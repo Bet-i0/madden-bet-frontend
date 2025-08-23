@@ -29,8 +29,11 @@ import {
   Smartphone,
   Chrome,
   User,
-  ArrowUp
+  ArrowUp,
+  RotateCcw
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { teamThemes, getTeamsByLeague, findTeamTheme } from "@/lib/teamThemes";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -39,6 +42,7 @@ interface SettingsDialogProps {
 
 const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const { themeState, updateSport, updateTeam, toggleThemeEnabled, resetTheme } = useTheme();
   
   // Settings state
   const [oddsFormat, setOddsFormat] = useState("american");
@@ -48,6 +52,11 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [pushAlerts, setPushAlerts] = useState(false);
   const [aiAlerts, setAiAlerts] = useState(true);
+
+  const availableTeams = getTeamsByLeague(themeState.sport);
+  const currentTeamTheme = themeState.sport && themeState.team 
+    ? findTeamTheme(themeState.sport, themeState.team) 
+    : null;
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -213,16 +222,35 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Favorite Teams / Sports</label>
-                      <div className="flex flex-wrap gap-2">
-                        {["NFL", "NBA", "MLB", "Chiefs", "Lakers"].map((item) => (
-                          <Badge key={item} variant="secondary" className="cursor-pointer hover:bg-primary">
-                            {item}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                     <div>
+                       <label className="text-sm font-medium mb-3 block">Favorite Sport</label>
+                       <Select value={themeState.sport} onValueChange={updateSport}>
+                         <SelectTrigger>
+                           <SelectValue placeholder="Select a sport..." />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {Object.keys(teamThemes).map((sport) => (
+                             <SelectItem key={sport} value={sport}>{sport}</SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
+
+                     {themeState.sport && (
+                       <div>
+                         <label className="text-sm font-medium mb-3 block">Favorite Team</label>
+                         <Select value={themeState.team} onValueChange={updateTeam}>
+                           <SelectTrigger>
+                             <SelectValue placeholder="Select a team..." />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {availableTeams.map((team) => (
+                               <SelectItem key={team.name} value={team.name}>{team.name}</SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                     )}
                   </div>
                 )}
 
@@ -302,32 +330,74 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                   </div>
                 )}
 
-                {section.id === "appearance" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Dark Mode</label>
-                      <Switch checked={darkMode} onCheckedChange={setDarkMode} />
-                    </div>
+                 {section.id === "appearance" && (
+                   <div className="space-y-6">
+                     <div className="flex items-center justify-between">
+                       <label className="text-sm font-medium">Dark Mode</label>
+                       <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Accent Color Theme</label>
-                      <div className="flex gap-2">
-                        {[
-                          { name: "Neon Blue", color: "bg-blue-500" },
-                          { name: "Electric Purple", color: "bg-purple-500" },
-                          { name: "Gold", color: "bg-yellow-500" },
-                          { name: "Green", color: "bg-green-500" }
-                        ].map((theme) => (
-                          <button
-                            key={theme.name}
-                            className={`w-8 h-8 rounded-full ${theme.color} border-2 border-border hover:scale-110 transition-transform`}
-                            title={theme.name}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                     <Separator />
+
+                     <div>
+                       <label className="text-sm font-medium mb-3 block">Team Theme</label>
+                       
+                       {themeState.sport && themeState.team && (
+                         <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
+                           <div className="flex items-center justify-between mb-3">
+                             <div>
+                               <p className="font-medium">{themeState.team}</p>
+                               <p className="text-xs text-muted-foreground">{themeState.sport}</p>
+                             </div>
+                             {currentTeamTheme && (
+                               <div className="flex gap-1">
+                                 <div 
+                                   className="w-6 h-6 rounded-full border border-border"
+                                   style={{ backgroundColor: `hsl(${currentTeamTheme.primary})` }}
+                                   title="Primary"
+                                 />
+                                 <div 
+                                   className="w-6 h-6 rounded-full border border-border"
+                                   style={{ backgroundColor: `hsl(${currentTeamTheme.secondary})` }}
+                                   title="Secondary"
+                                 />
+                                 <div 
+                                   className="w-6 h-6 rounded-full border border-border"
+                                   style={{ backgroundColor: `hsl(${currentTeamTheme.accent})` }}
+                                   title="Accent"
+                                 />
+                               </div>
+                             )}
+                           </div>
+                           
+                           <div className="flex items-center justify-between">
+                             <label className="text-sm">Use team theme</label>
+                             <Switch 
+                               checked={themeState.enabled} 
+                               onCheckedChange={toggleThemeEnabled}
+                             />
+                           </div>
+                         </div>
+                       )}
+
+                       {!themeState.sport && (
+                         <p className="text-sm text-muted-foreground mb-4">
+                           Select your favorite team in "Betting Preferences" to enable team themes.
+                         </p>
+                       )}
+
+                       <Button 
+                         variant="outline" 
+                         size="sm" 
+                         onClick={resetTheme}
+                         className="w-full"
+                       >
+                         <RotateCcw className="w-4 h-4 mr-2" />
+                         Reset to Default Theme
+                       </Button>
+                     </div>
+                   </div>
+                 )}
               </CollapsibleContent>
             </Collapsible>
           ))}
