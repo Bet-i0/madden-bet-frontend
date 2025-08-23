@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import AICoach from "./pages/AICoach";
 import AnalyzeStrategies from "./pages/AnalyzeStrategies";
 import TrendingNow from "./pages/TrendingNow";
+import Injuries from "./pages/Injuries";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/ai-coach" element={<AICoach />} />
           <Route path="/analyze-strategies" element={<AnalyzeStrategies />} />
           <Route path="/trending-now" element={<TrendingNow />} />
+          <Route path="/injuries" element={<Injuries />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

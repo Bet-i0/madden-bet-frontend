@@ -46,7 +46,7 @@ const Index = () => {
 
   const bottomMenuItems = [
     { icon: Target, label: "AI Coach", active: false, path: "/ai-coach" },
-    { icon: Activity, label: "Injuries", active: false, path: null },
+    { icon: Activity, label: "Injuries", active: false, path: "/injuries" },
     { icon: BarChart3, label: "Analytics", active: false, path: null },
     { icon: Settings, label: "Settings", active: false, path: null }
   ];
