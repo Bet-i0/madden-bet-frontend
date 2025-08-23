@@ -14,16 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      bankroll_transactions: {
+        Row: {
+          amount: number
+          bankroll_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          reference_bet_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bankroll_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference_bet_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bankroll_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reference_bet_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bankroll_transactions_bankroll_id_fkey"
+            columns: ["bankroll_id"]
+            isOneToOne: false
+            referencedRelation: "bankrolls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bankroll_transactions_reference_bet_id_fkey"
+            columns: ["reference_bet_id"]
+            isOneToOne: false
+            referencedRelation: "bets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bankrolls: {
+        Row: {
+          archived: boolean
+          created_at: string
+          currency: string
+          id: string
+          kelly_fraction: number | null
+          name: string
+          staking_strategy: string
+          starting_balance: number
+          unit_size: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          kelly_fraction?: number | null
+          name: string
+          staking_strategy?: string
+          starting_balance?: number
+          unit_size?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          kelly_fraction?: number | null
+          name?: string
+          staking_strategy?: string
+          starting_balance?: number
+          unit_size?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bet_legs: {
         Row: {
           bet_id: string
           bet_market: string
           bet_selection: string
+          closing_odds: number | null
           created_at: string
           game_date: string | null
           id: string
           league: string
           odds: number | null
+          open_odds: number | null
           result: Database["public"]["Enums"]["bet_status"] | null
           sport: string
           team1: string
@@ -33,11 +125,13 @@ export type Database = {
           bet_id: string
           bet_market: string
           bet_selection: string
+          closing_odds?: number | null
           created_at?: string
           game_date?: string | null
           id?: string
           league: string
           odds?: number | null
+          open_odds?: number | null
           result?: Database["public"]["Enums"]["bet_status"] | null
           sport: string
           team1: string
@@ -47,11 +141,13 @@ export type Database = {
           bet_id?: string
           bet_market?: string
           bet_selection?: string
+          closing_odds?: number | null
           created_at?: string
           game_date?: string | null
           id?: string
           league?: string
           odds?: number | null
+          open_odds?: number | null
           result?: Database["public"]["Enums"]["bet_status"] | null
           sport?: string
           team1?: string
@@ -70,6 +166,7 @@ export type Database = {
       bets: {
         Row: {
           ai_suggested: boolean | null
+          bankroll_id: string | null
           bet_type: Database["public"]["Enums"]["bet_type"]
           created_at: string
           id: string
@@ -79,12 +176,14 @@ export type Database = {
           sportsbook: string | null
           stake: number
           status: Database["public"]["Enums"]["bet_status"]
+          tags: string[]
           total_odds: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           ai_suggested?: boolean | null
+          bankroll_id?: string | null
           bet_type?: Database["public"]["Enums"]["bet_type"]
           created_at?: string
           id?: string
@@ -94,12 +193,14 @@ export type Database = {
           sportsbook?: string | null
           stake: number
           status?: Database["public"]["Enums"]["bet_status"]
+          tags?: string[]
           total_odds?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           ai_suggested?: boolean | null
+          bankroll_id?: string | null
           bet_type?: Database["public"]["Enums"]["bet_type"]
           created_at?: string
           id?: string
@@ -109,11 +210,20 @@ export type Database = {
           sportsbook?: string | null
           stake?: number
           status?: Database["public"]["Enums"]["bet_status"]
+          tags?: string[]
           total_odds?: number | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bets_bankroll_id_fkey"
+            columns: ["bankroll_id"]
+            isOneToOne: false
+            referencedRelation: "bankrolls"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -123,9 +233,12 @@ export type Database = {
           default_sportsbook: string | null
           display_name: string | null
           id: string
+          notification_preferences: Json
           odds_format: string | null
+          public_profile: boolean
           updated_at: string
           user_id: string
+          zapier_webhook_url: string | null
         }
         Insert: {
           auto_save_bets?: boolean | null
@@ -134,9 +247,12 @@ export type Database = {
           default_sportsbook?: string | null
           display_name?: string | null
           id?: string
+          notification_preferences?: Json
           odds_format?: string | null
+          public_profile?: boolean
           updated_at?: string
           user_id: string
+          zapier_webhook_url?: string | null
         }
         Update: {
           auto_save_bets?: boolean | null
@@ -145,9 +261,12 @@ export type Database = {
           default_sportsbook?: string | null
           display_name?: string | null
           id?: string
+          notification_preferences?: Json
           odds_format?: string | null
+          public_profile?: boolean
           updated_at?: string
           user_id?: string
+          zapier_webhook_url?: string | null
         }
         Relationships: []
       }

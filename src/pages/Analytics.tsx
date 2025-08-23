@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, BarChart, TrendingUp, Download, Bot, Target, PieChart, LineChart, FileText, Share2, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
+import { ArrowLeft, BarChart, TrendingUp, Download, Bot, Target, PieChart, LineChart, FileText, Share2, CheckCircle, XCircle, MinusCircle, Upload } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useBets } from '@/hooks/useBets';
 import { useToast } from '@/hooks/use-toast';
+import { exportBetsToCSV } from '@/utils/csvUtils';
+import BetHistoryTab from '@/components/BetHistoryTab';
+import CumulativeProfitChart from '@/components/CumulativeProfitChart';
+import CSVImportDialog from '@/components/CSVImportDialog';
 
 const Analytics = () => {
   const navigate = useNavigate();
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const { bets, analytics, updateBetStatus, loading } = useBets();
   const { toast } = useToast();
 
@@ -33,22 +38,6 @@ const Analytics = () => {
 
   const handleAskAI = (context: string) => {
     navigate('/ai-coach', { state: { context } });
-  };
-
-  const handleUpdateBetStatus = async (betId: string, status: 'won' | 'lost' | 'void' | 'push') => {
-    try {
-      await updateBetStatus(betId, status);
-      toast({
-        title: "Bet updated",
-        description: `Bet marked as ${status.toUpperCase()}`
-      });
-    } catch (error) {
-      toast({
-        title: "Error", 
-        description: "Failed to update bet status",
-        variant: "destructive"
-      });
-    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -90,6 +79,22 @@ const Analytics = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
+              <Button
+                onClick={() => setShowImportDialog(true)}
+                variant="outline"
+                className="font-sports"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                IMPORT CSV
+              </Button>
+              <Button
+                onClick={() => exportBetsToCSV(bets)}
+                variant="outline"
+                className="font-sports"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                EXPORT CSV
+              </Button>
               <Button
                 onClick={handleGeneratePDF}
                 disabled={isGeneratingPDF}
@@ -173,11 +178,12 @@ const Analytics = () => {
 
         {/* Main Analytics Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-5 bg-muted/50">
             <TabsTrigger value="overview" className="font-sports">OVERVIEW</TabsTrigger>
+            <TabsTrigger value="history" className="font-sports">HISTORY</TabsTrigger>
             <TabsTrigger value="trends" className="font-sports">TRENDS</TabsTrigger>
             <TabsTrigger value="strategies" className="font-sports">STRATEGIES</TabsTrigger>
-            <TabsTrigger value="history" className="font-sports">HISTORY</TabsTrigger>
+            <TabsTrigger value="charts" className="font-sports">CHARTS</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -197,6 +203,15 @@ const Analytics = () => {
                       <div>
                         <p className="font-medium">{bet.legs?.[0]?.team1} vs {bet.legs?.[0]?.team2}</p>
                         <p className="text-sm text-muted-foreground">{bet.legs?.[0]?.bet_selection}</p>
+                        {bet.tags && bet.tags.length > 0 && (
+                          <div className="flex gap-1 mt-2">
+                            {bet.tags.slice(0, 2).map((tag, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <div className="flex items-center space-x-2 mb-1">
@@ -266,6 +281,14 @@ const Analytics = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-6">
+            <BetHistoryTab />
+          </TabsContent>
+
+          <TabsContent value="charts" className="space-y-6">
+            <CumulativeProfitChart bets={bets} />
           </TabsContent>
 
           <TabsContent value="trends" className="space-y-6">
@@ -362,49 +385,13 @@ const Analytics = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
-          <TabsContent value="history" className="space-y-6">
-            <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 font-sports">
-                  <LineChart className="w-5 h-5 text-primary" />
-                  <span>HISTORICAL DATA</span>
-                </CardTitle>
-                <CardDescription>Complete betting history and performance tracking</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto bg-gradient-neon rounded-full flex items-center justify-center mb-4 shadow-glow">
-                    <LineChart className="w-8 h-8 text-accent-foreground" />
-                  </div>
-                  <h3 className="font-sports text-lg mb-4">COMPREHENSIVE HISTORY TRACKING</h3>
-                  <p className="text-muted-foreground mb-8">Access detailed records of all your betting activity</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button 
-                      onClick={() => handleAskAI('analyze my monthly performance')}
-                      className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-sports"
-                    >
-                      MONTHLY BREAKDOWN
-                    </Button>
-                    <Button 
-                      onClick={() => handleAskAI('show seasonal trends in my betting')}
-                      className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-sports"
-                    >
-                      SEASONAL ANALYSIS
-                    </Button>
-                    <Button 
-                      onClick={() => handleAskAI('compare my performance year over year')}
-                      className="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-sports"
-                    >
-                      YEARLY COMPARISON
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
+
+      <CSVImportDialog 
+        open={showImportDialog} 
+        onOpenChange={setShowImportDialog} 
+      />
     </div>
   );
 };

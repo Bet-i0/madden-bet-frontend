@@ -1,39 +1,16 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Shield,
-  BarChart3,
-  Brain,
-  Bell,
-  Palette,
-  ChevronDown,
-  Crown,
-  LogOut,
-  Mail,
-  Smartphone,
-  Chrome,
-  User,
-  ArrowUp,
-  RotateCcw
-} from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
-import { teamThemes, getTeamsByLeague, findTeamTheme } from "@/lib/teamThemes";
+
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { useProfile } from '@/hooks/useProfile';
+import { Settings, Zap, Shield, Bell, Database } from 'lucide-react';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -41,366 +18,297 @@ interface SettingsDialogProps {
 }
 
 const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
-  const { themeState, updateSport, updateTeam, toggleThemeEnabled, resetTheme } = useTheme();
+  const { profile, updateProfile, loading } = useProfile();
+  const { toast } = useToast();
   
-  // Settings state
-  const [oddsFormat, setOddsFormat] = useState("american");
-  const [betStyle, setBetStyle] = useState("balanced");
-  const [gptTone, setGptTone] = useState("analytical");
-  const [darkMode, setDarkMode] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [pushAlerts, setPushAlerts] = useState(false);
-  const [aiAlerts, setAiAlerts] = useState(true);
+  const [formData, setFormData] = useState({
+    display_name: '',
+    auto_save_bets: true,
+    default_sportsbook: 'draftkings',
+    odds_format: 'american',
+    zapier_webhook_url: '',
+    public_profile: false,
+    notification_preferences: {
+      settlement_reminders: true,
+      ai_picks_ready: true,
+      bankroll_alerts: true
+    }
+  });
+  const [saving, setSaving] = useState(false);
 
-  const availableTeams = getTeamsByLeague(themeState.sport);
-  const currentTeamTheme = themeState.sport && themeState.team 
-    ? findTeamTheme(themeState.sport, themeState.team) 
-    : null;
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        display_name: profile.display_name || '',
+        auto_save_bets: profile.auto_save_bets ?? true,
+        default_sportsbook: profile.default_sportsbook || 'draftkings',
+        odds_format: profile.odds_format || 'american',
+        zapier_webhook_url: profile.zapier_webhook_url || '',
+        public_profile: profile.public_profile || false,
+        notification_preferences: {
+          settlement_reminders: profile.notification_preferences?.settlement_reminders ?? true,
+          ai_picks_ready: profile.notification_preferences?.ai_picks_ready ?? true,
+          bankroll_alerts: profile.notification_preferences?.bankroll_alerts ?? true
+        }
+      });
+    }
+  }, [profile]);
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({
+        display_name: formData.display_name,
+        auto_save_bets: formData.auto_save_bets,
+        default_sportsbook: formData.default_sportsbook,
+        odds_format: formData.odds_format as 'american' | 'decimal' | 'fractional',
+        zapier_webhook_url: formData.zapier_webhook_url || null,
+        public_profile: formData.public_profile,
+        notification_preferences: formData.notification_preferences
+      });
+      
+      toast({
+        title: "Settings saved",
+        description: "Your preferences have been updated successfully."
+      });
+      
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        title: "Error saving settings",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const settingsSections = [
-    {
-      id: "account",
-      icon: Shield,
-      title: "Account",
-      emoji: "🔐"
-    },
-    {
-      id: "betting",
-      icon: BarChart3,
-      title: "Betting Preferences",
-      emoji: "📊"
-    },
-    {
-      id: "ai",
-      icon: Brain,
-      title: "AI Settings",
-      emoji: "🧠"
-    },
-    {
-      id: "notifications",
-      icon: Bell,
-      title: "Notifications",
-      emoji: "🔔"
-    },
-    {
-      id: "appearance",
-      icon: Palette,
-      title: "Appearance",
-      emoji: "🌑"
+  const testZapierWebhook = async () => {
+    if (!formData.zapier_webhook_url) {
+      toast({
+        title: "No webhook URL",
+        description: "Please enter your Zapier webhook URL first.",
+        variant: "destructive"
+      });
+      return;
     }
-  ];
+
+    try {
+      await fetch(formData.zapier_webhook_url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "no-cors",
+        body: JSON.stringify({
+          test: true,
+          timestamp: new Date().toISOString(),
+          message: "Test webhook from BET.IO settings"
+        }),
+      });
+
+      toast({
+        title: "Test sent",
+        description: "Check your Zapier dashboard to see if the webhook was received.",
+      });
+    } catch (error) {
+      toast({
+        title: "Test failed",
+        description: "Unable to send test webhook. Please check the URL.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-card border-border">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gradient-card border-border">
         <DialogHeader>
-          <DialogTitle className="font-sports text-2xl text-center">SETTINGS</DialogTitle>
+          <DialogTitle className="flex items-center space-x-2 font-sports text-xl">
+            <Settings className="w-5 h-5" />
+            <span>SETTINGS</span>
+          </DialogTitle>
         </DialogHeader>
-
-        {/* Hero Profile Section */}
-        <div className="bg-gradient-primary p-6 rounded-lg mb-6 text-center">
-          <Avatar className="w-20 h-20 mx-auto mb-4 border-4 border-primary-foreground shadow-neon">
-            <AvatarImage src="/api/placeholder/80/80" />
-            <AvatarFallback className="bg-gradient-neon font-bold text-xl">PB</AvatarFallback>
-          </Avatar>
-          
-          <h3 className="font-sports text-xl text-primary-foreground mb-2">SportsFan_99</h3>
-          
-          <div className="flex justify-center mb-4">
-            <Badge className="bg-gold-accent text-background font-sports px-4 py-1">
-              <Crown className="w-4 h-4 mr-1" />
-              PRO ANALYST
-            </Badge>
-          </div>
-          
-          <p className="text-primary-foreground/80 text-sm mb-4">
-            Active since Jan 2024 • 127 successful predictions
-          </p>
-          
-          <Button 
-            className="bg-gradient-neon text-accent-foreground hover:shadow-glow font-sports"
-            size="lg"
-          >
-            <ArrowUp className="w-4 h-4 mr-2" />
-            UPGRADE TO ELITE
-          </Button>
-        </div>
-
-        {/* Settings Sections */}
-        <div className="space-y-4">
-          {settingsSections.map((section) => (
-            <Collapsible 
-              key={section.id}
-              open={expandedSections[section.id]}
-              onOpenChange={() => toggleSection(section.id)}
-            >
-              <CollapsibleTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between p-4 h-auto hover:bg-muted/50 border border-border rounded-lg"
+        
+        <div className="space-y-6">
+          {/* Profile Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Shield className="w-4 h-4 text-primary" />
+              <h3 className="font-sports text-lg">PROFILE</h3>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Display Name</Label>
+                <Input
+                  value={formData.display_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
+                  placeholder="Your display name"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Default Sportsbook</Label>
+                <Select 
+                  value={formData.default_sportsbook} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, default_sportsbook: value }))}
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{section.emoji}</span>
-                    <span className="font-sports text-lg">{section.title}</span>
-                  </div>
-                  <ChevronDown 
-                    className={`w-5 h-5 transition-transform ${
-                      expandedSections[section.id] ? 'rotate-180' : ''
-                    }`} 
-                  />
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draftkings">DraftKings</SelectItem>
+                    <SelectItem value="fanduel">FanDuel</SelectItem>
+                    <SelectItem value="betmgm">BetMGM</SelectItem>
+                    <SelectItem value="caesars">Caesars</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Odds Format</Label>
+              <Select 
+                value={formData.odds_format} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, odds_format: value }))}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="american">American (-110)</SelectItem>
+                  <SelectItem value="decimal">Decimal (1.91)</SelectItem>
+                  <SelectItem value="fractional">Fractional (10/11)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Public Profile</Label>
+                <p className="text-sm text-muted-foreground">Allow others to see your betting stats</p>
+              </div>
+              <Switch
+                checked={formData.public_profile}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, public_profile: checked }))}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Bet Tracking Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Database className="w-4 h-4 text-primary" />
+              <h3 className="font-sports text-lg">BET TRACKING</h3>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Auto-save AI Suggestions</Label>
+                <p className="text-sm text-muted-foreground">Automatically save AI picks to your bet tracker</p>
+              </div>
+              <Switch
+                checked={formData.auto_save_bets}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, auto_save_bets: checked }))}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Notification Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Bell className="w-4 h-4 text-primary" />
+              <h3 className="font-sports text-lg">NOTIFICATIONS</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Settlement Reminders</Label>
+                  <p className="text-sm text-muted-foreground">Get reminded to settle pending bets</p>
+                </div>
+                <Switch
+                  checked={formData.notification_preferences.settlement_reminders}
+                  onCheckedChange={(checked) => setFormData(prev => ({
+                    ...prev,
+                    notification_preferences: { ...prev.notification_preferences, settlement_reminders: checked }
+                  }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>AI Picks Ready</Label>
+                  <p className="text-sm text-muted-foreground">Get notified when new AI picks are available</p>
+                </div>
+                <Switch
+                  checked={formData.notification_preferences.ai_picks_ready}
+                  onCheckedChange={(checked) => setFormData(prev => ({
+                    ...prev,
+                    notification_preferences: { ...prev.notification_preferences, ai_picks_ready: checked }
+                  }))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label>Bankroll Alerts</Label>
+                  <p className="text-sm text-muted-foreground">Get alerts for bankroll risk and milestones</p>
+                </div>
+                <Switch
+                  checked={formData.notification_preferences.bankroll_alerts}
+                  onCheckedChange={(checked) => setFormData(prev => ({
+                    ...prev,
+                    notification_preferences: { ...prev.notification_preferences, bankroll_alerts: checked }
+                  }))}
+                />
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Zapier Integration */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Zap className="w-4 h-4 text-primary" />
+              <h3 className="font-sports text-lg">ZAPIER INTEGRATION</h3>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Webhook URL</Label>
+              <div className="flex space-x-2">
+                <Input
+                  value={formData.zapier_webhook_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, zapier_webhook_url: e.target.value }))}
+                  placeholder="https://hooks.zapier.com/hooks/catch/..."
+                  className="flex-1"
+                />
+                <Button onClick={testZapierWebhook} variant="outline" size="sm">
+                  Test
                 </Button>
-              </CollapsibleTrigger>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Connect your Zapier webhook to receive notifications and automate workflows.
+              </p>
+            </div>
+          </div>
 
-              <CollapsibleContent className="mt-2 p-4 bg-muted/20 rounded-lg border border-border/50">
-                {section.id === "account" && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Email / Username</label>
-                      <div className="p-3 bg-background rounded-md border text-muted-foreground">
-                        sportsfan_99@email.com
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="space-y-3">
-                      <h4 className="font-medium">Link Accounts</h4>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Chrome className="w-4 h-4 mr-2" />
-                          Google
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Smartphone className="w-4 h-4 mr-2" />
-                          Apple
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <Button variant="destructive" className="w-full">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Log Out
-                    </Button>
-                  </div>
-                )}
-
-                {section.id === "betting" && (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Odds Format</label>
-                      <Select value={oddsFormat} onValueChange={setOddsFormat}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="american">American (+120)</SelectItem>
-                          <SelectItem value="decimal">Decimal (2.20)</SelectItem>
-                          <SelectItem value="fractional">Fractional (6/5)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Preferred Sportsbooks</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {["FanDuel", "DraftKings", "BetMGM", "Caesars"].map((book) => (
-                          <div key={book} className="flex items-center space-x-2 p-2 border rounded">
-                            <Switch id={book} />
-                            <label htmlFor={book} className="text-sm">{book}</label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                     <div>
-                       <label className="text-sm font-medium mb-3 block">Favorite Sport</label>
-                       <Select value={themeState.sport} onValueChange={updateSport}>
-                         <SelectTrigger>
-                           <SelectValue placeholder="Select a sport..." />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {Object.keys(teamThemes).map((sport) => (
-                             <SelectItem key={sport} value={sport}>{sport}</SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
-                     </div>
-
-                     {themeState.sport && (
-                       <div>
-                         <label className="text-sm font-medium mb-3 block">Favorite Team</label>
-                         <Select value={themeState.team} onValueChange={updateTeam}>
-                           <SelectTrigger>
-                             <SelectValue placeholder="Select a team..." />
-                           </SelectTrigger>
-                           <SelectContent>
-                             {availableTeams.map((team) => (
-                               <SelectItem key={team.name} value={team.name}>{team.name}</SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                     )}
-                  </div>
-                )}
-
-                {section.id === "ai" && (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Bet Style</label>
-                      <Select value={betStyle} onValueChange={setBetStyle}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="conservative">Conservative</SelectItem>
-                          <SelectItem value="balanced">Balanced</SelectItem>
-                          <SelectItem value="aggressive">Aggressive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">GPT Voice Tone</label>
-                      <Select value={gptTone} onValueChange={setGptTone}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="analytical">Analytical (stats heavy)</SelectItem>
-                          <SelectItem value="chill">Chill (casual, plain English)</SelectItem>
-                          <SelectItem value="sharp">Sharp (risk-savvy, high ROI focus)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-3 block">Receive AI Alerts?</label>
-                      <div className="space-y-3">
-                        {[
-                          { id: "injury", label: "Injury changes" },
-                          { id: "line", label: "Line movement" },
-                          { id: "gpt", label: "GPT-pick updates" }
-                        ].map((alert) => (
-                          <div key={alert.id} className="flex items-center space-x-3">
-                            <Switch id={alert.id} checked={aiAlerts} onCheckedChange={setAiAlerts} />
-                            <label htmlFor={alert.id} className="text-sm">{alert.label}</label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {section.id === "notifications" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4" />
-                        <label className="text-sm font-medium">Email Alerts</label>
-                      </div>
-                      <Switch checked={emailAlerts} onCheckedChange={setEmailAlerts} />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Chrome className="w-4 h-4" />
-                        <label className="text-sm font-medium">Browser Push Alerts</label>
-                      </div>
-                      <Switch checked={pushAlerts} onCheckedChange={setPushAlerts} />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Smartphone className="w-4 h-4" />
-                        <label className="text-sm font-medium">Text Alerts</label>
-                      </div>
-                      <Switch />
-                    </div>
-                  </div>
-                )}
-
-                 {section.id === "appearance" && (
-                   <div className="space-y-6">
-                     <div className="flex items-center justify-between">
-                       <label className="text-sm font-medium">Dark Mode</label>
-                       <Switch checked={darkMode} onCheckedChange={setDarkMode} />
-                     </div>
-
-                     <Separator />
-
-                     <div>
-                       <label className="text-sm font-medium mb-3 block">Team Theme</label>
-                       
-                       {themeState.sport && themeState.team && (
-                         <div className="mb-4 p-4 bg-muted/30 rounded-lg border">
-                           <div className="flex items-center justify-between mb-3">
-                             <div>
-                               <p className="font-medium">{themeState.team}</p>
-                               <p className="text-xs text-muted-foreground">{themeState.sport}</p>
-                             </div>
-                             {currentTeamTheme && (
-                               <div className="flex gap-1">
-                                 <div 
-                                   className="w-6 h-6 rounded-full border border-border"
-                                   style={{ backgroundColor: `hsl(${currentTeamTheme.primary})` }}
-                                   title="Primary"
-                                 />
-                                 <div 
-                                   className="w-6 h-6 rounded-full border border-border"
-                                   style={{ backgroundColor: `hsl(${currentTeamTheme.secondary})` }}
-                                   title="Secondary"
-                                 />
-                                 <div 
-                                   className="w-6 h-6 rounded-full border border-border"
-                                   style={{ backgroundColor: `hsl(${currentTeamTheme.accent})` }}
-                                   title="Accent"
-                                 />
-                               </div>
-                             )}
-                           </div>
-                           
-                           <div className="flex items-center justify-between">
-                             <label className="text-sm">Use team theme</label>
-                             <Switch 
-                               checked={themeState.enabled} 
-                               onCheckedChange={toggleThemeEnabled}
-                             />
-                           </div>
-                         </div>
-                       )}
-
-                       {!themeState.sport && (
-                         <p className="text-sm text-muted-foreground mb-4">
-                           Select your favorite team in "Betting Preferences" to enable team themes.
-                         </p>
-                       )}
-
-                       <Button 
-                         variant="outline" 
-                         size="sm" 
-                         onClick={resetTheme}
-                         className="w-full"
-                       >
-                         <RotateCcw className="w-4 h-4 mr-2" />
-                         Reset to Default Theme
-                       </Button>
-                     </div>
-                   </div>
-                 )}
-              </CollapsibleContent>
-            </Collapsible>
-          ))}
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving || loading} className="bg-gradient-primary">
+              {saving ? 'Saving...' : 'Save Settings'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

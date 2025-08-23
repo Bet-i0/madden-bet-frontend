@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -5,28 +6,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useBets, type Bet, type BetLeg } from '@/hooks/useBets';
 import { useProfile } from '@/hooks/useProfile';
 import { Separator } from '@/components/ui/separator';
-import { PlusCircle, X } from 'lucide-react';
+import { PlusCircle, X, Tag } from 'lucide-react';
 
 interface SaveBetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialBet?: Partial<Bet>;
+  autoSave?: boolean;
 }
 
-const SaveBetDialog = ({ open, onOpenChange, initialBet }: SaveBetDialogProps) => {
+const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: SaveBetDialogProps) => {
   const [bet, setBet] = useState<Partial<Bet>>({
     bet_type: 'single',
     stake: 0,
     status: 'pending',
     ai_suggested: true,
     legs: [],
+    tags: [],
     ...initialBet
   });
   const [loading, setLoading] = useState(false);
+  const [newTag, setNewTag] = useState('');
   
   const { saveBet } = useBets();
   const { profile } = useProfile();
@@ -102,11 +107,32 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet }: SaveBetDialogProps) =
     }));
   };
 
+  const addTag = () => {
+    if (newTag.trim() && !bet.tags?.includes(newTag.trim())) {
+      setBet(prev => ({
+        ...prev,
+        tags: [...(prev.tags || []), newTag.trim()]
+      }));
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setBet(prev => ({
+      ...prev,
+      tags: prev.tags?.filter(tag => tag !== tagToRemove) || []
+    }));
+  };
+
+  const commonTags = ['NFL', 'NBA', 'MLB', 'NHL', 'Spread', 'Total', 'Moneyline', 'Parlay', 'Prop', 'Same Game'];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gradient-card border-border">
         <DialogHeader>
-          <DialogTitle className="font-sports text-xl">Save Bet to Tracker</DialogTitle>
+          <DialogTitle className="font-sports text-xl">
+            {autoSave ? 'Quick Save Bet' : 'Save Bet to Tracker'}
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
@@ -165,6 +191,59 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet }: SaveBetDialogProps) =
                 onChange={(e) => setBet(prev => ({ ...prev, total_odds: parseFloat(e.target.value) || 0 }))}
                 placeholder="e.g., -110"
               />
+            </div>
+          </div>
+
+          {/* Tags Section */}
+          <div className="space-y-3">
+            <Label className="flex items-center space-x-2">
+              <Tag className="w-4 h-4" />
+              <span>Tags</span>
+            </Label>
+            
+            {/* Current Tags */}
+            {bet.tags && bet.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {bet.tags.map((tag, index) => (
+                  <Badge key={index} variant="secondary" className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground">
+                    {tag}
+                    <X 
+                      className="w-3 h-3 ml-1" 
+                      onClick={() => removeTag(tag)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Add New Tag */}
+            <div className="flex space-x-2">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Add tag..."
+                onKeyPress={(e) => e.key === 'Enter' && addTag()}
+              />
+              <Button onClick={addTag} variant="outline" size="sm">
+                Add
+              </Button>
+            </div>
+
+            {/* Common Tags */}
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Quick Add:</Label>
+              <div className="flex flex-wrap gap-2">
+                {commonTags.filter(tag => !bet.tags?.includes(tag)).map(tag => (
+                  <Badge 
+                    key={tag}
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => setBet(prev => ({ ...prev, tags: [...(prev.tags || []), tag] }))}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -227,7 +306,7 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet }: SaveBetDialogProps) =
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   <div className="space-y-2">
                     <Label>Market</Label>
                     <Select value={leg.bet_market} onValueChange={(value) => updateLeg(index, { bet_market: value })}>
@@ -256,6 +335,15 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet }: SaveBetDialogProps) =
                       type="number"
                       value={leg.odds || ''}
                       onChange={(e) => updateLeg(index, { odds: parseFloat(e.target.value) || 0 })}
+                      placeholder="-110"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Open Odds</Label>
+                    <Input
+                      type="number"
+                      value={leg.open_odds || ''}
+                      onChange={(e) => updateLeg(index, { open_odds: parseFloat(e.target.value) || 0 })}
                       placeholder="-110"
                     />
                   </div>
@@ -289,7 +377,7 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet }: SaveBetDialogProps) =
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={loading} className="bg-gradient-primary">
-              {loading ? 'Saving...' : 'Save Bet'}
+              {loading ? 'Saving...' : autoSave ? 'Quick Save' : 'Save Bet'}
             </Button>
           </div>
         </div>

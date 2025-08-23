@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +13,8 @@ export interface BetLeg {
   bet_market: string;
   bet_selection: string;
   odds?: number;
+  open_odds?: number;
+  closing_odds?: number;
   result?: 'pending' | 'won' | 'lost' | 'void' | 'push';
 }
 
@@ -27,6 +30,8 @@ export interface Bet {
   ai_suggested?: boolean;
   settled_at?: string;
   created_at?: string;
+  tags?: string[];
+  bankroll_id?: string;
   legs: BetLeg[];
 }
 
@@ -102,7 +107,9 @@ export const useBets = () => {
           status: bet.status,
           sportsbook: bet.sportsbook,
           notes: bet.notes,
-          ai_suggested: bet.ai_suggested
+          ai_suggested: bet.ai_suggested,
+          tags: bet.tags || [],
+          bankroll_id: bet.bankroll_id
         }])
         .select()
         .single();
@@ -124,6 +131,8 @@ export const useBets = () => {
               bet_market: leg.bet_market,
               bet_selection: leg.bet_selection,
               odds: leg.odds,
+              open_odds: leg.open_odds,
+              closing_odds: leg.closing_odds,
               result: leg.result || 'pending'
             }))
           );
@@ -131,8 +140,6 @@ export const useBets = () => {
         if (legsError) throw legsError;
       }
 
-      // Refresh bets
-      fetchBets();
       return betData;
     } catch (error) {
       console.error('Error saving bet:', error);
@@ -154,13 +161,58 @@ export const useBets = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      
-      // Refresh bets
-      fetchBets();
     } catch (error) {
       console.error('Error updating bet status:', error);
     }
   };
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('Setting up real-time subscriptions for user:', user.id);
+
+    // Subscribe to bets changes
+    const betsChannel = supabase
+      .channel('bets-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bets',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Bets real-time update:', payload);
+          fetchBets(); // Refetch all bets when there's a change
+        }
+      )
+      .subscribe();
+
+    // Subscribe to bet_legs changes for user's bets
+    const legsChannel = supabase
+      .channel('bet-legs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bet_legs'
+        },
+        (payload) => {
+          console.log('Bet legs real-time update:', payload);
+          fetchBets(); // Refetch all bets when legs change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscriptions');
+      supabase.removeChannel(betsChannel);
+      supabase.removeChannel(legsChannel);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
