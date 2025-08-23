@@ -180,7 +180,10 @@ const Index = () => {
                     <p className="text-sm text-muted-foreground">{insight.reason}</p>
                   </div>
                 ))}
-                <Button className="w-full bg-gradient-neon hover:shadow-glow font-sports text-accent-foreground">
+                <Button 
+                  className="w-full bg-gradient-neon hover:shadow-glow font-sports text-accent-foreground"
+                  onClick={() => navigate('/ai-coach')}
+                >
                   CHAT WITH AI COACH
                 </Button>
               </CardContent>
