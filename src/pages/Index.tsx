@@ -107,7 +107,7 @@ const Index = () => {
         <div className="relative container mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <h1 className="text-6xl md:text-8xl font-sports font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
-              GAME ANALYSIS
+              BET.IO
             </h1>
             <div className="w-full overflow-hidden">
               <div className="animate-marquee whitespace-nowrap text-gold-accent font-sports text-xl">
