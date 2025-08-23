@@ -1,49 +1,75 @@
 import { useState } from 'react';
-import { ArrowLeft, BarChart, TrendingUp, Download, Bot, Target, PieChart, LineChart, FileText, Share2 } from 'lucide-react';
+import { ArrowLeft, BarChart, TrendingUp, Download, Bot, Target, PieChart, LineChart, FileText, Share2, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useBets } from '@/hooks/useBets';
+import { useToast } from '@/hooks/use-toast';
 
 const Analytics = () => {
   const navigate = useNavigate();
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const { bets, analytics, updateBetStatus, loading } = useBets();
+  const { toast } = useToast();
 
-  const analyticsData = {
-    overview: {
-      totalPicks: 142,
-      winRate: 67.3,
-      profit: 2340,
-      roi: 18.7
-    },
-    recentPicks: [
-      { game: 'Chiefs vs Bills', pick: 'Over 47.5', result: 'WIN', profit: '+120' },
-      { game: 'Lakers vs Warriors', pick: 'Lakers -3.5', result: 'LOSS', profit: '-110' },
-      { game: 'Cowboys vs Eagles', pick: 'Under 51', result: 'WIN', profit: '+105' },
-      { game: 'Celtics vs Heat', pick: 'Celtics ML', result: 'WIN', profit: '+85' },
-    ],
-    trends: [
-      { category: 'NFL Overs', winRate: 72.1, volume: 23 },
-      { category: 'NBA Spreads', winRate: 64.8, volume: 34 },
-      { category: 'MLB Totals', winRate: 59.3, volume: 18 },
-      { category: 'NHL Moneylines', winRate: 68.9, volume: 15 },
-    ]
-  };
+  // Mock data for features not yet implemented
+  const mockTrends = [
+    { category: 'NFL Spreads', winRate: 72.1, volume: 8 },
+    { category: 'NBA Totals', winRate: 64.8, volume: 12 },
+    { category: 'NFL Totals', winRate: 59.3, volume: 6 },
+    { category: 'Parlays', winRate: 45.2, volume: 4 },
+  ];
 
   const handleGeneratePDF = async () => {
     setIsGeneratingPDF(true);
-    // Simulate PDF generation
     setTimeout(() => {
       setIsGeneratingPDF(false);
-      // In a real app, this would trigger the PDF download
       console.log('PDF generated and downloaded');
     }, 2000);
   };
 
   const handleAskAI = (context: string) => {
     navigate('/ai-coach', { state: { context } });
+  };
+
+  const handleUpdateBetStatus = async (betId: string, status: 'won' | 'lost' | 'void' | 'push') => {
+    try {
+      await updateBetStatus(betId, status);
+      toast({
+        title: "Bet updated",
+        description: `Bet marked as ${status.toUpperCase()}`
+      });
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to update bet status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'won':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'lost':
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'push':
+      case 'void':
+        return <MinusCircle className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <div className="w-4 h-4 rounded-full bg-muted animate-pulse" />;
+    }
   };
 
   return (
@@ -101,7 +127,7 @@ const Analytics = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">Total Picks</p>
-                  <p className="text-2xl font-bold font-sports">{analyticsData.overview.totalPicks}</p>
+                  <p className="text-2xl font-bold font-sports">{analytics.totalPicks}</p>
                 </div>
                 <Target className="w-8 h-8 text-primary" />
               </div>
@@ -113,7 +139,7 @@ const Analytics = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">Win Rate</p>
-                  <p className="text-2xl font-bold font-sports text-neon-green">{analyticsData.overview.winRate}%</p>
+                  <p className="text-2xl font-bold font-sports text-neon-green">{analytics.winRate.toFixed(1)}%</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-neon-green" />
               </div>
@@ -125,7 +151,7 @@ const Analytics = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">Total Profit</p>
-                  <p className="text-2xl font-bold font-sports text-neon-green">+${analyticsData.overview.profit}</p>
+                  <p className="text-2xl font-bold font-sports text-neon-green">{formatCurrency(analytics.profit)}</p>
                 </div>
                 <PieChart className="w-8 h-8 text-neon-green" />
               </div>
@@ -137,7 +163,7 @@ const Analytics = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">ROI</p>
-                  <p className="text-2xl font-bold font-sports text-neon-green">{analyticsData.overview.roi}%</p>
+                  <p className="text-2xl font-bold font-sports text-neon-green">{analytics.roi.toFixed(1)}%</p>
                 </div>
                 <LineChart className="w-8 h-8 text-neon-green" />
               </div>
@@ -166,22 +192,31 @@ const Analytics = () => {
                   <CardDescription>Last 4 betting picks and results</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {analyticsData.recentPicks.map((pick, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                  {bets.slice(0, 4).map((bet, index) => (
+                    <div key={bet.id || index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                       <div>
-                        <p className="font-medium">{pick.game}</p>
-                        <p className="text-sm text-muted-foreground">{pick.pick}</p>
+                        <p className="font-medium">{bet.legs?.[0]?.team1} vs {bet.legs?.[0]?.team2}</p>
+                        <p className="text-sm text-muted-foreground">{bet.legs?.[0]?.bet_selection}</p>
                       </div>
                       <div className="text-right">
-                        <Badge variant={pick.result === 'WIN' ? 'default' : 'destructive'} className="mb-1">
-                          {pick.result}
-                        </Badge>
-                        <p className={`text-sm font-bold ${pick.result === 'WIN' ? 'text-neon-green' : 'text-destructive'}`}>
-                          {pick.profit}
+                        <div className="flex items-center space-x-2 mb-1">
+                          {getStatusIcon(bet.status)}
+                          <Badge variant={bet.status === 'won' ? 'default' : bet.status === 'lost' ? 'destructive' : 'secondary'}>
+                            {bet.status.toUpperCase()}
+                          </Badge>
+                        </div>
+                        <p className={`text-sm font-bold ${bet.status === 'won' ? 'text-green-500' : bet.status === 'lost' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                          {bet.status === 'won' ? `+${bet.potential_payout || bet.stake}` : bet.status === 'lost' ? `-${bet.stake}` : 'Pending'}
                         </p>
                       </div>
                     </div>
                   ))}
+                  {bets.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>No bets tracked yet</p>
+                      <p className="text-sm">Start using AI Coach to build your betting history</p>
+                    </div>
+                  )}
                   <Button 
                     onClick={() => handleAskAI('recent picks analysis')}
                     className="w-full bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 font-sports"
@@ -244,7 +279,7 @@ const Analytics = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analyticsData.trends.map((trend, index) => (
+                  {mockTrends.map((trend, index) => (
                     <div key={index} className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium">{trend.category}</h3>

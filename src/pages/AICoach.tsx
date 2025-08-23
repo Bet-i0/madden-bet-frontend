@@ -7,19 +7,23 @@ import {
   Zap,
   Target,
   TrendingUp,
-  Activity
+  Activity,
+  Bookmark
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import SaveBetDialog from "@/components/SaveBetDialog";
+import { useProfile } from "@/hooks/useProfile";
 
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
+  hasBetSuggestion?: boolean;
 }
 
 const AICoach = () => {
@@ -33,8 +37,11 @@ const AICoach = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [saveBetOpen, setSaveBetOpen] = useState(false);
+  const [currentBetSuggestion, setCurrentBetSuggestion] = useState(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { profile } = useProfile();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,33 +67,100 @@ const AICoach = () => {
 
     // Simulate AI response
     setTimeout(() => {
+      const response = getAIResponse(inputValue);
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: getAIResponse(inputValue),
+        text: response.text,
         sender: 'ai',
-        timestamp: new Date()
+        timestamp: new Date(),
+        hasBetSuggestion: response.hasBetSuggestion
       };
+      
+      if (response.hasBetSuggestion) {
+        setCurrentBetSuggestion(response.betData);
+      }
+      
       setMessages(prev => [...prev, aiResponse]);
       setIsTyping(false);
     }, 1500);
   };
 
-  const getAIResponse = (userInput: string): string => {
+  const getAIResponse = (userInput: string): { text: string; hasBetSuggestion: boolean; betData?: any } => {
     const input = userInput.toLowerCase();
     
     if (input.includes('parlay') || input.includes('combination')) {
-      return "For parlay strategies, I recommend starting with 2-3 legs maximum. Focus on correlated bets like same-game parlays where outcomes influence each other. Would you like me to analyze specific games for parlay opportunities?";
+      return {
+        text: "For parlay strategies, I recommend starting with 2-3 legs maximum. Focus on correlated bets like same-game parlays where outcomes influence each other.\n\n**Suggested Parlay:**\n• Chiefs -3.5 (-110)\n• Over 47.5 (-105)\n• Mahomes 2+ TD passes (-150)\n\n**Total Odds:** +285 | **Confidence:** 72%\n\nWould you like me to analyze the correlation between these picks?",
+        hasBetSuggestion: true,
+        betData: {
+          bet_type: 'parlay',
+          total_odds: 285,
+          legs: [
+            {
+              sport: 'NFL',
+              league: 'NFL', 
+              team1: 'Chiefs',
+              team2: 'Bills',
+              bet_market: 'spread',
+              bet_selection: 'Chiefs -3.5',
+              odds: -110
+            },
+            {
+              sport: 'NFL',
+              league: 'NFL',
+              team1: 'Chiefs', 
+              team2: 'Bills',
+              bet_market: 'total',
+              bet_selection: 'Over 47.5',
+              odds: -105
+            },
+            {
+              sport: 'NFL',
+              league: 'NFL',
+              team1: 'Chiefs',
+              team2: 'Bills', 
+              bet_market: 'prop',
+              bet_selection: 'Mahomes 2+ TD passes',
+              odds: -150
+            }
+          ]
+        }
+      };
     }
     
     if (input.includes('chiefs') || input.includes('mahomes')) {
-      return "The Chiefs are showing strong offensive metrics this season. Mahomes has a 68% completion rate with 2.1 TD/INT ratio. Their red zone efficiency is at 71%. Consider their performance against divisional opponents when analyzing spreads.";
+      return {
+        text: "The Chiefs are showing strong offensive metrics this season. Mahomes has a 68% completion rate with 2.1 TD/INT ratio. Their red zone efficiency is at 71%.\n\n**My Pick:** Chiefs -3.5 (-110)\n**Confidence:** 78%\n\nConsider their performance against divisional opponents when analyzing spreads.",
+        hasBetSuggestion: true,
+        betData: {
+          bet_type: 'single',
+          total_odds: -110,
+          legs: [
+            {
+              sport: 'NFL',
+              league: 'NFL',
+              team1: 'Chiefs',
+              team2: 'Bills',
+              bet_market: 'spread', 
+              bet_selection: 'Chiefs -3.5',
+              odds: -110
+            }
+          ]
+        }
+      };
     }
     
     if (input.includes('injury') || input.includes('report')) {
-      return "Injury reports can significantly impact lines. Key positions to monitor: QB (4-7 point swing), RB1 (1-3 points), WR1/CB1 (1-2 points). I track real-time injury updates and their historical impact on team performance.";
+      return {
+        text: "Injury reports can significantly impact lines. Key positions to monitor: QB (4-7 point swing), RB1 (1-3 points), WR1/CB1 (1-2 points). I track real-time injury updates and their historical impact on team performance.",
+        hasBetSuggestion: false
+      };
     }
     
-    return "That's an interesting question! Based on current data trends and team analytics, I'd recommend focusing on situational advantages like home/away splits, weather conditions, and recent team momentum. What specific matchup are you analyzing?";
+    return {
+      text: "That's an interesting question! Based on current data trends and team analytics, I'd recommend focusing on situational advantages like home/away splits, weather conditions, and recent team momentum. What specific matchup are you analyzing?",
+      hasBetSuggestion: false
+    };
   };
 
   const quickActions = [
@@ -161,13 +235,23 @@ const AICoach = () => {
                   : 'bg-muted border-primary/20'
               }`}>
                 <CardContent className="p-3">
-                  <p className="text-sm leading-relaxed">{message.text}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{message.text}</p>
                   <div className="text-xs opacity-70 mt-2">
                     {message.timestamp.toLocaleTimeString([], { 
                       hour: '2-digit', 
                       minute: '2-digit' 
                     })}
                   </div>
+                  {message.sender === 'ai' && message.hasBetSuggestion && profile?.auto_save_bets !== false && (
+                    <Button
+                      onClick={() => setSaveBetOpen(true)}
+                      size="sm"
+                      className="mt-3 bg-gradient-neon hover:shadow-glow font-sports text-accent-foreground"
+                    >
+                      <Bookmark className="w-3 h-3 mr-1" />
+                      Save to Bet Tracker
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
 
@@ -247,6 +331,13 @@ const AICoach = () => {
           </div>
         </div>
       </div>
+
+      {/* Save Bet Dialog */}
+      <SaveBetDialog
+        open={saveBetOpen}
+        onOpenChange={setSaveBetOpen}
+        initialBet={currentBetSuggestion}
+      />
     </div>
   );
 };

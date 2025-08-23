@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import stadiumBg from "@/assets/stadium-bg.jpg";
 import SettingsDialog from "@/components/SettingsDialog";
 
@@ -28,6 +29,7 @@ const Index = () => {
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -86,13 +88,15 @@ const Index = () => {
             {/* Right: User Profile */}
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setSettingsOpen(true)}>
               <div className="hidden md:flex flex-col items-end text-sm">
-                <span className="font-semibold">SportsFan_99</span>
+                <span className="font-semibold">{user?.email || 'SportsFan_99'}</span>
                 <span className="text-gold-accent font-sports">ANALYST</span>
               </div>
               <div className="relative group cursor-pointer">
                 <Avatar className="w-10 h-10 border-2 border-primary shadow-neon">
                   <AvatarImage src="/api/placeholder/40/40" />
-                  <AvatarFallback className="bg-gradient-primary font-bold">PB</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-primary font-bold">
+                    {user?.email?.charAt(0).toUpperCase() || 'PB'}
+                  </AvatarFallback>
                 </Avatar>
                 <ChevronDown className="w-4 h-4 absolute -bottom-1 -right-1 text-primary" />
               </div>
