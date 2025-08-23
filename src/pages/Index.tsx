@@ -21,10 +21,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import stadiumBg from "@/assets/stadium-bg.jpg";
+import SettingsDialog from "@/components/SettingsDialog";
 
 const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -264,7 +266,13 @@ const Index = () => {
             {bottomMenuItems.map((item, index) => (
               <button
                 key={index}
-                onClick={() => item.path && navigate(item.path)}
+                onClick={() => {
+                  if (item.label === "Settings") {
+                    setSettingsOpen(true);
+                  } else if (item.path) {
+                    navigate(item.path);
+                  }
+                }}
                 className="flex flex-col items-center space-y-1 p-3 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:shadow-glow group"
               >
                 <item.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -276,6 +284,9 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Settings Dialog */}
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
