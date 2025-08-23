@@ -84,7 +84,7 @@ const Index = () => {
             </div>
 
             {/* Right: User Profile */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setSettingsOpen(true)}>
               <div className="hidden md:flex flex-col items-end text-sm">
                 <span className="font-semibold">SportsFan_99</span>
                 <span className="text-gold-accent font-sports">ANALYST</span>
