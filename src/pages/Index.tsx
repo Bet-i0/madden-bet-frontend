@@ -187,7 +187,8 @@ const Index = () => {
             </Card>
 
             {/* Strategy Builder Panel */}
-            <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group">
+            <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group cursor-pointer"
+                  onClick={() => navigate('/analyze-strategies')}>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
                   <Target className="w-6 h-6 text-electric-purple animate-glow-pulse" />
