@@ -19,11 +19,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 import stadiumBg from "@/assets/stadium-bg.jpg";
 
 const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -43,10 +45,10 @@ const Index = () => {
   ];
 
   const bottomMenuItems = [
-    { icon: Target, label: "AI Coach", active: false },
-    { icon: Activity, label: "Injuries", active: false },
-    { icon: BarChart3, label: "Analytics", active: false },
-    { icon: Settings, label: "Settings", active: false }
+    { icon: Target, label: "AI Coach", active: false, path: "/ai-coach" },
+    { icon: Activity, label: "Injuries", active: false, path: null },
+    { icon: BarChart3, label: "Analytics", active: false, path: null },
+    { icon: Settings, label: "Settings", active: false, path: null }
   ];
 
   return (
@@ -254,6 +256,7 @@ const Index = () => {
             {bottomMenuItems.map((item, index) => (
               <button
                 key={index}
+                onClick={() => item.path && navigate(item.path)}
                 className="flex flex-col items-center space-y-1 p-3 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:shadow-glow group"
               >
                 <item.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
