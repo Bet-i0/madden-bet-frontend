@@ -36,16 +36,16 @@ const Index = () => {
     { team1: "Ravens", team2: "Bengals", time: "1:00 PM", spread: "-7.5", total: "51.5" }
   ];
 
-  const aiPicks = [
-    { pick: "Ravens -7.5", confidence: 87, reason: "Strong rushing attack vs weak run defense" },
-    { pick: "Over 51.5 BAL/CIN", confidence: 91, reason: "Weather conditions favor passing game" },
-    { pick: "Chiefs ML", confidence: 78, reason: "Home field advantage in divisional game" }
+  const aiInsights = [
+    { analysis: "Ravens Advantage", confidence: 87, reason: "Strong rushing attack vs weak run defense" },
+    { analysis: "High-Scoring Game", confidence: 91, reason: "Weather conditions favor passing game" },
+    { analysis: "Chiefs Edge", confidence: 78, reason: "Home field advantage in divisional game" }
   ];
 
   const bottomMenuItems = [
-    { icon: Trophy, label: "My Bets", active: false },
+    { icon: Target, label: "AI Coach", active: false },
     { icon: Activity, label: "Injuries", active: false },
-    { icon: Award, label: "Leaderboard", active: false },
+    { icon: BarChart3, label: "Analytics", active: false },
     { icon: Settings, label: "Settings", active: false }
   ];
 
@@ -55,12 +55,12 @@ const Index = () => {
       <header className="sticky top-0 z-50 bg-gradient-card backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Left: Bankroll HUD */}
+            {/* Left: AI Coach Status */}
             <div className="flex items-center space-x-4">
               <div className="bg-gradient-neon px-4 py-2 rounded-lg shadow-glow">
                 <div className="flex items-center space-x-2">
-                  <Wallet className="w-5 h-5 text-accent-foreground" />
-                  <span className="font-bold text-accent-foreground font-sports">$2,847.50</span>
+                  <Zap className="w-5 h-5 text-accent-foreground animate-pulse" />
+                  <span className="font-bold text-accent-foreground font-sports">AI COACH</span>
                 </div>
               </div>
             </div>
@@ -79,8 +79,8 @@ const Index = () => {
             {/* Right: User Profile */}
             <div className="flex items-center space-x-3">
               <div className="hidden md:flex flex-col items-end text-sm">
-                <span className="font-semibold">ProBettor_99</span>
-                <span className="text-gold-accent font-sports">ELITE TIER</span>
+                <span className="font-semibold">SportsFan_99</span>
+                <span className="text-gold-accent font-sports">ANALYST</span>
               </div>
               <div className="relative group cursor-pointer">
                 <Avatar className="w-10 h-10 border-2 border-primary shadow-neon">
@@ -105,11 +105,11 @@ const Index = () => {
         <div className="relative container mx-auto px-4 py-12">
           <div className="text-center mb-8">
             <h1 className="text-6xl md:text-8xl font-sports font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
-              TODAY'S MATCHUPS
+              GAME ANALYSIS
             </h1>
             <div className="w-full overflow-hidden">
               <div className="animate-marquee whitespace-nowrap text-gold-accent font-sports text-xl">
-                NFL WEEK 14 • LIVE ODDS • AI PREDICTIONS • REAL-TIME INSIGHTS • NFL WEEK 14 • LIVE ODDS • AI PREDICTIONS • REAL-TIME INSIGHTS
+                AI INSIGHTS • ODDS COMPARISON • INJURY REPORTS • SENTIMENT ANALYSIS • AI INSIGHTS • ODDS COMPARISON • INJURY REPORTS • SENTIMENT ANALYSIS
               </div>
             </div>
           </div>
@@ -157,39 +157,39 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-3 gap-8">
             
-            {/* AI Picks Panel */}
+            {/* AI Insights Panel */}
             <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
                   <Zap className="w-6 h-6 text-neon-blue animate-glow-pulse" />
-                  <span>AI PICKS</span>
+                  <span>AI INSIGHTS</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {aiPicks.map((pick, index) => (
+                {aiInsights.map((insight, index) => (
                   <div key={index} className="bg-background/50 p-4 rounded-lg border border-border/50">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold font-sports">{pick.pick}</span>
+                      <span className="font-bold font-sports">{insight.analysis}</span>
                       <div className="flex items-center space-x-1">
                         <Star className="w-4 h-4 text-gold-accent" />
-                        <span className="text-gold-accent font-bold">{pick.confidence}%</span>
+                        <span className="text-gold-accent font-bold">{insight.confidence}%</span>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">{pick.reason}</p>
+                    <p className="text-sm text-muted-foreground">{insight.reason}</p>
                   </div>
                 ))}
                 <Button className="w-full bg-gradient-neon hover:shadow-glow font-sports text-accent-foreground">
-                  VIEW ALL AI INSIGHTS
+                  CHAT WITH AI COACH
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Parlay Builder Panel */}
+            {/* Strategy Builder Panel */}
             <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
                   <Target className="w-6 h-6 text-electric-purple animate-glow-pulse" />
-                  <span>PARLAY BUILDER</span>
+                  <span>STRATEGY BUILDER</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -197,11 +197,11 @@ const Index = () => {
                   <div className="w-20 h-20 mx-auto bg-gradient-primary rounded-full flex items-center justify-center mb-4 shadow-neon">
                     <Target className="w-10 h-10 text-primary-foreground" />
                   </div>
-                  <h3 className="font-sports text-xl mb-2">BUILD YOUR PARLAY</h3>
-                  <p className="text-muted-foreground mb-6">Combine multiple bets for bigger payouts</p>
+                  <h3 className="font-sports text-xl mb-2">ANALYZE STRATEGIES</h3>
+                  <p className="text-muted-foreground mb-6">Build and test betting strategies with AI guidance</p>
                 </div>
                 <Button className="w-full bg-gradient-primary hover:shadow-neon font-sports">
-                  START BUILDING
+                  START ANALYZING
                 </Button>
               </CardContent>
             </Card>
@@ -217,29 +217,29 @@ const Index = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="font-sports">Chiefs ML</span>
+                    <span className="font-sports">Public Sentiment</span>
                     <div className="flex items-center space-x-2">
                       <BarChart3 className="w-4 h-4 text-neon-green" />
-                      <span className="text-neon-green font-bold">↑ 78%</span>
+                      <span className="text-neon-green font-bold">↑ 78% Chiefs</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-sports">Ravens -7.5</span>
+                    <span className="font-sports">Line Movement</span>
                     <div className="flex items-center space-x-2">
                       <BarChart3 className="w-4 h-4 text-destructive" />
-                      <span className="text-destructive font-bold">↓ 45%</span>
+                      <span className="text-destructive font-bold">↓ Ravens -7.5</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-sports">Over 51.5</span>
+                    <span className="font-sports">Sharp Action</span>
                     <div className="flex items-center space-x-2">
                       <BarChart3 className="w-4 h-4 text-neon-green" />
-                      <span className="text-neon-green font-bold">↑ 89%</span>
+                      <span className="text-neon-green font-bold">↑ Over 51.5</span>
                     </div>
                   </div>
                 </div>
                 <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground font-sports">
-                  VIEW FULL HEATMAP
+                  VIEW FULL ANALYSIS
                 </Button>
               </CardContent>
             </Card>
