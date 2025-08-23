@@ -124,8 +124,13 @@ const AnalyzeStrategies = () => {
                 AI-POWERED STRATEGIES
               </h2>
               <p className="text-gray-300">
-                Machine learning algorithms analyze thousands of data points to identify winning opportunities
+                Machine learning algorithms analyze thousands of data points to identify profitable betting patterns
               </p>
+              <div className="mt-4 p-3 bg-neon-blue/10 border border-neon-blue/30 rounded-lg">
+                <p className="text-neon-blue text-sm text-center">
+                  📊 Analysis Only - No actual betting or sportsbook connections
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -187,7 +192,7 @@ const AnalyzeStrategies = () => {
                       className="w-full hover-glow"
                       disabled={selectedStrategy !== strategy.id}
                     >
-                      Deploy Strategy
+                      Analyze Strategy
                     </Button>
                   </div>
                 </Card>
@@ -202,7 +207,7 @@ const AnalyzeStrategies = () => {
                 LIVE ODDS COMPARISON
               </h2>
               <p className="text-gray-300">
-                Real-time odds from major sportsbooks - Updated every 30 seconds
+                Real-time odds comparison for analysis - Updated every 30 seconds via API
               </p>
             </div>
 
@@ -386,7 +391,7 @@ const AnalyzeStrategies = () => {
 
                       <Button variant="neon" className="w-full">
                         <Users className="w-4 h-4 mr-2" />
-                        Save & Share Strategy
+                        Save Analysis
                       </Button>
                     </div>
                   ) : (
