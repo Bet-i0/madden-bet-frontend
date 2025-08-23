@@ -210,7 +210,10 @@ const Index = () => {
             </Card>
 
             {/* Trending Now Panel */}
-            <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group">
+            <Card 
+              className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group cursor-pointer"
+              onClick={() => navigate('/trending-now')}
+            >
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
                   <TrendingUp className="w-6 h-6 text-destructive animate-glow-pulse" />
@@ -218,31 +221,29 @@ const Index = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="text-center py-4 mb-4">
+                  <div className="w-16 h-16 mx-auto bg-gradient-neon rounded-full flex items-center justify-between mb-3 shadow-glow">
+                    <TrendingUp className="w-8 h-8 text-accent-foreground mx-auto" />
+                  </div>
+                  <h3 className="font-sports text-lg mb-2">SOCIAL INTELLIGENCE</h3>
+                  <p className="text-muted-foreground text-sm">Real-time trend analysis from X (Twitter)</p>
+                </div>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-sports">Public Sentiment</span>
-                    <div className="flex items-center space-x-2">
-                      <BarChart3 className="w-4 h-4 text-neon-green" />
-                      <span className="text-neon-green font-bold">↑ 78% Chiefs</span>
-                    </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm">#MondayNightFootball</span>
+                    <span className="text-neon-green text-sm font-bold">+2.3k</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-sports">Line Movement</span>
-                    <div className="flex items-center space-x-2">
-                      <BarChart3 className="w-4 h-4 text-destructive" />
-                      <span className="text-destructive font-bold">↓ Ravens -7.5</span>
-                    </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm">#NBAPlayoffs</span>
+                    <span className="text-neon-green text-sm font-bold">+1.8k</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-sports">Sharp Action</span>
-                    <div className="flex items-center space-x-2">
-                      <BarChart3 className="w-4 h-4 text-neon-green" />
-                      <span className="text-neon-green font-bold">↑ Over 51.5</span>
-                    </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm">#MarchMadness</span>
+                    <span className="text-neon-green text-sm font-bold">+3.1k</span>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground font-sports">
-                  VIEW FULL ANALYSIS
+                <Button className="w-full bg-gradient-primary hover:shadow-neon font-sports">
+                  EXPLORE TRENDS
                 </Button>
               </CardContent>
             </Card>
