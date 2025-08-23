@@ -37,7 +37,25 @@ export const useProfile = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      setProfile(data);
+      
+      if (data) {
+        // Type assertion and transformation for notification_preferences
+        const transformedProfile: Profile = {
+          ...data,
+          notification_preferences: typeof data.notification_preferences === 'object' && data.notification_preferences
+            ? {
+                settlement_reminders: (data.notification_preferences as any)?.settlement_reminders ?? true,
+                ai_picks_ready: (data.notification_preferences as any)?.ai_picks_ready ?? true,
+                bankroll_alerts: (data.notification_preferences as any)?.bankroll_alerts ?? true,
+              }
+            : {
+                settlement_reminders: true,
+                ai_picks_ready: true,
+                bankroll_alerts: true,
+              }
+        };
+        setProfile(transformedProfile);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -59,7 +77,25 @@ export const useProfile = () => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      
+      if (data) {
+        // Same transformation for the updated data
+        const transformedProfile: Profile = {
+          ...data,
+          notification_preferences: typeof data.notification_preferences === 'object' && data.notification_preferences
+            ? {
+                settlement_reminders: (data.notification_preferences as any)?.settlement_reminders ?? true,
+                ai_picks_ready: (data.notification_preferences as any)?.ai_picks_ready ?? true,
+                bankroll_alerts: (data.notification_preferences as any)?.bankroll_alerts ?? true,
+              }
+            : {
+                settlement_reminders: true,
+                ai_picks_ready: true,
+                bankroll_alerts: true,
+              }
+        };
+        setProfile(transformedProfile);
+      }
       return data;
     } catch (error) {
       console.error('Error updating profile:', error);
