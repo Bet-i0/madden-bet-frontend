@@ -14,7 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bet_legs: {
+        Row: {
+          bet_id: string
+          bet_market: string
+          bet_selection: string
+          created_at: string
+          game_date: string | null
+          id: string
+          league: string
+          odds: number | null
+          result: Database["public"]["Enums"]["bet_status"] | null
+          sport: string
+          team1: string
+          team2: string
+        }
+        Insert: {
+          bet_id: string
+          bet_market: string
+          bet_selection: string
+          created_at?: string
+          game_date?: string | null
+          id?: string
+          league: string
+          odds?: number | null
+          result?: Database["public"]["Enums"]["bet_status"] | null
+          sport: string
+          team1: string
+          team2: string
+        }
+        Update: {
+          bet_id?: string
+          bet_market?: string
+          bet_selection?: string
+          created_at?: string
+          game_date?: string | null
+          id?: string
+          league?: string
+          odds?: number | null
+          result?: Database["public"]["Enums"]["bet_status"] | null
+          sport?: string
+          team1?: string
+          team2?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bet_legs_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "bets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bets: {
+        Row: {
+          ai_suggested: boolean | null
+          bet_type: Database["public"]["Enums"]["bet_type"]
+          created_at: string
+          id: string
+          notes: string | null
+          potential_payout: number | null
+          settled_at: string | null
+          sportsbook: string | null
+          stake: number
+          status: Database["public"]["Enums"]["bet_status"]
+          total_odds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_suggested?: boolean | null
+          bet_type?: Database["public"]["Enums"]["bet_type"]
+          created_at?: string
+          id?: string
+          notes?: string | null
+          potential_payout?: number | null
+          settled_at?: string | null
+          sportsbook?: string | null
+          stake: number
+          status?: Database["public"]["Enums"]["bet_status"]
+          total_odds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_suggested?: boolean | null
+          bet_type?: Database["public"]["Enums"]["bet_type"]
+          created_at?: string
+          id?: string
+          notes?: string | null
+          potential_payout?: number | null
+          settled_at?: string | null
+          sportsbook?: string | null
+          stake?: number
+          status?: Database["public"]["Enums"]["bet_status"]
+          total_odds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          auto_save_bets: boolean | null
+          avatar_url: string | null
+          created_at: string
+          default_sportsbook: string | null
+          display_name: string | null
+          id: string
+          odds_format: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_save_bets?: boolean | null
+          avatar_url?: string | null
+          created_at?: string
+          default_sportsbook?: string | null
+          display_name?: string | null
+          id?: string
+          odds_format?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_save_bets?: boolean | null
+          avatar_url?: string | null
+          created_at?: string
+          default_sportsbook?: string | null
+          display_name?: string | null
+          id?: string
+          odds_format?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +159,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      bet_status: "pending" | "won" | "lost" | "void" | "push"
+      bet_type: "single" | "parlay" | "teaser" | "round_robin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +287,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      bet_status: ["pending", "won", "lost", "void", "push"],
+      bet_type: ["single", "parlay", "teaser", "round_robin"],
+    },
   },
 } as const
