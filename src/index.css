@@ -2,95 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Bet.iO Sports Gaming Design System - Madden 25 Inspired
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
+    /* Gaming Base Colors - Dark Navy Foundation */
+    --background: 225 30% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    /* Gaming Cards - Deep Blue with Metallic Edge */
+    --card: 225 25% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    /* HUD Elements */
+    --popover: 225 25% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Electric Blue Primary - Madden Style */
+    --primary: 200 100% 50%;
+    --primary-foreground: 225 30% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    /* Metallic Secondary */
+    --secondary: 210 15% 25%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted Gaming Elements */
+    --muted: 225 20% 15%;
+    --muted-foreground: 210 20% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Neon Green Accent - CTA Color */
+    --accent: 120 100% 45%;
+    --accent-foreground: 225 30% 8%;
 
-    --destructive: 0 62.8% 30.6%;
+    /* Destructive Red - Alert Color */
+    --destructive: 0 85% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Gaming Borders */
+    --border: 210 15% 20%;
+    --input: 225 20% 15%;
+    --ring: 200 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* Gaming Specific Colors */
+    --neon-green: 120 100% 45%;
+    --neon-blue: 200 100% 50%;
+    --electric-purple: 270 100% 60%;
+    --gold-accent: 45 100% 55%;
+    --silver-metallic: 210 15% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(200 100% 50%), hsl(220 100% 60%));
+    --gradient-neon: linear-gradient(135deg, hsl(120 100% 45%), hsl(150 100% 50%));
+    --gradient-card: linear-gradient(135deg, hsl(225 25% 12%), hsl(225 20% 15%));
+    --gradient-hero: linear-gradient(135deg, hsl(225 30% 8% / 0.9), hsl(225 25% 12% / 0.8));
+    
+    /* Gaming Shadows */
+    --shadow-neon: 0 0 20px hsl(200 100% 50% / 0.3);
+    --shadow-glow: 0 0 40px hsl(120 100% 45% / 0.4);
+    --shadow-card: 0 8px 32px hsl(225 30% 8% / 0.6);
+    
+    /* Animation Variables */
+    --transition-gaming: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-glow: box-shadow 0.3s ease, transform 0.2s ease;
   }
 }
 
@@ -100,6 +77,38 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-gaming;
+  }
+}
+
+@layer utilities {
+  /* Gaming Custom Classes */
+  .gaming-card {
+    @apply bg-gradient-card border border-border hover:border-primary transition-all duration-300 hover:shadow-neon;
+  }
+  
+  .hud-element {
+    @apply bg-gradient-card backdrop-blur-sm border border-border/50;
+  }
+  
+  .neon-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  
+  .console-button {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+  
+  .console-button:hover::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-primary opacity-20 z-0;
+  }
+  
+  .marquee-container {
+    @apply overflow-hidden whitespace-nowrap;
+  }
+  
+  .marquee-text {
+    @apply inline-block animate-marquee;
   }
 }
