@@ -7,10 +7,10 @@ export interface Bankroll {
   id: string;
   user_id: string;
   name: string;
-  currency: string;
   starting_balance: number;
-  unit_size?: number;
+  currency: string;
   staking_strategy: 'fixed' | '%_bankroll' | 'kelly';
+  unit_size?: number;
   kelly_fraction?: number;
   archived: boolean;
   created_at: string;
@@ -20,12 +20,12 @@ export interface Bankroll {
 export interface BankrollTransaction {
   id: string;
   bankroll_id: string;
+  type: 'deposit' | 'withdrawal' | 'bet_win' | 'bet_loss';
+  amount: number;
+  notes?: string;
+  reference_bet_id?: string;
   created_at: string;
   updated_at: string;
-  amount: number;
-  type: 'deposit' | 'withdrawal' | 'bet' | 'win' | 'loss' | 'adjustment';
-  reference_bet_id?: string;
-  notes?: string;
 }
 
 export const useBankrolls = () => {
@@ -43,15 +43,24 @@ export const useBankrolls = () => {
         .from('bankrolls')
         .select('*')
         .eq('user_id', user.id)
-        .eq('archived', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBankrolls(data || []);
+
+      // Type assertion to handle the database response
+      const typedData = data?.map(bankroll => ({
+        ...bankroll,
+        staking_strategy: bankroll.staking_strategy as 'fixed' | '%_bankroll' | 'kelly'
+      })) || [];
+
+      setBankrolls(typedData);
       
-      // Set first bankroll as active if none selected
-      if (data && data.length > 0 && !activeBankroll) {
-        setActiveBankroll(data[0]);
+      if (typedData.length > 0 && !activeBankroll) {
+        const activeData = {
+          ...typedData[0],
+          staking_strategy: typedData[0].staking_strategy as 'fixed' | '%_bankroll' | 'kelly'
+        };
+        setActiveBankroll(activeData);
       }
     } catch (error) {
       console.error('Error fetching bankrolls:', error);
@@ -74,8 +83,6 @@ export const useBankrolls = () => {
         .single();
 
       if (error) throw error;
-      
-      await fetchBankrolls();
       return data;
     } catch (error) {
       console.error('Error creating bankroll:', error);
@@ -83,26 +90,39 @@ export const useBankrolls = () => {
     }
   };
 
-  const getCurrentBalance = async (bankrollId: string): Promise<number> => {
+  const updateBankroll = async (id: string, updates: Partial<Omit<Bankroll, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+    if (!user) return null;
+
     try {
-      const { data: bankroll } = await supabase
+      const { data, error } = await supabase
         .from('bankrolls')
-        .select('starting_balance')
-        .eq('id', bankrollId)
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
         .single();
 
-      const { data: transactions } = await supabase
-        .from('bankroll_transactions')
-        .select('amount')
-        .eq('bankroll_id', bankrollId);
-
-      const startingBalance = bankroll?.starting_balance || 0;
-      const totalTransactions = transactions?.reduce((sum, tx) => sum + parseFloat(tx.amount.toString()), 0) || 0;
-      
-      return startingBalance + totalTransactions;
+      if (error) throw error;
+      return data;
     } catch (error) {
-      console.error('Error calculating balance:', error);
-      return 0;
+      console.error('Error updating bankroll:', error);
+      throw error;
+    }
+  };
+
+  const addTransaction = async (transaction: Omit<BankrollTransaction, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('bankroll_transactions')
+        .insert([transaction])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
     }
   };
 
@@ -118,7 +138,8 @@ export const useBankrolls = () => {
     setActiveBankroll,
     loading,
     createBankroll,
-    getCurrentBalance,
+    updateBankroll,
+    addTransaction,
     refetch: fetchBankrolls
   };
 };

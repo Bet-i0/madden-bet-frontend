@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +11,13 @@ export interface Profile {
   auto_save_bets: boolean;
   default_sportsbook: string;
   odds_format: string;
+  zapier_webhook_url?: string;
+  public_profile: boolean;
+  notification_preferences: {
+    settlement_reminders: boolean;
+    ai_picks_ready: boolean;
+    bankroll_alerts: boolean;
+  };
 }
 
 export const useProfile = () => {
