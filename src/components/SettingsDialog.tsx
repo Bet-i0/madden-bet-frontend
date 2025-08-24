@@ -10,7 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useProfile } from '@/hooks/useProfile';
-import { Settings, Zap, Shield, Bell, Database } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { teamThemes, getTeamsByLeague } from '@/lib/teamThemes';
+import { Settings, Zap, Shield, Bell, Database, Palette } from 'lucide-react';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -20,6 +22,7 @@ interface SettingsDialogProps {
 const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const { profile, updateProfile, loading } = useProfile();
   const { toast } = useToast();
+  const { themeState, updateSport, updateTeam, toggleThemeEnabled, resetTheme } = useTheme();
   
   const [formData, setFormData] = useState({
     display_name: '',
@@ -271,6 +274,78 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
                 />
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Team Theme Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Palette className="w-4 h-4 text-primary" />
+              <h3 className="font-sports text-lg">TEAM THEME</h3>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Enable Team Theme</Label>
+                <p className="text-sm text-muted-foreground">Apply your favorite team's colors to the app</p>
+              </div>
+              <Switch
+                checked={themeState.enabled}
+                onCheckedChange={toggleThemeEnabled}
+              />
+            </div>
+
+            {themeState.enabled && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>League</Label>
+                  <Select 
+                    value={themeState.sport} 
+                    onValueChange={updateSport}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select league" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(teamThemes).map((sport) => (
+                        <SelectItem key={sport} value={sport}>
+                          {sport}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Team</Label>
+                  <Select 
+                    value={themeState.team} 
+                    onValueChange={updateTeam}
+                    disabled={!themeState.sport}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {themeState.sport && getTeamsByLeague(themeState.sport).map((team) => (
+                        <SelectItem key={team.name} value={team.name}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {themeState.enabled && (themeState.sport || themeState.team) && (
+              <div className="flex justify-start">
+                <Button onClick={resetTheme} variant="outline" size="sm">
+                  Reset to Default Theme
+                </Button>
+              </div>
+            )}
           </div>
 
           <Separator />
