@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3 } from "lucide-react";
+import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
 
@@ -23,7 +23,7 @@ const AnalyzeStrategies = () => {
     { sportsbook: "Caesars", team1: "Chiefs", team2: "Bills", odds1: "-112", odds2: "+108", spread: "-2.5" },
   ];
 
-  // GPT-picked strategies
+  // GPT-picked strategies with mock betting data
   const gptStrategies = [
     {
       id: "value-hunter",
@@ -32,7 +32,34 @@ const AnalyzeStrategies = () => {
       confidence: 87,
       expectedRoi: "+12.3%",
       timeframe: "Live",
-      tags: ["Line Shopping", "Value Betting", "AI Powered"]
+      tags: ["Line Shopping", "Value Betting", "AI Powered"],
+      activeBets: [
+        {
+          type: "3-Leg Parlay",
+          odds: "+285",
+          stake: "$50",
+          legs: [
+            "Chiefs -2.5 vs Bills (-110 → -105 DK)",
+            "Over 47.5 total points (-108 → -102 FD)", 
+            "Mahomes Over 1.5 TD passes (-125 → -115 MGM)"
+          ],
+          valueEdge: "+4.2% vs market average",
+          status: "pending"
+        },
+        {
+          type: "Single Bet",
+          odds: "+105", 
+          stake: "$75",
+          legs: ["Lakers ML vs Warriors (+105 vs +100 market)"],
+          valueEdge: "+2.1% line discrepancy",
+          status: "won"
+        }
+      ],
+      suggestedProps: [
+        "Travis Kelce Over 6.5 receptions (-110 → -105)",
+        "Josh Allen Under 2.5 TD passes (+115 → +120)",
+        "Total rushing yards Over 185.5 (-108 → -102)"
+      ]
     },
     {
       id: "momentum-play",
@@ -41,16 +68,70 @@ const AnalyzeStrategies = () => {
       confidence: 92,
       expectedRoi: "+18.7%",
       timeframe: "2-4 hours",
-      tags: ["Line Movement", "Public Betting", "Contrarian"]
+      tags: ["Line Movement", "Public Betting", "Contrarian"],
+      activeBets: [
+        {
+          type: "4-Leg Parlay",
+          odds: "+650",
+          stake: "$25",
+          legs: [
+            "Celtics +3.5 (line moved from +6)",
+            "Under 228.5 Lakers/Warriors (sharp money)",
+            "76ers ML (contrarian vs 85% public on Knicks)",
+            "Suns +7.5 (reverse line movement)"
+          ],
+          valueEdge: "Following sharp money indicators",
+          status: "pending"
+        },
+        {
+          type: "Live Bet",
+          odds: "+140",
+          stake: "$100", 
+          legs: ["Cowboys +7.5 live (opened +3.5)"],
+          valueEdge: "Injury news created line overreaction",
+          status: "won"
+        }
+      ],
+      suggestedProps: [
+        "Jayson Tatum Over 28.5 points (momentum from hot streak)",
+        "Steph Curry Under 4.5 threes (public fading opportunity)",
+        "Joel Embiid Double-Double (+110) vs tired legs narrative"
+      ]
     },
     {
       id: "injury-impact",
-      title: "Injury Intelligence",
+      title: "Injury Intelligence", 
       description: "React to late-breaking injury news before lines adjust",
       confidence: 78,
       expectedRoi: "+9.4%",
       timeframe: "30 mins",
-      tags: ["Breaking News", "Player Props", "Fast Action"]
+      tags: ["Breaking News", "Player Props", "Fast Action"],
+      activeBets: [
+        {
+          type: "2-Leg Parlay",
+          odds: "+180",
+          stake: "$40",
+          legs: [
+            "Backup QB Under 225.5 passing yards",
+            "Team total Under 21.5 points"
+          ],
+          valueEdge: "Star QB ruled out 20 mins ago",
+          status: "pending"
+        },
+        {
+          type: "Player Props",
+          odds: "+165",
+          stake: "$60",
+          legs: ["WR1 Over 8.5 receptions (target share increase)"],
+          valueEdge: "WR2 injury creates target funnel",
+          status: "won"
+        }
+      ],
+      suggestedProps: [
+        "Backup RB Over 75.5 rushing yards (starter questionable)",
+        "Team total Under 24.5 (key offensive line injuries)",
+        "Defense sacks Over 2.5 (opposing QB mobility limited)"
+      ]
     },
     {
       id: "weather-edge",
@@ -59,7 +140,37 @@ const AnalyzeStrategies = () => {
       confidence: 85,
       expectedRoi: "+14.2%",
       timeframe: "24 hours",
-      tags: ["Weather", "Totals", "Game Environment"]
+      tags: ["Weather", "Totals", "Game Environment"],
+      activeBets: [
+        {
+          type: "Same Game Parlay",
+          odds: "+220",
+          stake: "$80",
+          legs: [
+            "Under 42.5 total points (20mph winds)",
+            "Under 275.5 combined passing yards",
+            "Over 45.5 total rush attempts"
+          ],
+          valueEdge: "Weather not factored into totals yet",
+          status: "pending"
+        },
+        {
+          type: "Player Props Combo",
+          odds: "+190", 
+          stake: "$35",
+          legs: [
+            "QB Under 2.5 TD passes (wind/rain)",
+            "Kicker Under 1.5 FGs made (conditions)"
+          ],
+          valueEdge: "Severe weather forecast updated",
+          status: "won"
+        }
+      ],
+      suggestedProps: [
+        "Game total Under 38.5 (snow/wind combo)",
+        "Both teams Under 150.5 passing yards each",
+        "Total turnovers Over 3.5 (slippery conditions)"
+      ]
     }
   ];
 
@@ -195,6 +306,59 @@ const AnalyzeStrategies = () => {
                           {tag}
                         </span>
                       ))}
+                    </div>
+
+                    {/* Active Bets Section */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-gaming text-neon-green mb-2 flex items-center">
+                        <Trophy className="w-3 h-3 mr-1" />
+                        ACTIVE BETS ({strategy.activeBets.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {strategy.activeBets.map((bet, idx) => (
+                          <div key={idx} className="p-2 bg-gray-800/50 rounded border border-gray-700">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-xs font-bold text-neon-blue">{bet.type}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-neon-green">{bet.odds}</span>
+                                <span className="text-xs text-gray-400">{bet.stake}</span>
+                                <span className={`text-xs px-1 rounded ${
+                                  bet.status === 'won' ? 'bg-neon-green/20 text-neon-green' : 
+                                  bet.status === 'pending' ? 'bg-gold/20 text-gold' : 'bg-red-400/20 text-red-400'
+                                }`}>
+                                  {bet.status}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              {bet.legs.map((leg, legIdx) => (
+                                <div key={legIdx} className="text-xs text-gray-300 flex items-start">
+                                  <div className="w-1 h-1 bg-neon-blue rounded-full mt-1.5 mr-2 flex-shrink-0" />
+                                  {leg}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-purple-400 mt-1 italic">
+                              {bet.valueEdge}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Suggested Props Section */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-gaming text-gold mb-2 flex items-center">
+                        <Target className="w-3 h-3 mr-1" />
+                        SUGGESTED PROPS
+                      </h4>
+                      <div className="space-y-1">
+                        {strategy.suggestedProps.map((prop, idx) => (
+                          <div key={idx} className="text-xs text-gray-300 p-1.5 bg-gold/10 rounded border border-gold/20">
+                            {prop}
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <Button
