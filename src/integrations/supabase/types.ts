@@ -104,6 +104,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bet_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          shared_bet_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          shared_bet_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          shared_bet_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bet_legs: {
         Row: {
           bet_id: string
@@ -163,6 +187,30 @@ export type Database = {
           },
         ]
       }
+      bet_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          shared_bet_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          shared_bet_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          shared_bet_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bets: {
         Row: {
           ai_suggested: boolean | null
@@ -170,6 +218,7 @@ export type Database = {
           bet_type: Database["public"]["Enums"]["bet_type"]
           created_at: string
           id: string
+          is_public: boolean
           notes: string | null
           potential_payout: number | null
           settled_at: string | null
@@ -177,6 +226,7 @@ export type Database = {
           stake: number
           status: Database["public"]["Enums"]["bet_status"]
           tags: string[]
+          tailed_from_shared_bet_id: string | null
           total_odds: number | null
           updated_at: string
           user_id: string
@@ -187,6 +237,7 @@ export type Database = {
           bet_type?: Database["public"]["Enums"]["bet_type"]
           created_at?: string
           id?: string
+          is_public?: boolean
           notes?: string | null
           potential_payout?: number | null
           settled_at?: string | null
@@ -194,6 +245,7 @@ export type Database = {
           stake: number
           status?: Database["public"]["Enums"]["bet_status"]
           tags?: string[]
+          tailed_from_shared_bet_id?: string | null
           total_odds?: number | null
           updated_at?: string
           user_id: string
@@ -204,6 +256,7 @@ export type Database = {
           bet_type?: Database["public"]["Enums"]["bet_type"]
           created_at?: string
           id?: string
+          is_public?: boolean
           notes?: string | null
           potential_payout?: number | null
           settled_at?: string | null
@@ -211,6 +264,7 @@ export type Database = {
           stake?: number
           status?: Database["public"]["Enums"]["bet_status"]
           tags?: string[]
+          tailed_from_shared_bet_id?: string | null
           total_odds?: number | null
           updated_at?: string
           user_id?: string
@@ -245,6 +299,54 @@ export type Database = {
           created_at?: string
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      follows: {
+        Row: {
+          created_at: string
+          followed_id: string
+          follower_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          followed_id: string
+          follower_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          followed_id?: string
+          follower_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          read?: boolean
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          read?: boolean
+          type?: string
           user_id?: string
         }
         Relationships: []
@@ -294,9 +396,97 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_bet_legs: {
+        Row: {
+          bet_market: string
+          bet_selection: string
+          created_at: string
+          id: string
+          league: string
+          odds: number | null
+          shared_bet_id: string
+          sport: string
+          team1: string
+          team2: string
+        }
+        Insert: {
+          bet_market: string
+          bet_selection: string
+          created_at?: string
+          id?: string
+          league: string
+          odds?: number | null
+          shared_bet_id: string
+          sport: string
+          team1: string
+          team2: string
+        }
+        Update: {
+          bet_market?: string
+          bet_selection?: string
+          created_at?: string
+          id?: string
+          league?: string
+          odds?: number | null
+          shared_bet_id?: string
+          sport?: string
+          team1?: string
+          team2?: string
+        }
+        Relationships: []
+      }
+      shared_bets: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          original_bet_id: string
+          owner_user_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          original_bet_id: string
+          owner_user_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          original_bet_id?: string
+          owner_user_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_stats: {
+        Row: {
+          avatar_url: string | null
+          bets_count: number | null
+          display_name: string | null
+          last_settled_at: string | null
+          losses: number | null
+          profit: number | null
+          pushes: number | null
+          roi_percent: number | null
+          total_staked: number | null
+          user_id: string | null
+          win_rate_percent: number | null
+          wins: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

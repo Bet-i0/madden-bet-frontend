@@ -14,7 +14,8 @@ import {
   Zap,
   BarChart3,
   Flame,
-  Star
+  Star,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,7 @@ const Index = () => {
 
   const bottomMenuItems = [
     { icon: Target, label: "AI Coach", active: false, path: "/ai-coach" },
+    { icon: Users, label: "Social", active: false, path: "/social" },
     { icon: Activity, label: "Injuries", active: false, path: "/injuries" },
     { icon: BarChart3, label: "Analytics", active: false, path: "/analytics" },
     { icon: Settings, label: "Settings", active: false, path: null }
@@ -166,7 +168,7 @@ const Index = () => {
       {/* Horizontal Scroll Panels */}
       <section className="py-12 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-4 gap-8">
             
             {/* AI Insights Panel */}
             <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group">
@@ -224,6 +226,52 @@ const Index = () => {
                   data-testid="start-analyzing-btn"
                 >
                   START ANALYZING
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Social Hub Panel */}
+            <Card 
+              className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group cursor-pointer"
+              onClick={() => navigate('/social')}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
+                  <Users className="w-6 h-6 text-electric-purple animate-glow-pulse" />
+                  <span>SOCIAL HUB</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center py-4 mb-4">
+                  <div className="w-16 h-16 mx-auto bg-gradient-neon rounded-full flex items-center justify-between mb-3 shadow-glow">
+                    <Users className="w-8 h-8 text-accent-foreground mx-auto" />
+                  </div>
+                  <h3 className="font-sports text-lg mb-2">COMMUNITY BETTING</h3>
+                  <p className="text-muted-foreground text-sm">Follow top bettors and tail winning picks</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm">Top ROI: 284%</span>
+                    <span className="text-neon-green text-sm font-bold">🔥 Hot</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm">Active Bettors</span>
+                    <span className="text-neon-green text-sm font-bold">1,247</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm">Shared Today</span>
+                    <span className="text-neon-green text-sm font-bold">89 bets</span>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full bg-gradient-primary hover:shadow-neon font-sports"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/social');
+                  }}
+                  data-testid="join-community-btn"
+                >
+                  JOIN COMMUNITY
                 </Button>
               </CardContent>
             </Card>
