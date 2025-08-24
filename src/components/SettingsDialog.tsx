@@ -126,13 +126,20 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gradient-card border-border">
+      <DialogContent 
+        className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gradient-card border-border"
+        aria-describedby="settings-description"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2 font-sports text-xl">
             <Settings className="w-5 h-5" />
             <span>SETTINGS</span>
           </DialogTitle>
         </DialogHeader>
+        
+        <div id="settings-description" className="sr-only">
+          Configure your betting preferences, notifications, and app settings
+        </div>
         
         <div className="space-y-6">
           {/* Profile Settings */}

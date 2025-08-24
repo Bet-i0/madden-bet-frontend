@@ -20,13 +20,14 @@ import {
   TrendingDown,
   Minus
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTrendingData } from "@/hooks/useTrendingData";
 import { useAIInsights } from "@/hooks/useAIInsights";
 
 const TrendingNow = () => {
   const [selectedTrend, setSelectedTrend] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+  const navigate = useNavigate();
   
   const { trendingTopics, loading: dataLoading, lastUpdated } = useTrendingData();
   const { loading: insightLoading, currentInsight, generateInsight, clearInsight } = useAIInsights();
@@ -240,7 +241,18 @@ const TrendingNow = () => {
                               variant="neon" 
                               size="sm" 
                               className="flex-1"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/analyze-strategies', { 
+                                  state: { 
+                                    from: 'trend', 
+                                    trendId: trend.id, 
+                                    hashtag: trend.hashtag, 
+                                    category: trend.category 
+                                  } 
+                                });
+                              }}
+                              data-testid="trend-build-strategy-btn"
                             >
                               <Target className="w-3 h-3 mr-1" />
                               Build Strategy
@@ -344,7 +356,17 @@ const TrendingNow = () => {
                       </div>
                     </div>
 
-                    <Button variant="hero" className="w-full">
+                    <Button 
+                      variant="hero" 
+                      className="w-full"
+                      onClick={() => navigate('/analyze-strategies', { 
+                        state: { 
+                          from: 'ai-insight', 
+                          trendId: selectedTrend 
+                        } 
+                      })}
+                      data-testid="ai-add-to-strategy-btn"
+                    >
                       <Users className="w-4 h-4 mr-2" />
                       Add to Strategy Builder
                     </Button>

@@ -1,19 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [activeTab, setActiveTab] = useState("gpt-strategies");
+  const location = useLocation();
   
   const { isAnalyzing, currentAnalysis, analyzeStrategy, clearAnalysis } = useStrategyAnalysis();
+
+  // Handle navigation context from trending or other pages
+  useEffect(() => {
+    if (location.state?.from === 'trend') {
+      const { hashtag, category } = location.state;
+      setCustomPrompt(`Create a betting strategy based on trending topic: ${hashtag} (${category})`);
+      setActiveTab("custom-builder");
+    } else if (location.state?.from === 'ai-insight') {
+      setActiveTab("gpt-strategies");
+    }
+  }, [location.state]);
 
   // Mock live odds data from major sportsbooks
   const liveOdds = [

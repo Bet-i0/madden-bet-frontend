@@ -215,7 +215,14 @@ const Index = () => {
                   <h3 className="font-sports text-xl mb-2">ANALYZE STRATEGIES</h3>
                   <p className="text-muted-foreground mb-6">Build and test betting strategies with AI guidance</p>
                 </div>
-                <Button className="w-full bg-gradient-primary hover:shadow-neon font-sports">
+                <Button 
+                  className="w-full bg-gradient-primary hover:shadow-neon font-sports"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/analyze-strategies');
+                  }}
+                  data-testid="start-analyzing-btn"
+                >
                   START ANALYZING
                 </Button>
               </CardContent>
@@ -254,7 +261,14 @@ const Index = () => {
                     <span className="text-neon-green text-sm font-bold">+3.1k</span>
                   </div>
                 </div>
-                <Button className="w-full bg-gradient-primary hover:shadow-neon font-sports">
+                <Button 
+                  className="w-full bg-gradient-primary hover:shadow-neon font-sports"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/trending-now');
+                  }}
+                  data-testid="explore-trends-btn"
+                >
                   EXPLORE TRENDS
                 </Button>
               </CardContent>
