@@ -4,13 +4,16 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock } from "lucide-react";
+import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [activeTab, setActiveTab] = useState("gpt-strategies");
+  
+  const { isAnalyzing, currentAnalysis, analyzeStrategy, clearAnalysis } = useStrategyAnalysis();
 
   // Mock live odds data from major sportsbooks
   const liveOdds = [
@@ -60,12 +63,15 @@ const AnalyzeStrategies = () => {
     }
   ];
 
-  const handleAnalyzeCustom = () => {
-    setIsAnalyzing(true);
-    // Simulate GPT analysis
-    setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 3000);
+  const handleAnalyzeStrategy = async (strategyId: string, strategyName: string) => {
+    await analyzeStrategy(strategyId, strategyName);
+    setActiveTab("analysis-results");
+  };
+
+  const handleAnalyzeCustom = async () => {
+    if (!customPrompt.trim()) return;
+    await analyzeStrategy("custom", "Custom Strategy");
+    setActiveTab("analysis-results");
   };
 
   return (
@@ -101,8 +107,8 @@ const AnalyzeStrategies = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="gpt-strategies" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 gaming-tabs">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8 gaming-tabs">
             <TabsTrigger value="gpt-strategies" className="gaming-tab">
               <Brain className="w-4 h-4 mr-2" />
               GPT Strategies
@@ -114,6 +120,10 @@ const AnalyzeStrategies = () => {
             <TabsTrigger value="custom-builder" className="gaming-tab">
               <Target className="w-4 h-4 mr-2" />
               Custom Builder
+            </TabsTrigger>
+            <TabsTrigger value="analysis-results" className="gaming-tab" disabled={!currentAnalysis}>
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analysis Results
             </TabsTrigger>
           </TabsList>
 
@@ -190,9 +200,17 @@ const AnalyzeStrategies = () => {
                     <Button
                       variant="gaming"
                       className="w-full hover-glow"
-                      disabled={selectedStrategy !== strategy.id}
+                      onClick={() => handleAnalyzeStrategy(strategy.id, strategy.title)}
+                      disabled={isAnalyzing}
                     >
-                      Analyze Strategy
+                      {isAnalyzing ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-neon-green border-t-transparent rounded-full animate-spin mr-2"></div>
+                          Analyzing...
+                        </>
+                      ) : (
+                        'Analyze Strategy'
+                      )}
                     </Button>
                   </div>
                 </Card>
@@ -242,7 +260,12 @@ const AnalyzeStrategies = () => {
                           <td className="py-4 text-center text-white">{odds.odds1}</td>
                           <td className="py-4 text-center text-white">{odds.odds2}</td>
                           <td className="py-4 text-center">
-                            <Button size="sm" variant="neon" className="text-xs">
+                            <Button 
+                              size="sm" 
+                              variant="neon" 
+                              className="text-xs"
+                              onClick={() => handleAnalyzeStrategy(`odds-${index}`, `${odds.sportsbook} Analysis`)}
+                            >
                               ANALYZE
                             </Button>
                           </td>
@@ -405,6 +428,195 @@ const AnalyzeStrategies = () => {
                 </div>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Analysis Results Tab */}
+          <TabsContent value="analysis-results" className="space-y-6">
+            {currentAnalysis && (
+              <div className="space-y-6">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-gaming text-neon-blue mb-2">
+                    STRATEGY ANALYSIS RESULTS
+                  </h2>
+                  <p className="text-gray-300">
+                    Comprehensive AI analysis of "{currentAnalysis.strategyName}"
+                  </p>
+                </div>
+
+                {/* Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                  <Card className="gaming-card text-center">
+                    <div className="p-4">
+                      <Zap className="w-6 h-6 mx-auto mb-2 text-neon-green" />
+                      <div className="text-2xl font-gaming text-neon-green">
+                        {currentAnalysis.confidence}%
+                      </div>
+                      <div className="text-sm text-gray-400">Confidence</div>
+                    </div>
+                  </Card>
+                  <Card className="gaming-card text-center">
+                    <div className="p-4">
+                      <DollarSign className="w-6 h-6 mx-auto mb-2 text-neon-blue" />
+                      <div className="text-2xl font-gaming text-neon-blue">
+                        {currentAnalysis.expectedRoi}
+                      </div>
+                      <div className="text-sm text-gray-400">Expected ROI</div>
+                    </div>
+                  </Card>
+                  <Card className="gaming-card text-center">
+                    <div className="p-4">
+                      <AlertTriangle className={`w-6 h-6 mx-auto mb-2 ${
+                        currentAnalysis.riskLevel === 'LOW' ? 'text-neon-green' :
+                        currentAnalysis.riskLevel === 'MEDIUM' ? 'text-gold' : 'text-red-400'
+                      }`} />
+                      <div className={`text-2xl font-gaming ${
+                        currentAnalysis.riskLevel === 'LOW' ? 'text-neon-green' :
+                        currentAnalysis.riskLevel === 'MEDIUM' ? 'text-gold' : 'text-red-400'
+                      }`}>
+                        {currentAnalysis.riskLevel}
+                      </div>
+                      <div className="text-sm text-gray-400">Risk Level</div>
+                    </div>
+                  </Card>
+                  <Card className="gaming-card text-center">
+                    <div className="p-4">
+                      <Clock className="w-6 h-6 mx-auto mb-2 text-purple-400" />
+                      <div className="text-xl font-gaming text-purple-400">
+                        {currentAnalysis.timeframe}
+                      </div>
+                      <div className="text-sm text-gray-400">Timeframe</div>
+                    </div>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Historical Performance */}
+                  <Card className="gaming-card">
+                    <div className="p-6">
+                      <h3 className="text-xl font-gaming text-neon-green mb-4 flex items-center">
+                        <BarChart3 className="w-5 h-5 mr-2" />
+                        HISTORICAL PERFORMANCE
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="gaming-stat-card">
+                          <span className="text-neon-blue text-sm">Total Bets</span>
+                          <span className="text-white font-bold ml-2">{currentAnalysis.historicalPerformance.totalBets}</span>
+                        </div>
+                        <div className="gaming-stat-card">
+                          <span className="text-neon-green text-sm">Win Rate</span>
+                          <span className="text-white font-bold ml-2">{currentAnalysis.historicalPerformance.winRate.toFixed(1)}%</span>
+                        </div>
+                        <div className="gaming-stat-card">
+                          <span className="text-gold text-sm">Avg Return</span>
+                          <span className="text-white font-bold ml-2">{currentAnalysis.historicalPerformance.avgReturn.toFixed(1)}%</span>
+                        </div>
+                        <div className="gaming-stat-card">
+                          <span className="text-purple-400 text-sm">Best Streak</span>
+                          <span className="text-white font-bold ml-2">{currentAnalysis.historicalPerformance.bestStreak}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Key Metrics */}
+                  <Card className="gaming-card">
+                    <div className="p-6">
+                      <h3 className="text-xl font-gaming text-neon-blue mb-4 flex items-center">
+                        <Target className="w-5 h-5 mr-2" />
+                        KEY METRICS
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Sharpe Ratio</span>
+                          <span className="text-neon-green font-bold">{currentAnalysis.keyMetrics.sharpeRatio.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Max Drawdown</span>
+                          <span className="text-red-400 font-bold">{currentAnalysis.keyMetrics.maxDrawdown}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Profit Factor</span>
+                          <span className="text-neon-blue font-bold">{currentAnalysis.keyMetrics.profitFactor.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Avg Hold Time</span>
+                          <span className="text-purple-400 font-bold">{currentAnalysis.keyMetrics.avgHoldTime}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Strengths */}
+                  <Card className="gaming-card">
+                    <div className="p-6">
+                      <h3 className="text-xl font-gaming text-neon-green mb-4 flex items-center">
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        STRENGTHS
+                      </h3>
+                      <ul className="space-y-2">
+                        {currentAnalysis.strengths.map((strength, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                            <div className="w-1 h-1 bg-neon-green rounded-full mt-2 flex-shrink-0" />
+                            {strength}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </Card>
+
+                  {/* Weaknesses */}
+                  <Card className="gaming-card">
+                    <div className="p-6">
+                      <h3 className="text-xl font-gaming text-red-400 mb-4 flex items-center">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        WEAKNESSES
+                      </h3>
+                      <ul className="space-y-2">
+                        {currentAnalysis.weaknesses.map((weakness, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
+                            <div className="w-1 h-1 bg-red-400 rounded-full mt-2 flex-shrink-0" />
+                            {weakness}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Recommendations */}
+                <Card className="gaming-card">
+                  <div className="p-6">
+                    <h3 className="text-xl font-gaming text-gold mb-4 flex items-center">
+                      <Brain className="w-5 h-5 mr-2" />
+                      AI RECOMMENDATIONS
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {currentAnalysis.recommendations.map((rec, index) => (
+                        <div key={index} className="p-3 bg-gold/10 border border-gold/30 rounded-lg">
+                          <p className="text-sm text-gray-300">{rec}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 justify-center">
+                  <Button variant="gaming" onClick={() => setActiveTab("gpt-strategies")}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Strategies
+                  </Button>
+                  <Button variant="neon" onClick={clearAnalysis}>
+                    <Target className="w-4 h-4 mr-2" />
+                    Clear Analysis
+                  </Button>
+                  <Button variant="hero">
+                    <Users className="w-4 h-4 mr-2" />
+                    Save to Portfolio
+                  </Button>
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
