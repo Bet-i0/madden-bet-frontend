@@ -11,12 +11,14 @@ import { exportBetsToCSV } from '@/utils/csvUtils';
 import BetHistoryTab from '@/components/BetHistoryTab';
 import CumulativeProfitChart from '@/components/CumulativeProfitChart';
 import CSVImportDialog from '@/components/CSVImportDialog';
+import DataSourceToggle from '@/components/DataSourceToggle';
 
 const Analytics = () => {
   const navigate = useNavigate();
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [dataSource, setDataSource] = useState<'mock' | 'live'>('mock');
   const { bets: realBets, analytics: realAnalytics, updateBetStatus, loading } = useBets();
   const { toast } = useToast();
 
@@ -58,9 +60,9 @@ const Analytics = () => {
     roi: 208.0
   };
 
-  // Use mock data
-  const bets = mockBets;
-  const analytics = mockAnalytics;
+  // Use selected data source
+  const bets = dataSource === 'mock' ? mockBets : realBets;
+  const analytics = dataSource === 'mock' ? mockAnalytics : realAnalytics;
 
   // Mock data for features not yet implemented
   const mockTrends = [
@@ -229,7 +231,15 @@ const Analytics = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Data Source Toggle */}
+              <DataSourceToggle 
+                dataSource={dataSource}
+                onToggle={setDataSource}
+                liveDataCount={realBets.length}
+              />
+            
+              <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Performance */}
               <Card className="bg-gradient-card border-border">
                 <CardHeader>
@@ -262,9 +272,14 @@ const Analytics = () => {
                             {bet.status.toUpperCase()}
                           </Badge>
                         </div>
-                        <p className={`text-sm font-bold ${bet.status === 'won' ? 'text-green-500' : bet.status === 'lost' ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {bet.status === 'won' ? `+${bet.potential_payout || bet.stake}` : bet.status === 'lost' ? `-${bet.stake}` : 'Pending'}
-                        </p>
+                         <p className={`text-sm font-bold ${bet.status === 'won' ? 'text-green-500' : bet.status === 'lost' ? 'text-red-500' : 'text-muted-foreground'}`}>
+                           {bet.status === 'won' 
+                             ? `+${formatCurrency(((bet.potential_payout || bet.stake) - bet.stake))}`
+                             : bet.status === 'lost' 
+                             ? `-${formatCurrency(bet.stake)}`
+                             : 'Pending'
+                           }
+                         </p>
                       </div>
                     </div>
                   ))}
@@ -322,11 +337,12 @@ const Analytics = () => {
                   </div>
                 </CardContent>
               </Card>
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="history" className="space-y-6">
-            <BetHistoryTab />
+            <BetHistoryTab bets={bets} />
           </TabsContent>
 
           <TabsContent value="charts" className="space-y-6">
@@ -345,21 +361,31 @@ const Analytics = () => {
               <CardContent>
                 <div className="space-y-4">
                   {mockTrends.map((trend, index) => (
-                    <div key={index} className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium">{trend.category}</h3>
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-muted-foreground">{trend.volume} picks</span>
-                          <Badge variant={trend.winRate > 65 ? 'default' : 'secondary'}>
-                            {trend.winRate}% Win Rate
+                    <div key={index} className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors border border-border/50">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-medium font-sports">{trend.category}</h3>
+                        <div className="flex items-center space-x-3">
+                          <span className="text-xs text-muted-foreground font-sports">{trend.volume} PICKS</span>
+                          <Badge 
+                            variant={trend.winRate > 65 ? 'default' : trend.winRate > 55 ? 'secondary' : 'destructive'}
+                            className="font-sports text-xs"
+                          >
+                            {trend.winRate}%
                           </Badge>
                         </div>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
+                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                         <div 
-                          className="bg-gradient-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${trend.winRate}%` }}
+                          className={`h-3 rounded-full transition-all duration-500 ${
+                            trend.winRate > 65 ? 'bg-gradient-neon' : 
+                            trend.winRate > 55 ? 'bg-gradient-primary' : 
+                            'bg-destructive'
+                          }`}
+                          style={{ width: `${Math.min(trend.winRate, 100)}%` }}
                         />
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Performance: {trend.winRate > 65 ? 'Excellent' : trend.winRate > 55 ? 'Good' : 'Needs Improvement'}
                       </div>
                     </div>
                   ))}

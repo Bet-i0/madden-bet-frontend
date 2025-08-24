@@ -11,11 +11,17 @@ interface CumulativeProfitChartProps {
 
 const CumulativeProfitChart = ({ bets }: CumulativeProfitChartProps) => {
   const chartData = useMemo(() => {
-    // Create realistic profit curve with ups and downs that reaches $100,000.90
+    // Create deterministic profit curve with exactly 100 picks reaching $100,000.90
     const targetProfit = 100000.90;
-    const totalBets = 95; // Only count settled bets
+    const totalBets = 100; // Exactly 100 picks for consistency
     
-    // Create a realistic profit curve with volatility
+    // Use a seed for deterministic behavior
+    const seed = 42;
+    const seededRandom = (i: number) => {
+      const x = Math.sin(seed + i) * 10000;
+      return x - Math.floor(x);
+    };
+    
     const data = [];
     let currentProfit = 0;
     
@@ -25,33 +31,33 @@ const CumulativeProfitChart = ({ bets }: CumulativeProfitChartProps) => {
       // Base trend towards target profit
       const baseTrend = targetProfit * progress;
       
-      // Add realistic volatility with larger swings
-      const volatilityScale = Math.sin(progress * Math.PI) * 15000; // More volatile in middle
-      const randomFactor = (Math.random() - 0.5) * 2 * volatilityScale;
+      // Add realistic volatility with ups and downs
+      const volatilityScale = Math.sin(progress * Math.PI) * 12000; // Volatility peaks in middle
+      const randomFactor = (seededRandom(i) - 0.5) * 2 * volatilityScale;
       
-      // Add some losing streaks and winning streaks
-      const streakFactor = Math.sin(progress * Math.PI * 3) * 8000;
+      // Add winning/losing streaks
+      const streakFactor = Math.sin(progress * Math.PI * 4 + seed) * 6000;
       
-      // Combine factors with some smoothing
+      // Combine factors
       const targetForThisBet = baseTrend + randomFactor + streakFactor;
       
-      // Don't let profit go too negative early on
-      const minProfit = Math.max(-20000, -10000 * progress);
+      // Prevent excessive negative profit early on
+      const minProfit = Math.max(-15000, -8000 * progress);
       currentProfit = Math.max(minProfit, targetForThisBet);
       
-      // Ensure we hit the exact target on the last bet
+      // Ensure we hit exactly $100,000.90 on the last bet
       if (i === totalBets - 1) {
         currentProfit = targetProfit;
       }
       
-      // Calculate what this bet's result would be
+      // Calculate bet profit/loss
       const previousProfit = i > 0 ? data[i - 1].profit : 0;
       const betProfit = currentProfit - previousProfit;
-      const betResult = betProfit > 0 ? 'won' : betProfit < 0 ? 'lost' : 'push';
+      const betResult = betProfit > 5 ? 'won' : betProfit < -5 ? 'lost' : 'push';
       
       data.push({
         date: new Date(Date.now() - ((totalBets - i) * 86400000)).toLocaleDateString(),
-        profit: Math.round(currentProfit * 100) / 100, // Round to cents
+        profit: Math.round(currentProfit * 100) / 100,
         betNumber: i + 1,
         betResult: betResult,
         betProfit: Math.round(betProfit * 100) / 100
@@ -85,7 +91,7 @@ const CumulativeProfitChart = ({ bets }: CumulativeProfitChartProps) => {
             {formatCurrency(currentProfit)}
           </div>
           <div className="text-sm text-muted-foreground">
-            {chartData.length} settled bets
+            100 total picks
           </div>
         </div>
       </CardHeader>

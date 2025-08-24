@@ -12,8 +12,13 @@ import { useBets, type Bet } from '@/hooks/useBets';
 import { exportBetsToCSV } from '@/utils/csvUtils';
 import { CheckCircle, XCircle, MinusCircle, Download, Search, Filter, Archive } from 'lucide-react';
 
-const BetHistoryTab = () => {
-  const { bets, updateBetStatus, loading } = useBets();
+interface BetHistoryTabProps {
+  bets?: Bet[] | any[];
+}
+
+const BetHistoryTab = ({ bets: propBets }: BetHistoryTabProps) => {
+  const { bets: hookBets, updateBetStatus, loading } = useBets();
+  const bets = propBets || hookBets;
   const { toast } = useToast();
   const [selectedBets, setSelectedBets] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
