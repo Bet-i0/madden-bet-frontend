@@ -254,8 +254,8 @@ const Index = () => {
 
       {/* Dialogs */}
       <SaveBetDialog 
-        isOpen={showSaveBetDialog} 
-        onClose={() => setShowSaveBetDialog(false)} 
+        open={showSaveBetDialog} 
+        onOpenChange={setShowSaveBetDialog} 
       />
       
       <SettingsDialog
