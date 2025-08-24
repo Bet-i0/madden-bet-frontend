@@ -20,12 +20,12 @@ const Analytics = () => {
   const { bets: realBets, analytics: realAnalytics, updateBetStatus, loading } = useBets();
   const { toast } = useToast();
 
-  // Mock data for 100 picks with $100,000.90 profit
+  // Mock data for 100 picks with $100,000.90 profit and 208% ROI
   const mockBets = Array.from({ length: 100 }, (_, i) => ({
     id: `mock-bet-${i}`,
     bet_type: (i % 5 === 0 ? 'parlay' : 'single') as 'single' | 'parlay',
-    stake: 100 + (i * 25),
-    potential_payout: i < 68 ? (100 + (i * 25)) * 1.9 : undefined,
+    stake: 240 + (i * 5), // Total investment ≈ $48,750 for 208% ROI
+    potential_payout: i < 68 ? (240 + (i * 5)) * 1.9 : undefined,
     total_odds: 1.9 + (Math.random() * 2),
     status: (i < 68 ? 'won' : i < 95 ? 'lost' : 'pending') as 'pending' | 'won' | 'lost',
     settled_at: i < 95 ? new Date(Date.now() - (i * 86400000)).toISOString() : undefined,
@@ -55,7 +55,7 @@ const Analytics = () => {
     totalPicks: 100,
     winRate: 68.0,
     profit: 100000.90,
-    roi: 42.3
+    roi: 208.0
   };
 
   // Use mock data
