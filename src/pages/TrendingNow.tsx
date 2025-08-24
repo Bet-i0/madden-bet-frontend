@@ -9,7 +9,6 @@ import {
   MessageCircle, 
   Heart, 
   Eye, 
-  ArrowLeft,
   Zap,
   Target,
   Brain,
@@ -20,9 +19,10 @@ import {
   TrendingDown,
   Minus
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTrendingData } from "@/hooks/useTrendingData";
 import { useAIInsights } from "@/hooks/useAIInsights";
+import BackToHome from "@/components/BackToHome";
 
 const TrendingNow = () => {
   const [selectedTrend, setSelectedTrend] = useState<number | null>(null);
@@ -86,12 +86,7 @@ const TrendingNow = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/">
-                <Button variant="ghost" size="sm" className="hover:bg-primary/20">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
+              <BackToHome variant="ghost" size="sm" className="hover:bg-primary/20" />
               <div className="h-6 w-px bg-primary/30" />
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-neon-green" />

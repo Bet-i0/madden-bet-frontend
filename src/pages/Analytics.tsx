@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, BarChart, TrendingUp, Download, Bot, Target, PieChart, LineChart, FileText, Share2, CheckCircle, XCircle, MinusCircle, Upload } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { BarChart, TrendingUp, Download, Bot, Target, PieChart, LineChart, FileText, Share2, CheckCircle, XCircle, MinusCircle, Upload } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import { exportBetsToCSV } from '@/utils/csvUtils';
 import BetHistoryTab from '@/components/BetHistoryTab';
 import CumulativeProfitChart from '@/components/CumulativeProfitChart';
 import CSVImportDialog from '@/components/CSVImportDialog';
+import BackToHome from '@/components/BackToHome';
 
 const Analytics = () => {
   const navigate = useNavigate();
@@ -110,10 +111,7 @@ const Analytics = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link to="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Dashboard</span>
-              </Link>
+              <BackToHome className="flex items-center space-x-2 transition-colors" />
               <div className="h-6 w-px bg-border" />
               <div className="flex items-center space-x-2">
                 <BarChart className="w-6 h-6 text-primary" />

@@ -1,12 +1,11 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, TrendingUp, Flame, Target, Crown, ArrowLeft, UserPlus, UserCheck } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Flame, Target, Crown, UserPlus, UserCheck } from 'lucide-react';
 import SharedBetCard from '@/components/social/SharedBetCard';
 import ProfileModal from '@/components/social/ProfileModal';
 import NotificationBell from '@/components/social/NotificationBell';
@@ -14,6 +13,7 @@ import { useSharedBets } from '@/hooks/useSharedBets';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { useFollows } from '@/hooks/useFollows';
 import { useToast } from '@/hooks/use-toast';
+import BackToHome from '@/components/BackToHome';
 
 const Social = () => {
   const [selectedTab, setSelectedTab] = useState('feed');
@@ -79,10 +79,7 @@ const Social = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <Link to="/" className="inline-flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Home</span>
-            </Link>
+            <BackToHome className="inline-flex items-center space-x-2 transition-colors" />
             <NotificationBell />
           </div>
           <h1 className="text-4xl font-sports font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">

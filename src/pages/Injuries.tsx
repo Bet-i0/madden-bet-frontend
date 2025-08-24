@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import BackToHome from "@/components/BackToHome";
 
 const Injuries = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -155,13 +156,10 @@ const Injuries = () => {
             </div>
 
             {/* Right: Back Button */}
-            <Button 
+            <BackToHome 
               variant="outline" 
-              onClick={() => navigate('/')}
               className="font-sports"
-            >
-              ← BACK TO HUB
-            </Button>
+            />
           </div>
         </div>
       </header>

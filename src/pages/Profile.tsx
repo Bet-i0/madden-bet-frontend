@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Globe, Calendar, Settings, TrendingUp, Target, Trophy, ArrowLeft } from 'lucide-react';
+import { MapPin, Globe, Calendar, Settings, TrendingUp, Target, Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useFollows } from '@/hooks/useFollows';
 import { useToast } from '@/hooks/use-toast';
 import SettingsDialog from '@/components/SettingsDialog';
+import BackToHome from '@/components/BackToHome';
 
 interface UserProfile {
   user_id: string;
@@ -55,7 +56,6 @@ interface UserBet {
 
 const Profile = () => {
   const { userId } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile: currentUserProfile } = useProfile();
   const { followUser, unfollowUser, isFollowing } = useFollows();
@@ -209,14 +209,7 @@ const Profile = () => {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Back to Home Button */}
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Button>
+        <BackToHome />
       </div>
 
       {/* Profile Header */}

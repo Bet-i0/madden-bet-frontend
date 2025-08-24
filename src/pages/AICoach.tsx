@@ -3,7 +3,6 @@ import {
   Send,
   Bot,
   User,
-  ArrowLeft,
   Zap,
   Target,
   TrendingUp,
@@ -17,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import SaveBetDialog from "@/components/SaveBetDialog";
 import { useProfile } from "@/hooks/useProfile";
+import BackToHome from "@/components/BackToHome";
 
 interface Message {
   id: string;
@@ -180,14 +180,11 @@ const AICoach = () => {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-primary/20">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
-            <Button
+            <BackToHome
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/')}
               className="hover:bg-primary/20"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            />
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Avatar className="h-10 w-10 border-2 border-primary">
