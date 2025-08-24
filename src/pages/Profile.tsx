@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Globe, Calendar, Settings, TrendingUp, Target, Trophy } from 'lucide-react';
+import { MapPin, Globe, Calendar, Settings, TrendingUp, Target, Trophy, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -55,6 +55,7 @@ interface UserBet {
 
 const Profile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile: currentUserProfile } = useProfile();
   const { followUser, unfollowUser, isFollowing } = useFollows();
@@ -110,7 +111,7 @@ const Profile = () => {
       setStats(statsData);
 
       // Fetch recent bets (only public ones unless it's own profile)
-      const { data: betsData, error: betsError } = await supabase
+      let betsQuery = supabase
         .from('bets')
         .select(`
           id,
@@ -127,8 +128,14 @@ const Profile = () => {
             odds
           )
         `)
-        .eq('user_id', targetUserId)
-        .eq('is_public', isOwnProfile ? undefined : true)
+        .eq('user_id', targetUserId);
+
+      // Only filter by is_public for other users' profiles
+      if (!isOwnProfile) {
+        betsQuery = betsQuery.eq('is_public', true);
+      }
+
+      const { data: betsData, error: betsError } = await betsQuery
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -200,6 +207,18 @@ const Profile = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Back to Home Button */}
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/')}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Button>
+      </div>
+
       {/* Profile Header */}
       <Card className="mb-6">
         {profile.banner_url && (
