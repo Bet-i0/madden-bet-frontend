@@ -355,43 +355,55 @@ export type Database = {
         Row: {
           auto_save_bets: boolean | null
           avatar_url: string | null
+          banner_url: string | null
+          bio: string | null
           created_at: string
           default_sportsbook: string | null
           display_name: string | null
           id: string
+          location: string | null
           notification_preferences: Json
           odds_format: string | null
           public_profile: boolean
           updated_at: string
           user_id: string
+          website_url: string | null
           zapier_webhook_url: string | null
         }
         Insert: {
           auto_save_bets?: boolean | null
           avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
           created_at?: string
           default_sportsbook?: string | null
           display_name?: string | null
           id?: string
+          location?: string | null
           notification_preferences?: Json
           odds_format?: string | null
           public_profile?: boolean
           updated_at?: string
           user_id: string
+          website_url?: string | null
           zapier_webhook_url?: string | null
         }
         Update: {
           auto_save_bets?: boolean | null
           avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
           created_at?: string
           default_sportsbook?: string | null
           display_name?: string | null
           id?: string
+          location?: string | null
           notification_preferences?: Json
           odds_format?: string | null
           public_profile?: boolean
           updated_at?: string
           user_id?: string
+          website_url?: string | null
           zapier_webhook_url?: string | null
         }
         Relationships: []

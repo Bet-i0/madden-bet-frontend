@@ -1,358 +1,267 @@
-import { useState, useEffect } from "react";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Trophy, 
-  Target, 
+  BarChart3, 
+  Users, 
   TrendingUp, 
-  Gamepad2, 
-  Activity, 
-  Award, 
-  Settings, 
-  Wallet, 
-  Clock, 
-  User,
-  ChevronDown,
-  Zap,
-  BarChart3,
+  Activity,
+  Target,
+  PlusCircle,
+  Calendar,
+  Trophy,
   Flame,
-  Star,
-  Users
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import stadiumBg from "@/assets/stadium-bg.jpg";
-import SettingsDialog from "@/components/SettingsDialog";
+  User
+} from 'lucide-react';
+import BetHistoryTab from '@/components/BetHistoryTab';
+import SaveBetDialog from '@/components/SaveBetDialog';
+import SettingsDialog from '@/components/SettingsDialog';
+import { useProfile } from '@/hooks/useProfile';
 
 const Index = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedPanel, setSelectedPanel] = useState<string | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showSaveBetDialog, setShowSaveBetDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useProfile();
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleNavigation = (path: string) => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    navigate(path);
+  };
 
-  const featuredGames = [
-    { team1: "Chiefs", team2: "Bills", time: "8:15 PM", spread: "-3.5", total: "47.5" },
-    { team1: "Cowboys", team2: "49ers", time: "4:25 PM", spread: "+2.5", total: "44.5" },
-    { team1: "Ravens", team2: "Bengals", time: "1:00 PM", spread: "-7.5", total: "51.5" }
-  ];
-
-  const aiInsights = [
-    { analysis: "Ravens Advantage", confidence: 87, reason: "Strong rushing attack vs weak run defense" },
-    { analysis: "High-Scoring Game", confidence: 91, reason: "Weather conditions favor passing game" },
-    { analysis: "Chiefs Edge", confidence: 78, reason: "Home field advantage in divisional game" }
-  ];
-
-  const bottomMenuItems = [
-    { icon: Target, label: "AI Coach", active: false, path: "/ai-coach" },
-    { icon: Users, label: "Social", active: false, path: "/social" },
-    { icon: Activity, label: "Injuries", active: false, path: "/injuries" },
-    { icon: BarChart3, label: "Analytics", active: false, path: "/analytics" },
-    { icon: Settings, label: "Settings", active: false, path: null }
-  ];
-
-  return (
-    <div className="min-h-screen bg-background font-gaming overflow-x-hidden">
-      {/* HUD-Style Top Navigation */}
-      <header className="sticky top-0 z-50 bg-gradient-card backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left: AI Coach Status */}
-            <div className="flex items-center space-x-4">
-              <div 
-                className="bg-gradient-neon px-4 py-2 rounded-lg shadow-glow cursor-pointer hover:shadow-neon transition-all duration-300"
-                onClick={() => navigate('/ai-coach')}
-              >
-                <div className="flex items-center space-x-2">
-                  <Zap className="w-5 h-5 text-accent-foreground animate-pulse" />
-                  <span className="font-bold text-accent-foreground font-sports">AI COACH</span>
-                </div>
-              </div>
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="mb-8">
+              <Trophy className="w-16 h-16 mx-auto mb-4 text-primary" />
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-4">
+                SportsBet Tracker
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                Track your sports bets, analyze your performance, and improve your betting strategy with our comprehensive analytics platform.
+              </p>
             </div>
 
-            {/* Center: Live Time/Date */}
-            <div className="flex items-center space-x-2 text-silver-metallic">
-              <Clock className="w-4 h-4" />
-              <span className="font-sports text-lg">
-                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              <span className="hidden md:inline text-muted-foreground">
-                {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
-              </span>
-            </div>
-
-            {/* Right: User Profile */}
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setSettingsOpen(true)}>
-              <div className="hidden md:flex flex-col items-end text-sm">
-                <span className="font-semibold">{user?.email || 'SportsFan_99'}</span>
-                <span className="text-gold-accent font-sports">ANALYST</span>
-              </div>
-              <div className="relative group cursor-pointer">
-                <Avatar className="w-10 h-10 border-2 border-primary shadow-neon">
-                  <AvatarImage src="/api/placeholder/40/40" />
-                  <AvatarFallback className="bg-gradient-primary font-bold">
-                    {user?.email?.charAt(0).toUpperCase() || 'PB'}
-                  </AvatarFallback>
-                </Avatar>
-                <ChevronDown className="w-4 h-4 absolute -bottom-1 -right-1 text-primary" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Area - Today's Matchups */}
-      <section className="relative overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${stadiumBg})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-hero" />
-        
-        <div className="relative container mx-auto px-4 py-12">
-          <div className="text-center mb-8">
-            <h1 className="text-6xl md:text-8xl font-sports font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
-              BET.IO
-            </h1>
-            <div className="w-full overflow-hidden">
-              <div className="animate-marquee whitespace-nowrap text-gold-accent font-sports text-xl">
-                AI INSIGHTS • ODDS COMPARISON • INJURY REPORTS • SENTIMENT ANALYSIS • AI INSIGHTS • ODDS COMPARISON • INJURY REPORTS • SENTIMENT ANALYSIS
-              </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {featuredGames.map((game, index) => (
-              <Card 
-                key={index}
-                className="group bg-gradient-card border-border hover:border-primary transition-all duration-300 hover:shadow-neon cursor-pointer hover:scale-105"
-                onClick={() => setSelectedPanel(`game-${index}`)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-sm text-muted-foreground font-sports">{game.time}</CardTitle>
-                    <Flame className="w-4 h-4 text-destructive animate-glow-pulse" />
-                  </div>
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <BarChart3 className="w-8 h-8 text-primary mx-auto" />
+                  <CardTitle>Analytics</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-center space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="text-xl font-sports font-bold">{game.team1}</div>
-                      <div className="text-silver-metallic font-bold">VS</div>
-                      <div className="text-xl font-sports font-bold">{game.team2}</div>
-                    </div>
-                    <div className="flex justify-around text-sm space-x-4">
-                      <div className="text-center">
-                        <div className="text-muted-foreground">SPREAD</div>
-                        <div className="font-bold text-primary">{game.spread}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-muted-foreground">TOTAL</div>
-                        <div className="font-bold text-primary">{game.total}</div>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-muted-foreground">
+                    Track your ROI, win rate, and betting patterns with detailed analytics
+                  </p>
                 </CardContent>
               </Card>
-            ))}
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <Users className="w-8 h-8 text-primary mx-auto" />
+                  <CardTitle>Social Features</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Share bets, follow top bettors, and learn from the community
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <TrendingUp className="w-8 h-8 text-primary mx-auto" />
+                  <CardTitle>AI Insights</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Get AI-powered betting insights and strategy recommendations
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Button 
+              onClick={() => navigate('/auth')} 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90"
+            >
+              Get Started - It's Free
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      {/* Horizontal Scroll Panels */}
-      <section className="py-12 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-4 gap-8">
-            
-            {/* AI Insights Panel */}
-            <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group">
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground">Welcome back, {profile?.display_name || 'Bettor'}!</p>
+          </div>
+          <Button onClick={() => setShowSaveBetDialog(true)} className="flex items-center gap-2">
+            <PlusCircle className="w-4 h-4" />
+            Add Bet
+          </Button>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Bets</p>
+                  <p className="text-2xl font-bold">24</p>
+                </div>
+                <Target className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Win Rate</p>
+                  <p className="text-2xl font-bold text-green-600">67%</p>
+                </div>
+                <Trophy className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">ROI</p>
+                  <p className="text-2xl font-bold text-green-600">+12.4%</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Profit</p>
+                  <p className="text-2xl font-bold text-green-600">+$2,450</p>
+                </div>
+                <Flame className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Tabs defaultValue="bets" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="bets">Recent Bets</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="bets">
+            <BetHistoryTab />
+          </TabsContent>
+
+          <TabsContent value="activity">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
-                  <Zap className="w-6 h-6 text-neon-blue animate-glow-pulse" />
-                  <span>AI INSIGHTS</span>
-                </CardTitle>
+                <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {aiInsights.map((insight, index) => (
-                  <div key={index} className="bg-background/50 p-4 rounded-lg border border-border/50">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold font-sports">{insight.analysis}</span>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-gold-accent" />
-                        <span className="text-gold-accent font-bold">{insight.confidence}%</span>
-                      </div>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                      <p className="text-sm font-medium">Won bet on Lakers vs Warriors</p>
+                      <p className="text-xs text-muted-foreground">2 hours ago</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{insight.reason}</p>
                   </div>
-                ))}
-                <Button 
-                  className="w-full bg-gradient-neon hover:shadow-glow font-sports text-accent-foreground"
-                  onClick={() => navigate('/ai-coach')}
-                >
-                  CHAT WITH AI COACH
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Strategy Builder Panel */}
-            <Card className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group cursor-pointer"
-                  onClick={() => navigate('/analyze-strategies')}>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
-                  <Target className="w-6 h-6 text-electric-purple animate-glow-pulse" />
-                  <span>STRATEGY BUILDER</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center py-8">
-                  <div className="w-20 h-20 mx-auto bg-gradient-primary rounded-full flex items-center justify-center mb-4 shadow-neon">
-                    <Target className="w-10 h-10 text-primary-foreground" />
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div>
+                      <p className="text-sm font-medium">Placed new bet on Chiefs -7.5</p>
+                      <p className="text-xs text-muted-foreground">5 hours ago</p>
+                    </div>
                   </div>
-                  <h3 className="font-sports text-xl mb-2">ANALYZE STRATEGIES</h3>
-                  <p className="text-muted-foreground mb-6">Build and test betting strategies with AI guidance</p>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <div>
+                      <p className="text-sm font-medium">Lost parlay bet</p>
+                      <p className="text-xs text-muted-foreground">1 day ago</p>
+                    </div>
+                  </div>
                 </div>
-                <Button 
-                  className="w-full bg-gradient-primary hover:shadow-neon font-sports"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/analyze-strategies');
-                  }}
-                  data-testid="start-analyzing-btn"
-                >
-                  START ANALYZING
-                </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+        </Tabs>
 
-            {/* Social Hub Panel */}
-            <Card 
-              className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group cursor-pointer"
-              onClick={() => navigate('/social')}
+        {/* Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4">
+          <div className="flex justify-around max-w-md mx-auto">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleNavigation('/analytics')}
+              className="flex flex-col items-center gap-1"
             >
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
-                  <Users className="w-6 h-6 text-electric-purple animate-glow-pulse" />
-                  <span>SOCIAL HUB</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-4 mb-4">
-                  <div className="w-16 h-16 mx-auto bg-gradient-neon rounded-full flex items-center justify-between mb-3 shadow-glow">
-                    <Users className="w-8 h-8 text-accent-foreground mx-auto" />
-                  </div>
-                  <h3 className="font-sports text-lg mb-2">COMMUNITY BETTING</h3>
-                  <p className="text-muted-foreground text-sm">Follow top bettors and tail winning picks</p>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">Top ROI: 284%</span>
-                    <span className="text-neon-green text-sm font-bold">🔥 Hot</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">Active Bettors</span>
-                    <span className="text-neon-green text-sm font-bold">1,247</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">Shared Today</span>
-                    <span className="text-neon-green text-sm font-bold">89 bets</span>
-                  </div>
-                </div>
-                <Button 
-                  className="w-full bg-gradient-primary hover:shadow-neon font-sports"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/social');
-                  }}
-                  data-testid="join-community-btn"
-                >
-                  JOIN COMMUNITY
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Trending Now Panel */}
-            <Card 
-              className="bg-gradient-card border-border hover:border-primary transition-all duration-300 group cursor-pointer"
-              onClick={() => navigate('/trending-now')}
+              <BarChart3 className="w-4 h-4" />
+              <span className="text-xs">Analytics</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleNavigation('/social')}
+              className="flex flex-col items-center gap-1"
             >
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 font-sports text-2xl">
-                  <TrendingUp className="w-6 h-6 text-destructive animate-glow-pulse" />
-                  <span>TRENDING NOW</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-4 mb-4">
-                  <div className="w-16 h-16 mx-auto bg-gradient-neon rounded-full flex items-center justify-between mb-3 shadow-glow">
-                    <TrendingUp className="w-8 h-8 text-accent-foreground mx-auto" />
-                  </div>
-                  <h3 className="font-sports text-lg mb-2">SOCIAL INTELLIGENCE</h3>
-                  <p className="text-muted-foreground text-sm">Real-time trend analysis from X (Twitter)</p>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">#MondayNightFootball</span>
-                    <span className="text-neon-green text-sm font-bold">+2.3k</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">#NBAPlayoffs</span>
-                    <span className="text-neon-green text-sm font-bold">+1.8k</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">#MarchMadness</span>
-                    <span className="text-neon-green text-sm font-bold">+3.1k</span>
-                  </div>
-                </div>
-                <Button 
-                  className="w-full bg-gradient-primary hover:shadow-neon font-sports"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate('/trending-now');
-                  }}
-                  data-testid="explore-trends-btn"
-                >
-                  EXPLORE TRENDS
-                </Button>
-              </CardContent>
-            </Card>
+              <Users className="w-4 h-4" />
+              <span className="text-xs">Social</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleNavigation('/trending')}
+              className="flex flex-col items-center gap-1"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-xs">Trending</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleNavigation('/profile/me')}
+              className="flex flex-col items-center gap-1"
+            >
+              <User className="w-4 h-4" />
+              <span className="text-xs">Profile</span>
+            </Button>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Bottom Navigation/Shortcut Bar */}
-      <footer className="sticky bottom-0 bg-gradient-card backdrop-blur-sm border-t border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-around items-center">
-            {bottomMenuItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  if (item.label === "Settings") {
-                    setSettingsOpen(true);
-                  } else if (item.path) {
-                    navigate(item.path);
-                  }
-                }}
-                className="flex flex-col items-center space-y-1 p-3 rounded-lg hover:bg-muted/50 transition-all duration-300 hover:shadow-glow group"
-              >
-                <item.icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-                <span className="text-xs font-sports text-muted-foreground group-hover:text-primary transition-colors">
-                  {item.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </footer>
-
-      {/* Settings Dialog */}
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {/* Dialogs */}
+      <SaveBetDialog 
+        isOpen={showSaveBetDialog} 
+        onClose={() => setShowSaveBetDialog(false)} 
+      />
+      
+      <SettingsDialog
+        isOpen={showSettingsDialog}
+        onClose={() => setShowSettingsDialog(false)}
+      />
     </div>
   );
 };

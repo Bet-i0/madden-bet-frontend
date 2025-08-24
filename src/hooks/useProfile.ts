@@ -8,6 +8,10 @@ export interface Profile {
   user_id: string;
   display_name: string;
   avatar_url?: string;
+  bio?: string;
+  location?: string;
+  website_url?: string;
+  banner_url?: string;
   auto_save_bets: boolean;
   default_sportsbook: string;
   odds_format: string;
