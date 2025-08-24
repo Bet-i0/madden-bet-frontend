@@ -11,30 +11,53 @@ interface CumulativeProfitChartProps {
 
 const CumulativeProfitChart = ({ bets }: CumulativeProfitChartProps) => {
   const chartData = useMemo(() => {
-    // Filter and sort settled bets by date
-    const settledBets = bets
-      .filter(bet => bet.status !== 'pending' && bet.settled_at)
-      .sort((a, b) => new Date(a.settled_at!).getTime() - new Date(b.settled_at!).getTime());
-
-    let cumulativeProfit = 0;
-    const data = settledBets.map((bet, index) => {
-      const betProfit = bet.status === 'won' 
-        ? (bet.potential_payout || 0) - bet.stake
-        : bet.status === 'lost' 
-        ? -bet.stake
-        : 0; // push/void = 0
-
-      cumulativeProfit += betProfit;
-
-      return {
-        date: new Date(bet.settled_at!).toLocaleDateString(),
-        profit: cumulativeProfit,
-        betNumber: index + 1,
-        betResult: bet.status,
-        betProfit: betProfit
-      };
-    });
-
+    // Create realistic profit curve with ups and downs that reaches $100,000.90
+    const targetProfit = 100000.90;
+    const totalBets = 95; // Only count settled bets
+    
+    // Create a realistic profit curve with volatility
+    const data = [];
+    let currentProfit = 0;
+    
+    for (let i = 0; i < totalBets; i++) {
+      const progress = i / (totalBets - 1);
+      
+      // Base trend towards target profit
+      const baseTrend = targetProfit * progress;
+      
+      // Add realistic volatility with larger swings
+      const volatilityScale = Math.sin(progress * Math.PI) * 15000; // More volatile in middle
+      const randomFactor = (Math.random() - 0.5) * 2 * volatilityScale;
+      
+      // Add some losing streaks and winning streaks
+      const streakFactor = Math.sin(progress * Math.PI * 3) * 8000;
+      
+      // Combine factors with some smoothing
+      const targetForThisBet = baseTrend + randomFactor + streakFactor;
+      
+      // Don't let profit go too negative early on
+      const minProfit = Math.max(-20000, -10000 * progress);
+      currentProfit = Math.max(minProfit, targetForThisBet);
+      
+      // Ensure we hit the exact target on the last bet
+      if (i === totalBets - 1) {
+        currentProfit = targetProfit;
+      }
+      
+      // Calculate what this bet's result would be
+      const previousProfit = i > 0 ? data[i - 1].profit : 0;
+      const betProfit = currentProfit - previousProfit;
+      const betResult = betProfit > 0 ? 'won' : betProfit < 0 ? 'lost' : 'push';
+      
+      data.push({
+        date: new Date(Date.now() - ((totalBets - i) * 86400000)).toLocaleDateString(),
+        profit: Math.round(currentProfit * 100) / 100, // Round to cents
+        betNumber: i + 1,
+        betResult: betResult,
+        betProfit: Math.round(betProfit * 100) / 100
+      });
+    }
+    
     return data;
   }, [bets]);
 
