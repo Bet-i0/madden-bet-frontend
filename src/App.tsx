@@ -16,6 +16,7 @@ import AnalyzeStrategies from "./pages/AnalyzeStrategies";
 import AICoach from "./pages/AICoach";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
+import RightSidePanel from "./components/RightSidePanel";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -39,10 +40,13 @@ function App() {
                 <Route path="/trending" element={<TrendingNow />} />
                 <Route path="/injuries" element={<Injuries />} />
                 <Route path="/strategies" element={<AnalyzeStrategies />} />
+                <Route path="/analyze-strategies" element={<AnalyzeStrategies />} />
+                <Route path="/build-strategy" element={<AnalyzeStrategies />} />
                 <Route path="/ai-coach" element={<AICoach />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />
+              <RightSidePanel />
             </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>

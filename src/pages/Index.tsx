@@ -123,46 +123,6 @@ const Index = () => {
             })}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            {user ? (
-              <>
-                <Button 
-                  onClick={() => navigate('/profile/me')} 
-                  size="lg" 
-                  className="bg-gradient-primary hover:shadow-neon font-sports px-6"
-                >
-                  Go to Dashboard
-                </Button>
-                <Button 
-                  onClick={() => navigate('/analytics')} 
-                  variant="outline"
-                  size="lg" 
-                  className="bg-background/20 border-border/50 backdrop-blur-sm hover:bg-background/30 font-sports px-6"
-                >
-                  Analytics
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  onClick={() => navigate('/auth')} 
-                  size="lg" 
-                  className="bg-gradient-primary hover:shadow-neon font-sports px-6"
-                >
-                  Sign In
-                </Button>
-                <Button 
-                  onClick={() => navigate('/auth')} 
-                  variant="outline"
-                  size="lg" 
-                  className="bg-background/20 border-border/50 backdrop-blur-sm hover:bg-background/30 font-sports px-6"
-                >
-                  Sign Up
-                </Button>
-              </>
-            )}
-          </div>
         </div>
       </div>
     </div>

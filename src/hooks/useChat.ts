@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+const DEMO_MODE = true;
+
 export interface ChatMessage {
   id: string;
   user_id: string;
@@ -19,6 +21,47 @@ export const useChat = () => {
   // Fetch recent messages
   const fetchMessages = useCallback(async () => {
     try {
+      if (DEMO_MODE) {
+        // Demo chat messages for MVP presentation
+        const demoMessages = [
+          {
+            id: '1',
+            user_id: 'demo-user-1',
+            content: 'Anyone else seeing value in the Chiefs game tonight?',
+            created_at: new Date(Date.now() - 30 * 60000).toISOString(),
+            display_name: 'SportsBettor23'
+          },
+          {
+            id: '2', 
+            user_id: user?.id || 'current-user',
+            content: 'Yeah, the over looks good. Weather conditions are perfect',
+            created_at: new Date(Date.now() - 25 * 60000).toISOString(),
+            display_name: 'You'
+          },
+          {
+            id: '3',
+            user_id: 'demo-user-2', 
+            content: 'I\'m staying away from that game. Too much uncertainty with Mahomes\' injury',
+            created_at: new Date(Date.now() - 20 * 60000).toISOString(),
+            display_name: 'AnalyticsKing'
+          },
+          {
+            id: '4',
+            user_id: 'demo-user-3',
+            content: 'Just hit a 4-leg parlay! NBA is treating me well this week 🔥',
+            created_at: new Date(Date.now() - 10 * 60000).toISOString(),
+            display_name: 'ParlayPro'
+          }
+        ];
+        
+        setMessages(demoMessages);
+        setOnlineUsers([
+          'demo-user-1', 'demo-user-2', 'demo-user-3', user?.id || 'current-user'
+        ]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('chat_messages')
         .select(`
@@ -47,7 +90,7 @@ export const useChat = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Send a message
   const sendMessage = useCallback(async (content: string) => {

@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+const DEMO_MODE = true;
+
 export interface SharedBetLeg {
   id: string;
   sport: string;
@@ -44,6 +46,89 @@ export const useSharedBets = () => {
   const fetchSharedBets = async () => {
     setLoading(true);
     try {
+      if (DEMO_MODE) {
+        // Demo shared bets for MVP presentation
+        const demoSharedBets: SharedBet[] = [
+          {
+            id: '1',
+            original_bet_id: 'demo-bet-1',
+            owner_user_id: 'demo-user-1',
+            title: 'Sunday Night Parlay',
+            comment: 'Love these picks for tonight. All systems go! 🔥',
+            is_active: true,
+            created_at: new Date(Date.now() - 2 * 60 * 60000).toISOString(),
+            updated_at: new Date(Date.now() - 2 * 60 * 60000).toISOString(),
+            legs: [
+              {
+                id: '1',
+                sport: 'NFL',
+                league: 'NFL',
+                team1: 'Chiefs',
+                team2: 'Bills',
+                bet_market: 'spread',
+                bet_selection: 'Chiefs -3.5',
+                odds: -110
+              },
+              {
+                id: '2',
+                sport: 'NFL', 
+                league: 'NFL',
+                team1: 'Chiefs',
+                team2: 'Bills',
+                bet_market: 'total',
+                bet_selection: 'Over 47.5',
+                odds: -105
+              }
+            ],
+            owner_profile: {
+              display_name: 'BettingKing92',
+              avatar_url: null
+            },
+            reactions_count: {
+              likes: 12,
+              tails: 8,
+              fires: 6,
+              fades: 2
+            }
+          },
+          {
+            id: '2',
+            original_bet_id: 'demo-bet-2',
+            owner_user_id: 'demo-user-2',
+            title: 'NBA Lock of the Day',
+            comment: 'Warriors at home are unstoppable. Easy money!',
+            is_active: true,
+            created_at: new Date(Date.now() - 4 * 60 * 60000).toISOString(),
+            updated_at: new Date(Date.now() - 4 * 60 * 60000).toISOString(),
+            legs: [
+              {
+                id: '3',
+                sport: 'NBA',
+                league: 'NBA',
+                team1: 'Warriors',
+                team2: 'Lakers',
+                bet_market: 'moneyline',
+                bet_selection: 'Warriors ML',
+                odds: -150
+              }
+            ],
+            owner_profile: {
+              display_name: 'AnalyticsAce',
+              avatar_url: null
+            },
+            reactions_count: {
+              likes: 18,
+              tails: 14,
+              fires: 10,
+              fades: 1
+            }
+          }
+        ];
+        
+        setSharedBets(demoSharedBets);
+        return;
+      }
+
       // First, get the shared bets
       const { data: sharedBetsData, error } = await supabase
         .from('shared_bets')

@@ -38,12 +38,12 @@ export const ChatWidget = () => {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90"
+          className="h-12 w-12 rounded-full shadow-lg bg-primary hover:bg-primary/90"
           size="icon"
         >
           <MessageCircle className="h-6 w-6" />
           {onlineUsers.length > 1 && (
-            <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs">
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-background text-foreground border">
               {onlineUsers.length}
             </Badge>
           )}
@@ -52,7 +52,7 @@ export const ChatWidget = () => {
 
       {/* Chat Panel */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-80 h-96 flex flex-col shadow-xl z-50 bg-background/95 backdrop-blur">
+        <Card className="absolute bottom-16 right-0 w-80 h-96 flex flex-col shadow-xl bg-background/95 backdrop-blur">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">

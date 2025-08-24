@@ -182,8 +182,8 @@ const AICoach = () => {
           <div className="flex items-center gap-4">
             <BackToHome
               variant="ghost"
-              size="icon"
-              className="hover:bg-primary/20"
+              size="sm"
+              className="hover:bg-primary/20 mr-2"
             />
             <div className="flex items-center gap-3">
               <div className="relative">
@@ -210,7 +210,7 @@ const AICoach = () => {
       </div>
 
       {/* Chat Container */}
-      <div className="flex flex-col h-[calc(100vh-80px)]">
+      <div className="flex flex-col h-[calc(100vh-160px)] pb-20">
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (

@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useProfile } from '@/hooks/useProfile';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/contexts/ThemeContext';
+import { teamThemes } from '@/lib/teamThemes';
 
 interface SettingsDialogProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ interface SettingsDialogProps {
 const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
   const { profile, updateProfile, loading } = useProfile();
   const { toast } = useToast();
+  const { themeState, updateSport, updateTeam, toggleThemeEnabled, resetTheme } = useTheme();
   
   const [formData, setFormData] = useState({
     display_name: '',
@@ -267,6 +270,74 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
                 />
                 <Label htmlFor="bankroll_alerts">Bankroll alerts</Label>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Team Theme */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-sports text-primary">Team Theme</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="theme-enabled">Enable Team Theme</Label>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Switch
+                    id="theme-enabled"
+                    checked={themeState.enabled}
+                    onCheckedChange={toggleThemeEnabled}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    Apply your favorite team's colors to the app
+                  </span>
+                </div>
+              </div>
+              
+              {themeState.enabled && (
+                <>
+                  <div>
+                    <Label htmlFor="theme-sport">Sport</Label>
+                    <Select value={themeState.sport} onValueChange={updateSport}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select sport" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(teamThemes).map((sport) => (
+                          <SelectItem key={sport} value={sport}>
+                            {sport}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {themeState.sport && (
+                    <div>
+                      <Label htmlFor="theme-team">Team</Label>
+                      <Select value={themeState.team} onValueChange={updateTeam}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select team" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teamThemes[themeState.sport]?.map((team) => (
+                            <SelectItem key={team.name} value={team.name}>
+                              {team.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={resetTheme}
+                    className="w-full"
+                  >
+                    Reset to Default Theme
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
 

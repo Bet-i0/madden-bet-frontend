@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+const DEMO_MODE = true;
+
 export interface Notification {
   id: string;
   user_id: string;
@@ -22,6 +24,48 @@ export const useNotifications = () => {
     
     setLoading(true);
     try {
+      if (DEMO_MODE) {
+        // Demo notifications for MVP presentation
+        const demoNotifications = [
+          {
+            id: '1',
+            user_id: user.id,
+            type: 'new_follower',
+            data: { follower_name: 'Mike Johnson' },
+            read: false,
+            created_at: new Date(Date.now() - 5 * 60000).toISOString(), // 5 minutes ago
+          },
+          {
+            id: '2', 
+            user_id: user.id,
+            type: 'bet_tailed',
+            data: { user_name: 'Sarah Wilson' },
+            read: false,
+            created_at: new Date(Date.now() - 15 * 60000).toISOString(), // 15 minutes ago
+          },
+          {
+            id: '3',
+            user_id: user.id,
+            type: 'bet_reaction',
+            data: { user_name: 'Alex Rodriguez' },
+            read: true,
+            created_at: new Date(Date.now() - 2 * 60 * 60000).toISOString(), // 2 hours ago
+          },
+          {
+            id: '4',
+            user_id: user.id,
+            type: 'bet_comment',
+            data: { user_name: 'Emma Davis' },
+            read: true,
+            created_at: new Date(Date.now() - 6 * 60 * 60000).toISOString(), // 6 hours ago
+          }
+        ];
+        
+        setNotifications(demoNotifications);
+        setUnreadCount(demoNotifications.filter(n => !n.read).length);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -30,6 +74,7 @@ export const useNotifications = () => {
         .limit(50);
 
       if (error) throw error;
+      
       setNotifications((data || []).map(item => ({
         ...item,
         data: item.data as Record<string, any>
@@ -46,6 +91,14 @@ export const useNotifications = () => {
     if (!user) return;
 
     try {
+      if (DEMO_MODE) {
+        setNotifications(prev => 
+          prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        return;
+      }
+
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
@@ -53,14 +106,13 @@ export const useNotifications = () => {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      
+
       setNotifications(prev => 
         prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      throw error;
     }
   };
 
@@ -68,6 +120,12 @@ export const useNotifications = () => {
     if (!user) return;
 
     try {
+      if (DEMO_MODE) {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setUnreadCount(0);
+        return;
+      }
+
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
@@ -75,24 +133,26 @@ export const useNotifications = () => {
         .eq('read', false);
 
       if (error) throw error;
-      
+
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      throw error;
     }
   };
 
   const createNotification = async (userId: string, type: string, data: Record<string, any>) => {
+    if (DEMO_MODE) return; // Skip in demo mode
+    
     try {
       const { error } = await supabase
         .from('notifications')
-        .insert([{
+        .insert({
           user_id: userId,
           type,
-          data
-        }]);
+          data,
+          read: false
+        });
 
       if (error) throw error;
     } catch (error) {
@@ -105,8 +165,10 @@ export const useNotifications = () => {
     if (user) {
       fetchNotifications();
       
+      if (DEMO_MODE) return; // Skip real-time subscription in demo mode
+
       // Set up real-time subscription for new notifications
-      const subscription = supabase
+      const channel = supabase
         .channel('notifications')
         .on(
           'postgres_changes',
@@ -117,18 +179,17 @@ export const useNotifications = () => {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            const newNotification = {
-              ...payload.new,
-              data: payload.new.data as Record<string, any>
-            } as Notification;
+            const newNotification = payload.new as Notification;
             setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            if (!newNotification.read) {
+              setUnreadCount(prev => prev + 1);
+            }
           }
         )
         .subscribe();
 
       return () => {
-        subscription.unsubscribe();
+        supabase.removeChannel(channel);
       };
     }
   }, [user]);
@@ -137,9 +198,9 @@ export const useNotifications = () => {
     notifications,
     loading,
     unreadCount,
-    fetchNotifications,
     markAsRead,
     markAllAsRead,
-    createNotification
+    createNotification,
+    refetch: fetchNotifications
   };
 };

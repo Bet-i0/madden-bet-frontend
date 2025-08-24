@@ -7,7 +7,8 @@ import {
   Home, 
   BarChart3, 
   Settings,
-  Bell
+  Bell,
+  Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,14 +36,19 @@ const BottomNav = () => {
       path: '/ai-coach',
     },
     {
-      label: 'GAMES',
-      icon: Home,
-      path: '/',
+      label: 'INJURIES',
+      icon: Target,  // Using Target as injury icon
+      path: '/injuries',
     },
     {
       label: 'ANALYTICS',
       icon: BarChart3,
       path: '/analytics',
+    },
+    {
+      label: 'DASHBOARD',
+      icon: Home,
+      path: '/',
     },
     {
       label: 'SETTINGS',
@@ -86,7 +92,7 @@ const BottomNav = () => {
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 bg-card/95 backdrop-blur border-t border-border pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4 h-16">
+        <div className="grid grid-cols-5 h-16">
           {navItems.map((item) => {
             const IconComponent = item.icon;
             const active = item.path ? isActive(item.path) : (item.action === 'settings' && isSettingsOpen);
@@ -112,84 +118,6 @@ const BottomNav = () => {
         </div>
       </nav>
 
-      {/* Floating Notification Button */}
-      <div className="fixed bottom-20 right-4 z-50">
-          <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                size="icon"
-                className="h-12 w-12 rounded-full bg-gradient-to-br from-destructive to-orange-600 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                onClick={() => {
-                  if (!user) {
-                    navigate('/auth');
-                    return;
-                  }
-                }}
-              >
-                <Bell className="w-6 h-6 text-white" />
-                {user && unreadCount > 0 && (
-                  <Badge 
-                    variant="secondary" 
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center bg-background text-foreground border"
-                  >
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            {user && (
-              <PopoverContent className="w-80 p-0" align="end" side="top">
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={markAllAsRead}
-                        className="text-xs"
-                      >
-                        Mark all read
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
-                <ScrollArea className="h-80">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
-                      No notifications yet
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      {notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-3 hover:bg-muted/50 border-b cursor-pointer ${
-                            !notification.read ? 'bg-primary/5' : ''
-                          }`}
-                          onClick={() => !notification.read && markAsRead(notification.id)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm">{getNotificationText(notification)}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {new Date(notification.created_at).toLocaleString()}
-                              </p>
-                            </div>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-primary rounded-full ml-2 mt-1 flex-shrink-0" />
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </PopoverContent>
-            )}
-          </Popover>
-        </div>
 
       {/* Settings Dialog */}
       <SettingsDialog 
