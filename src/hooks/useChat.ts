@@ -26,7 +26,7 @@ export const useChat = () => {
           user_id,
           content,
           created_at,
-          profiles!inner(display_name)
+          profiles(display_name)
         `)
         .order('created_at', { ascending: true })
         .limit(50);

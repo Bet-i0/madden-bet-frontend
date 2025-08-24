@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,130 +16,38 @@ import {
   Users,
   Clock,
   Hash,
-  Sparkles
+  Sparkles,
+  TrendingDown,
+  Minus
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTrendingData } from "@/hooks/useTrendingData";
+import { useAIInsights } from "@/hooks/useAIInsights";
 
 const TrendingNow = () => {
-  const [selectedTrend, setSelectedTrend] = useState<string | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
-  const [currentTime] = useState(new Date().toLocaleTimeString());
+  const [selectedTrend, setSelectedTrend] = useState<number | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+  
+  const { trendingTopics, loading: dataLoading, lastUpdated } = useTrendingData();
+  const { loading: insightLoading, currentInsight, generateInsight, clearInsight } = useAIInsights();
 
-  // Mock trending data from X/Twitter API
-  const trendingTopics = [
-    {
-      id: 1,
-      hashtag: "#MondayNightFootball",
-      tweets: 145600,
-      category: "Sports",
-      volume: "Trending in Sports",
-      sentiment: "positive",
-      relevance: 95,
-      keyInsights: [
-        "Chiefs vs Ravens expected to be high-scoring",
-        "Weather conditions favorable for passing game",
-        "Key players injury status trending"
-      ]
-    },
-    {
-      id: 2,
-      hashtag: "#NBAPlayoffs",
-      tweets: 89400,
-      category: "Sports",
-      volume: "234K Tweets",
-      sentiment: "mixed",
-      relevance: 88,
-      keyInsights: [
-        "Underdog teams performing better than expected",
-        "Home court advantage less significant this season",
-        "Player prop bets gaining massive attention"
-      ]
-    },
-    {
-      id: 3,
-      hashtag: "#MarchMadness",
-      tweets: 267800,
-      category: "Sports",
-      volume: "500K+ Tweets",
-      sentiment: "excited",
-      relevance: 92,
-      keyInsights: [
-        "Bracket busters creating massive upsets",
-        "Low-seeded teams covering spreads consistently",
-        "Total points trending lower than projected"
-      ]
-    },
-    {
-      id: 4,
-      hashtag: "#SuperBowlOdds",
-      tweets: 78200,
-      category: "Betting",
-      volume: "Rising fast",
-      sentiment: "analytical",
-      relevance: 85,
-      keyInsights: [
-        "Early season odds showing major shifts",
-        "Public money heavily on favorites",
-        "Sharp money identifying value in underdogs"
-      ]
-    },
-    {
-      id: 5,
-      hashtag: "#FantasyFootball",
-      tweets: 156900,
-      category: "Sports",
-      volume: "Trending worldwide",
-      sentiment: "passionate",
-      relevance: 90,
-      keyInsights: [
-        "Waiver wire pickups creating huge impacts",
-        "Injury reports affecting multiple lineups",
-        "Stack strategies proving most profitable"
-      ]
-    },
-    {
-      id: 6,
-      hashtag: "#WorldCup2024",
-      tweets: 445600,
-      category: "Sports",
-      volume: "1M+ Tweets",
-      sentiment: "euphoric",
-      relevance: 98,
-      keyInsights: [
-        "Underdog nations drawing massive support",
-        "Goal totals exceeding expectations globally",
-        "Live betting volume at record highs"
-      ]
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleTrendClick = async (trendId: number) => {
+    if (selectedTrend === trendId) {
+      setSelectedTrend(null);
+      clearInsight();
+      return;
     }
-  ];
-
-  const generateGPTInsight = async (trend: any) => {
-    setLoadingInsight(true);
-    // Simulate API call to GPT
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setLoadingInsight(false);
-    return {
-      recommendation: Math.random() > 0.3 ? "STRONG ADD" : "AVOID",
-      confidence: Math.floor(Math.random() * 30) + 70,
-      reasoning: [
-        "Trend momentum shows sustained interest over 48 hours",
-        "Historical data suggests positive correlation with betting outcomes",
-        "Social sentiment analysis indicates strong public backing",
-        "Key influencer engagement rate above average threshold"
-      ],
-      parlayFit: Math.random() > 0.4 ? "HIGH" : "MEDIUM",
-      suggestedBets: [
-        "Over/Under Total Points",
-        "Spread Coverage",
-        "Player Performance Props"
-      ]
-    };
-  };
-
-  const handleTrendClick = async (trend: any) => {
-    setSelectedTrend(trend.hashtag);
-    const insight = await generateGPTInsight(trend);
-    // Store insight for display
+    
+    setSelectedTrend(trendId);
+    await generateInsight(trendId);
   };
 
   const getSentimentColor = (sentiment: string) => {
@@ -151,6 +59,22 @@ const TrendingNow = () => {
       case 'passionate': return 'text-orange-400';
       case 'euphoric': return 'text-gold';
       default: return 'text-gray-300';
+    }
+  };
+
+  const getChangeIcon = (change: number) => {
+    if (change > 0) return <TrendingUp className="w-3 h-3 text-neon-green" />;
+    if (change < 0) return <TrendingDown className="w-3 h-3 text-red-400" />;
+    return <Minus className="w-3 h-3 text-gray-400" />;
+  };
+
+  const getRecommendationColor = (rec: string) => {
+    switch (rec) {
+      case 'STRONG ADD': return 'bg-neon-green/20 text-neon-green';
+      case 'MODERATE ADD': return 'bg-neon-blue/20 text-neon-blue';
+      case 'AVOID': return 'bg-red-400/20 text-red-400';
+      case 'MONITOR': return 'bg-gold/20 text-gold';
+      default: return 'bg-gray-400/20 text-gray-400';
     }
   };
 
@@ -228,15 +152,28 @@ const TrendingNow = () => {
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[600px] pr-4">
-                  <div className="space-y-4">
-                    {trendingTopics.map((trend) => (
-                      <Card 
-                        key={trend.id}
-                        className={`gaming-card cursor-pointer transition-all duration-300 hover:scale-102 hover:shadow-neon ${
-                          selectedTrend === trend.hashtag ? 'ring-2 ring-primary' : ''
-                        }`}
-                        onClick={() => handleTrendClick(trend)}
-                      >
+                  {dataLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(6)].map((_, i) => (
+                        <Card key={i} className="gaming-card">
+                          <CardContent className="p-4">
+                            <Skeleton className="h-6 w-3/4 mb-2" />
+                            <Skeleton className="h-4 w-1/2 mb-4" />
+                            <Skeleton className="h-16 w-full" />
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {trendingTopics.map((trend) => (
+                        <Card 
+                          key={trend.id}
+                          className={`gaming-card cursor-pointer transition-all duration-300 hover:scale-102 hover:shadow-neon ${
+                            selectedTrend === trend.id ? 'ring-2 ring-primary' : ''
+                          }`}
+                          onClick={() => handleTrendClick(trend.id)}
+                        >
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -254,6 +191,14 @@ const TrendingNow = () => {
                               <div className="text-xs text-gray-400">
                                 {trend.volume}
                               </div>
+                              {trend.change24h && (
+                                <div className="flex items-center gap-1 text-xs mt-1">
+                                  {getChangeIcon(trend.change24h)}
+                                  <span className={trend.change24h > 0 ? 'text-neon-green' : trend.change24h < 0 ? 'text-red-400' : 'text-gray-400'}>
+                                    {Math.abs(trend.change24h)}%
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -284,11 +229,12 @@ const TrendingNow = () => {
                               className="flex-1"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleTrendClick(trend);
+                                handleTrendClick(trend.id);
                               }}
+                              disabled={insightLoading && selectedTrend === trend.id}
                             >
                               <Brain className="w-3 h-3 mr-1" />
-                              Get AI Insight
+                              {insightLoading && selectedTrend === trend.id ? 'Analyzing...' : 'Get AI Insight'}
                             </Button>
                             <Button 
                               variant="neon" 
@@ -301,9 +247,10 @@ const TrendingNow = () => {
                             </Button>
                           </div>
                         </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </ScrollArea>
               </CardContent>
             </Card>
@@ -326,25 +273,28 @@ const TrendingNow = () => {
                       Select a trending topic to get AI-powered betting insights
                     </p>
                   </div>
-                ) : loadingInsight ? (
+                ) : insightLoading ? (
                   <div className="space-y-4">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-4 w-1/2" />
                   </div>
-                ) : (
+                ) : currentInsight ? (
                   <div className="space-y-6">
                     <div>
                       <h3 className="font-sports font-bold mb-2 text-primary">
-                        {selectedTrend}
+                        {trendingTopics.find(t => t.id === selectedTrend)?.hashtag}
                       </h3>
                       <div className="flex items-center gap-2 mb-4">
-                        <Badge className="bg-neon-green/20 text-neon-green">
-                          STRONG ADD
+                        <Badge className={getRecommendationColor(currentInsight.recommendation)}>
+                          {currentInsight.recommendation}
                         </Badge>
                         <Badge variant="outline">
-                          87% Confidence
+                          {currentInsight.confidence}% Confidence
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {currentInsight.riskLevel} Risk
                         </Badge>
                       </div>
                     </div>
@@ -352,30 +302,35 @@ const TrendingNow = () => {
                     <div>
                       <h4 className="font-semibold mb-2 text-neon-blue">AI Reasoning:</h4>
                       <ul className="space-y-2 text-sm text-gray-300">
-                        <li className="flex items-start gap-2">
-                          <div className="w-1 h-1 bg-neon-green rounded-full mt-2 flex-shrink-0" />
-                          Trend momentum shows sustained interest over 48 hours
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <div className="w-1 h-1 bg-neon-green rounded-full mt-2 flex-shrink-0" />
-                          Historical data suggests positive correlation with betting outcomes
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <div className="w-1 h-1 bg-neon-green rounded-full mt-2 flex-shrink-0" />
-                          Social sentiment analysis indicates strong public backing
-                        </li>
+                        {currentInsight.reasoning.map((reason, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <div className="w-1 h-1 bg-neon-green rounded-full mt-2 flex-shrink-0" />
+                            {reason}
+                          </li>
+                        ))}
                       </ul>
                     </div>
 
-                    <div>
-                      <h4 className="font-semibold mb-2 text-purple-400">Parlay Fit:</h4>
-                      <Badge className="bg-neon-green/20 text-neon-green">HIGH</Badge>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-semibold mb-2 text-purple-400">Parlay Fit:</h4>
+                        <Badge className={`${currentInsight.parlayFit === 'HIGH' ? 'bg-neon-green/20 text-neon-green' : 
+                          currentInsight.parlayFit === 'MEDIUM' ? 'bg-gold/20 text-gold' : 'bg-red-400/20 text-red-400'}`}>
+                          {currentInsight.parlayFit}
+                        </Badge>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2 text-gold">Expected Value:</h4>
+                        <span className={`text-sm font-bold ${currentInsight.expectedValue > 0 ? 'text-neon-green' : 'text-red-400'}`}>
+                          {currentInsight.expectedValue > 0 ? '+' : ''}{currentInsight.expectedValue.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
 
                     <div>
                       <h4 className="font-semibold mb-2 text-gold">Suggested Bets:</h4>
                       <div className="space-y-2">
-                        {["Over/Under Total Points", "Spread Coverage", "Player Performance Props"].map((bet, idx) => (
+                        {currentInsight.suggestedBets.map((bet, idx) => (
                           <Button 
                             key={idx}
                             variant="outline" 
@@ -394,7 +349,7 @@ const TrendingNow = () => {
                       Add to Strategy Builder
                     </Button>
                   </div>
-                )}
+                ) : null}
               </CardContent>
             </Card>
           </div>
