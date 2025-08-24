@@ -13,6 +13,7 @@ import TrendingNow from "./pages/TrendingNow";
 import Injuries from "./pages/Injuries";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ChatWidget />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
