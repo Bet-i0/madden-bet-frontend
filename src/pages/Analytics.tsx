@@ -17,8 +17,50 @@ const Analytics = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const { bets, analytics, updateBetStatus, loading } = useBets();
+  const { bets: realBets, analytics: realAnalytics, updateBetStatus, loading } = useBets();
   const { toast } = useToast();
+
+  // Mock data for 100 picks with $100,000.90 profit
+  const mockBets = Array.from({ length: 100 }, (_, i) => ({
+    id: `mock-bet-${i}`,
+    bet_type: (i % 5 === 0 ? 'parlay' : 'single') as 'single' | 'parlay',
+    stake: 100 + (i * 25),
+    potential_payout: i < 68 ? (100 + (i * 25)) * 1.9 : undefined,
+    total_odds: 1.9 + (Math.random() * 2),
+    status: (i < 68 ? 'won' : i < 95 ? 'lost' : 'pending') as 'pending' | 'won' | 'lost',
+    settled_at: i < 95 ? new Date(Date.now() - (i * 86400000)).toISOString() : undefined,
+    created_at: new Date(Date.now() - (i * 86400000)).toISOString(),
+    ai_suggested: i % 3 === 0,
+    bankroll_id: undefined,
+    tags: i % 4 === 0 ? ['NFL', 'High Confidence'] : i % 3 === 0 ? ['NBA'] : [],
+    sportsbook: 'DraftKings',
+    notes: undefined,
+    legs: [{
+      id: `mock-leg-${i}`,
+      sport: i % 2 === 0 ? 'NFL' : 'NBA',
+      league: i % 2 === 0 ? 'NFL' : 'NBA',
+      team1: i % 2 === 0 ? 'Chiefs' : 'Lakers',
+      team2: i % 2 === 0 ? 'Bills' : 'Warriors',
+      bet_market: i % 3 === 0 ? 'spread' : i % 3 === 1 ? 'total' : 'moneyline',
+      bet_selection: i % 3 === 0 ? 'Chiefs -3.5' : i % 3 === 1 ? 'Over 47.5' : 'Lakers ML',
+      odds: 1.9 + (Math.random() * 2),
+      open_odds: 1.85 + (Math.random() * 2),
+      closing_odds: 1.92 + (Math.random() * 2),
+      result: (i < 68 ? 'won' : i < 95 ? 'lost' : 'pending') as 'pending' | 'won' | 'lost',
+      game_date: new Date(Date.now() + (Math.random() * 7 * 86400000)).toISOString()
+    }]
+  }));
+
+  const mockAnalytics = {
+    totalPicks: 100,
+    winRate: 68.0,
+    profit: 100000.90,
+    roi: 42.3
+  };
+
+  // Use mock data
+  const bets = mockBets;
+  const analytics = mockAnalytics;
 
   // Mock data for features not yet implemented
   const mockTrends = [
