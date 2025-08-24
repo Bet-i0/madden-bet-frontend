@@ -6,17 +6,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, TrendingUp, Flame, Target, Crown, ArrowLeft } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Flame, Target, Crown, ArrowLeft, UserPlus, UserCheck } from 'lucide-react';
 import SharedBetCard from '@/components/social/SharedBetCard';
+import ProfileModal from '@/components/social/ProfileModal';
+import NotificationBell from '@/components/social/NotificationBell';
 import { useSharedBets } from '@/hooks/useSharedBets';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
+import { useFollows } from '@/hooks/useFollows';
 import { useToast } from '@/hooks/use-toast';
 
 const Social = () => {
   const [selectedTab, setSelectedTab] = useState('feed');
   const [leaderboardSort, setLeaderboardSort] = useState<'roi_percent' | 'win_rate_percent' | 'profit'>('roi_percent');
-  const { sharedBets, loading: betsLoading, tailBet } = useSharedBets();
+  const [profileModalUserId, setProfileModalUserId] = useState<string | null>(null);
+  const { sharedBets, loading: betsLoading, tailBet, shareOriginalBet } = useSharedBets();
   const { entries: leaderboardEntries, loading: leaderboardLoading, refetch: refetchLeaderboard } = useLeaderboard();
+  const { following, followUser, unfollowUser, isFollowing, loading: followsLoading } = useFollows();
   const { toast } = useToast();
 
   const handleTailBet = async (sharedBetId: string, stake: number) => {
@@ -36,14 +41,50 @@ const Social = () => {
     refetchLeaderboard(sortBy);
   };
 
+  const handleFollowToggle = async (userId: string) => {
+    try {
+      if (isFollowing(userId)) {
+        await unfollowUser(userId);
+        toast({
+          title: "Unfollowed",
+          description: "You unfollowed this user",
+        });
+      } else {
+        await followUser(userId);
+        toast({
+          title: "Following",
+          description: "You are now following this user",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleProfileClick = (userId: string) => {
+    setProfileModalUserId(userId);
+  };
+
+  // Filter shared bets from followed users for the Following tab
+  const followingBets = sharedBets.filter(bet => 
+    following.some(follow => follow.followed_id === bet.owner_user_id)
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <Link to="/" className="inline-flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mb-4">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link to="/" className="inline-flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Home</span>
+            </Link>
+            <NotificationBell />
+          </div>
           <h1 className="text-4xl font-sports font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
             SOCIAL HUB
           </h1>
@@ -90,6 +131,7 @@ const Social = () => {
                     key={sharedBet.id}
                     sharedBet={sharedBet}
                     onTail={handleTailBet}
+                    onProfileClick={handleProfileClick}
                   />
                 ))
               )}
@@ -187,8 +229,23 @@ const Social = () => {
                               ${entry.profit >= 0 ? '+' : ''}{entry.profit.toLocaleString()}
                             </Badge>
                           )}
-                          <Button variant="outline" size="sm">
-                            Follow
+                          <Button 
+                            variant={isFollowing(entry.user_id) ? "outline" : "default"}
+                            size="sm"
+                            onClick={() => handleFollowToggle(entry.user_id)}
+                            disabled={followsLoading}
+                          >
+                            {isFollowing(entry.user_id) ? (
+                              <>
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                Following
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus className="w-4 h-4 mr-1" />
+                                Follow
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -200,17 +257,44 @@ const Social = () => {
           </TabsContent>
 
           <TabsContent value="following" className="space-y-6">
-            <Card className="text-center py-12">
-              <CardContent>
-                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Following Feed</h3>
-                <p className="text-muted-foreground">
-                  Follow other users to see their latest shared bets and updates here.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid gap-6">
+              {betsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-pulse text-muted-foreground">Loading following feed...</div>
+                </div>
+              ) : followingBets.length === 0 ? (
+                <Card className="text-center py-12">
+                  <CardContent>
+                    <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Bets from Followed Users</h3>
+                    <p className="text-muted-foreground">
+                      {following.length === 0 
+                        ? "Follow other users to see their latest shared bets here."
+                        : "The users you follow haven't shared any bets yet."
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                followingBets.map((sharedBet) => (
+                  <SharedBetCard
+                    key={sharedBet.id}
+                    sharedBet={sharedBet}
+                    onTail={handleTailBet}
+                    onProfileClick={handleProfileClick}
+                  />
+                ))
+              )}
+            </div>
           </TabsContent>
         </Tabs>
+
+        {/* Profile Modal */}
+        <ProfileModal
+          isOpen={profileModalUserId !== null}
+          onClose={() => setProfileModalUserId(null)}
+          userId={profileModalUserId || ''}
+        />
       </div>
     </div>
   );
