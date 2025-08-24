@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Trophy, Users, TrendingUp, Flame, Target, Crown } from 'lucide-react';
+import { Trophy, Users, TrendingUp, Flame, Target, Crown, ArrowLeft } from 'lucide-react';
 import SharedBetCard from '@/components/social/SharedBetCard';
 import { useSharedBets } from '@/hooks/useSharedBets';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
@@ -39,6 +40,10 @@ const Social = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
+          <Link to="/" className="inline-flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors mb-4">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
           <h1 className="text-4xl font-sports font-bold bg-gradient-primary bg-clip-text text-transparent mb-2">
             SOCIAL HUB
           </h1>
