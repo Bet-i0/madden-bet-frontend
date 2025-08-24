@@ -764,14 +764,222 @@ const AnalyzeStrategies = () => {
                   <div className="p-6">
                     <h3 className="text-xl font-gaming text-gold mb-4 flex items-center">
                       <Brain className="w-5 h-5 mr-2" />
-                      AI RECOMMENDATIONS
+                      AI RECOMMENDED BETTING LINES
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {currentAnalysis.recommendations.map((rec, index) => (
-                        <div key={index} className="p-3 bg-gold/10 border border-gold/30 rounded-lg">
-                          <p className="text-sm text-gray-300">{rec}</p>
+                    
+                    {/* Top Picks Banner */}
+                    <div className="bg-gradient-to-r from-neon-green/20 to-neon-blue/20 border border-neon-green/50 rounded-lg p-4 mb-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-5 h-5 text-gold" />
+                          <span className="font-sports font-bold text-gold">TOP AI PICKS</span>
                         </div>
-                      ))}
+                        <div className="text-sm text-neon-green font-bold">87% Win Rate</div>
+                      </div>
+                    </div>
+
+                    {/* Betting Lines Grid */}
+                    <div className="space-y-4">
+                      {/* Game 1 */}
+                      <Card className="gaming-card border-neon-green/30">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
+                              <span className="font-sports font-bold">Chiefs vs Bills</span>
+                              <span className="text-xs text-gray-400">8:15 PM ET</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Zap className="w-4 h-4 text-gold" />
+                              <span className="text-gold font-bold text-sm">92% Confidence</span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <Button 
+                              variant="gaming" 
+                              className="h-auto p-3 bg-neon-green/20 border-neon-green hover:bg-neon-green/30"
+                              data-testid="analyze-strategy-btn-chiefs-spread"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">SPREAD</div>
+                                <div className="font-bold text-neon-green">Chiefs -3.5</div>
+                                <div className="text-xs text-gray-400">-110</div>
+                              </div>
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              className="h-auto p-3 border-gray-500 hover:border-neon-blue"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">TOTAL</div>
+                                <div className="font-bold">Over 47.5</div>
+                                <div className="text-xs text-gray-400">-105</div>
+                              </div>
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              className="h-auto p-3 border-gray-500 hover:border-gold"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">MONEYLINE</div>
+                                <div className="font-bold">Chiefs</div>
+                                <div className="text-xs text-gray-400">-165</div>
+                              </div>
+                            </Button>
+                          </div>
+                          
+                          <div className="mt-3 p-2 bg-neon-green/10 border border-neon-green/30 rounded">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Target className="w-3 h-3 text-neon-green" />
+                              <span className="text-neon-green font-bold">AI Reasoning:</span>
+                              <span className="text-gray-300">Chiefs averaging 28.4 PPG vs Bills allowing 24.1. Weather favors running game.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+
+                      {/* Game 2 */}
+                      <Card className="gaming-card border-neon-blue/30">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-neon-blue rounded-full animate-pulse"></div>
+                              <span className="font-sports font-bold">Ravens vs Bengals</span>
+                              <span className="text-xs text-gray-400">1:00 PM ET</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Zap className="w-4 h-4 text-gold" />
+                              <span className="text-gold font-bold text-sm">84% Confidence</span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <Button 
+                              variant="outline" 
+                              className="h-auto p-3 border-gray-500 hover:border-neon-green"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">SPREAD</div>
+                                <div className="font-bold">Ravens -7.5</div>
+                                <div className="text-xs text-gray-400">-110</div>
+                              </div>
+                            </Button>
+                            
+                            <Button 
+                              variant="gaming" 
+                              className="h-auto p-3 bg-neon-blue/20 border-neon-blue hover:bg-neon-blue/30"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">TOTAL</div>
+                                <div className="font-bold text-neon-blue">Over 51.5</div>
+                                <div className="text-xs text-gray-400">-115</div>
+                              </div>
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              className="h-auto p-3 border-gray-500 hover:border-gold"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">PLAYER PROP</div>
+                                <div className="font-bold">Lamar 250+ Pass Yds</div>
+                                <div className="text-xs text-gray-400">+130</div>
+                              </div>
+                            </Button>
+                          </div>
+                          
+                          <div className="mt-3 p-2 bg-neon-blue/10 border border-neon-blue/30 rounded">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Target className="w-3 h-3 text-neon-blue" />
+                              <span className="text-neon-blue font-bold">AI Reasoning:</span>
+                              <span className="text-gray-300">Both teams rank top 5 in offensive DVOA. Dome conditions favor passing.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+
+                      {/* Game 3 */}
+                      <Card className="gaming-card border-gold/30">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-gold rounded-full animate-pulse"></div>
+                              <span className="font-sports font-bold">Cowboys vs 49ers</span>
+                              <span className="text-xs text-gray-400">4:25 PM ET</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <AlertTriangle className="w-4 h-4 text-orange-400" />
+                              <span className="text-orange-400 font-bold text-sm">76% Confidence</span>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <Button 
+                              variant="outline" 
+                              className="h-auto p-3 border-gray-500 hover:border-neon-green"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">SPREAD</div>
+                                <div className="font-bold">Cowboys +2.5</div>
+                                <div className="text-xs text-gray-400">-105</div>
+                              </div>
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              className="h-auto p-3 border-gray-500 hover:border-neon-blue"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">TOTAL</div>
+                                <div className="font-bold">Under 44.5</div>
+                                <div className="text-xs text-gray-400">-110</div>
+                              </div>
+                            </Button>
+                            
+                            <Button 
+                              variant="gaming" 
+                              className="h-auto p-3 bg-gold/20 border-gold hover:bg-gold/30"
+                            >
+                              <div className="text-center w-full">
+                                <div className="text-xs text-gray-300">PLAYER PROP</div>
+                                <div className="font-bold text-gold">Dak Under 1.5 TDs</div>
+                                <div className="text-xs text-gray-400">+110</div>
+                              </div>
+                            </Button>
+                          </div>
+                          
+                          <div className="mt-3 p-2 bg-gold/10 border border-gold/30 rounded">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Target className="w-3 h-3 text-gold" />
+                              <span className="text-gold font-bold">AI Reasoning:</span>
+                              <span className="text-gray-300">49ers defense allowing just 1.2 passing TDs/game at home this season.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+
+                    {/* Strategy Summary */}
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 bg-background/50 rounded-lg border border-border/50">
+                        <div className="text-2xl font-bold text-neon-green">3</div>
+                        <div className="text-xs text-gray-400">Recommended Picks</div>
+                      </div>
+                      <div className="text-center p-3 bg-background/50 rounded-lg border border-border/50">
+                        <div className="text-2xl font-bold text-gold">+$247</div>
+                        <div className="text-xs text-gray-400">Expected Profit</div>
+                      </div>
+                      <div className="text-center p-3 bg-background/50 rounded-lg border border-border/50">
+                        <div className="text-2xl font-bold text-neon-blue">84%</div>
+                        <div className="text-xs text-gray-400">Avg Confidence</div>
+                      </div>
+                      <div className="text-center p-3 bg-background/50 rounded-lg border border-border/50">
+                        <div className="text-2xl font-bold text-purple-400">2.4x</div>
+                        <div className="text-xs text-gray-400">Parlay Multiplier</div>
+                      </div>
                     </div>
                   </div>
                 </Card>
