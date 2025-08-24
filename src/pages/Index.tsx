@@ -12,7 +12,6 @@ import {
   Wrench
 } from 'lucide-react';
 import stadiumBg from '@/assets/stadium-bg.jpg';
-import BottomNav from '@/components/BottomNav';
 import TopBar from '@/components/TopBar';
 import MatchSpotlight from '@/components/MatchSpotlight';
 import AIInsightsPreview from '@/components/AIInsightsPreview';
@@ -65,8 +64,8 @@ const Index = () => {
       <div className="relative z-10">
         <TopBar />
         
-        <div className="container mx-auto px-4 py-6 pb-24">
-          <div className="max-w-6xl mx-auto">
+        <div className="px-6 md:px-8 lg:px-12 py-6 pb-24">
+          <div className="max-w-7xl mx-auto">
             {/* Hero Section */}
             <div className="text-center mb-8">
               <div className="flex items-center justify-center space-x-3 mb-4">
@@ -157,9 +156,6 @@ const Index = () => {
           </div>
         </div>
       </div>
-
-      {/* Bottom Navigation - Mobile Only */}
-      <BottomNav />
     </div>
   );
 };

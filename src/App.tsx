@@ -15,6 +15,7 @@ import Injuries from "./pages/Injuries";
 import AnalyzeStrategies from "./pages/AnalyzeStrategies";
 import AICoach from "./pages/AICoach";
 import NotFound from "./pages/NotFound";
+import BottomNav from "./components/BottomNav";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/ai-coach" element={<AICoach />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <BottomNav />
             </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>
