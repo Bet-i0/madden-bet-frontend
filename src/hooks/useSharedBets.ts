@@ -44,20 +44,35 @@ export const useSharedBets = () => {
   const fetchSharedBets = async () => {
     setLoading(true);
     try {
+      // First, get the shared bets
       const { data: sharedBetsData, error } = await supabase
         .from('shared_bets')
-        .select(`
-          *,
-          shared_bet_legs (*),
-          profiles!owner_user_id (display_name, avatar_url)
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      if (!sharedBetsData) {
+        setSharedBets([]);
+        return;
+      }
+
       const formattedBets = await Promise.all(
-        (sharedBetsData || []).map(async (bet) => {
+        sharedBetsData.map(async (bet) => {
+          // Fetch bet legs separately
+          const { data: legsData } = await supabase
+            .from('shared_bet_legs')
+            .select('*')
+            .eq('shared_bet_id', bet.id);
+
+          // Fetch owner profile separately
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('display_name, avatar_url')
+            .eq('user_id', bet.owner_user_id)
+            .single();
+
           // Fetch reaction counts
           const { data: reactionsData } = await supabase
             .from('bet_reactions')
@@ -71,8 +86,8 @@ export const useSharedBets = () => {
 
           return {
             ...bet,
-            legs: bet.shared_bet_legs || [],
-            owner_profile: bet.profiles,
+            legs: legsData || [],
+            owner_profile: profileData,
             reactions_count: reactions
           };
         })
@@ -93,15 +108,18 @@ export const useSharedBets = () => {
       // Get the original bet and its legs
       const { data: betData, error: betError } = await supabase
         .from('bets')
-        .select(`
-          *,
-          bet_legs (*)
-        `)
+        .select('*')
         .eq('id', betId)
         .eq('user_id', user.id)
         .single();
 
       if (betError) throw betError;
+
+      // Get bet legs separately
+      const { data: betLegsData } = await supabase
+        .from('bet_legs')
+        .select('*')
+        .eq('bet_id', betId);
 
       // Create shared bet
       const { data: sharedBetData, error: sharedBetError } = await supabase
@@ -118,11 +136,11 @@ export const useSharedBets = () => {
       if (sharedBetError) throw sharedBetError;
 
       // Create shared bet legs
-      if (betData.bet_legs?.length > 0) {
+      if (betLegsData && betLegsData.length > 0) {
         const { error: legsError } = await supabase
           .from('shared_bet_legs')
           .insert(
-            betData.bet_legs.map(leg => ({
+            betLegsData.map(leg => ({
               shared_bet_id: sharedBetData.id,
               sport: leg.sport,
               league: leg.league,
@@ -151,17 +169,24 @@ export const useSharedBets = () => {
       // Get shared bet details
       const { data: sharedBet, error: sharedBetError } = await supabase
         .from('shared_bets')
-        .select(`
-          *,
-          shared_bet_legs (*)
-        `)
+        .select('*')
         .eq('id', sharedBetId)
         .single();
 
       if (sharedBetError) throw sharedBetError;
 
+      // Get shared bet legs separately
+      const { data: sharedBetLegs } = await supabase
+        .from('shared_bet_legs')
+        .select('*')
+        .eq('shared_bet_id', sharedBetId);
+
+      if (!sharedBetLegs || sharedBetLegs.length === 0) {
+        throw new Error('No bet legs found for shared bet');
+      }
+
       // Calculate total odds for the bet
-      const totalOdds = sharedBet.shared_bet_legs.reduce((acc, leg) => {
+      const totalOdds = sharedBetLegs.reduce((acc, leg) => {
         return acc * (leg.odds || 1);
       }, 1);
 
@@ -172,7 +197,7 @@ export const useSharedBets = () => {
         .from('bets')
         .insert([{
           user_id: user.id,
-          bet_type: sharedBet.shared_bet_legs.length === 1 ? 'single' : 'parlay',
+          bet_type: sharedBetLegs.length === 1 ? 'single' : 'parlay',
           stake,
           potential_payout: potentialPayout,
           total_odds: totalOdds,
@@ -189,7 +214,7 @@ export const useSharedBets = () => {
       const { error: legsError } = await supabase
         .from('bet_legs')
         .insert(
-          sharedBet.shared_bet_legs.map(leg => ({
+          sharedBetLegs.map(leg => ({
             bet_id: newBet.id,
             sport: leg.sport,
             league: leg.league,
