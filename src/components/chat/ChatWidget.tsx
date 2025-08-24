@@ -52,7 +52,7 @@ export const ChatWidget = () => {
 
       {/* Chat Panel */}
       {isOpen && (
-        <Card className="absolute bottom-16 right-0 w-80 h-96 flex flex-col shadow-xl bg-background/95 backdrop-blur">
+        <Card className="absolute bottom-16 right-0 w-80 h-[400px] flex flex-col shadow-xl bg-background/95 backdrop-blur">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
