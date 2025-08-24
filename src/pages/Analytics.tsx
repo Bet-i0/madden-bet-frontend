@@ -11,14 +11,12 @@ import { exportBetsToCSV } from '@/utils/csvUtils';
 import BetHistoryTab from '@/components/BetHistoryTab';
 import CumulativeProfitChart from '@/components/CumulativeProfitChart';
 import CSVImportDialog from '@/components/CSVImportDialog';
-import DataSourceToggle from '@/components/DataSourceToggle';
 
 const Analytics = () => {
   const navigate = useNavigate();
   const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [dataSource, setDataSource] = useState<'mock' | 'live'>('mock');
   const { bets: realBets, analytics: realAnalytics, updateBetStatus, loading } = useBets();
   const { toast } = useToast();
 
@@ -60,9 +58,9 @@ const Analytics = () => {
     roi: 208.0
   };
 
-  // Use selected data source
-  const bets = dataSource === 'mock' ? mockBets : realBets;
-  const analytics = dataSource === 'mock' ? mockAnalytics : realAnalytics;
+  // Use demo data only
+  const bets = mockBets;
+  const analytics = mockAnalytics;
 
   // Mock data for features not yet implemented
   const mockTrends = [
@@ -231,15 +229,7 @@ const Analytics = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Data Source Toggle */}
-              <DataSourceToggle 
-                dataSource={dataSource}
-                onToggle={setDataSource}
-                liveDataCount={realBets.length}
-              />
-            
-              <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Recent Performance */}
               <Card className="bg-gradient-card border-border">
                 <CardHeader>
@@ -337,7 +327,6 @@ const Analytics = () => {
                   </div>
                 </CardContent>
               </Card>
-              </div>
             </div>
           </TabsContent>
 
