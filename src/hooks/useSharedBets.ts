@@ -50,7 +50,7 @@ export const useSharedBets = () => {
         // Demo shared bets for MVP presentation
         const demoSharedBets: SharedBet[] = [
           {
-            id: '1',
+            id: '550e8400-e29b-41d4-a716-446655440001',
             original_bet_id: 'demo-bet-1',
             owner_user_id: 'demo-user-1',
             title: 'Sunday Night Parlay',
@@ -60,7 +60,7 @@ export const useSharedBets = () => {
             updated_at: new Date(Date.now() - 2 * 60 * 60000).toISOString(),
             legs: [
               {
-                id: '1',
+                id: '550e8400-e29b-41d4-a716-446655440011',
                 sport: 'NFL',
                 league: 'NFL',
                 team1: 'Chiefs',
@@ -70,7 +70,7 @@ export const useSharedBets = () => {
                 odds: -110
               },
               {
-                id: '2',
+                id: '550e8400-e29b-41d4-a716-446655440012',
                 sport: 'NFL', 
                 league: 'NFL',
                 team1: 'Chiefs',
@@ -92,7 +92,7 @@ export const useSharedBets = () => {
             }
           },
           {
-            id: '2',
+            id: '550e8400-e29b-41d4-a716-446655440002',
             original_bet_id: 'demo-bet-2',
             owner_user_id: 'demo-user-2',
             title: 'NBA Lock of the Day',
@@ -102,7 +102,7 @@ export const useSharedBets = () => {
             updated_at: new Date(Date.now() - 4 * 60 * 60000).toISOString(),
             legs: [
               {
-                id: '3',
+                id: '550e8400-e29b-41d4-a716-446655440013',
                 sport: 'NBA',
                 league: 'NBA',
                 team1: 'Warriors',
