@@ -4,14 +4,17 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer } from "lucide-react";
+import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
+import { SuggestionPick } from "@/hooks/useAIInsights";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [activeTab, setActiveTab] = useState("gpt-strategies");
+  const [importedPicks, setImportedPicks] = useState<SuggestionPick[]>([]);
+  const [includePicksInAnalysis, setIncludePicksInAnalysis] = useState(true);
   const location = useLocation();
   
   const { isAnalyzing, currentAnalysis, analyzeStrategy, clearAnalysis } = useStrategyAnalysis();
@@ -24,6 +27,19 @@ const AnalyzeStrategies = () => {
       setActiveTab("custom-builder");
     } else if (location.state?.from === 'ai-insight') {
       setActiveTab("gpt-strategies");
+    } else if (location.state?.from === 'ai-suggestion') {
+      const { hashtag, category, picks } = location.state;
+      setActiveTab("custom-builder");
+      setImportedPicks(picks || []);
+      
+      // Generate prefilled prompt with pick details
+      const picksList = picks?.map((pick: SuggestionPick) => 
+        `• ${pick.title} (${pick.odds}, ${pick.book}) — ${pick.confidence}% conf. ${pick.rationale}`
+      ).join('\n') || '';
+      
+      setCustomPrompt(
+        `AI suggestion import for ${hashtag} (${category}):\n\nPicks:\n${picksList}\n\nAnalyze this combination and suggest optimal betting strategy.`
+      );
     }
   }, [location.state]);
 
@@ -193,8 +209,27 @@ const AnalyzeStrategies = () => {
 
   const handleAnalyzeCustom = async () => {
     if (!customPrompt.trim()) return;
+    
+    let finalPrompt = customPrompt;
+    
+    // Append imported picks if enabled
+    if (includePicksInAnalysis && importedPicks.length > 0) {
+      const picksText = importedPicks.map(pick => 
+        `• ${pick.title} (${pick.odds}, ${pick.book}) — ${pick.confidence}% confidence: ${pick.rationale}`
+      ).join('\n');
+      finalPrompt = `${customPrompt}\n\nImported AI Picks:\n${picksText}`;
+    }
+    
     await analyzeStrategy("custom", "Custom Strategy");
     setActiveTab("analysis-results");
+  };
+
+  const handleRemoveImportedPick = (pickId: string) => {
+    setImportedPicks(prev => prev.filter(p => p.id !== pickId));
+  };
+
+  const handleClearAllImportedPicks = () => {
+    setImportedPicks([]);
   };
 
   return (
@@ -479,6 +514,66 @@ const AnalyzeStrategies = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Card className="gaming-card">
                 <div className="p-6">
+                  {/* Imported Picks Section */}
+                  {importedPicks.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-gaming text-neon-green flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          IMPORTED PICKS ({importedPicks.length})
+                        </h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleClearAllImportedPicks}
+                          className="text-red-400 hover:bg-red-400/20"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Clear All
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
+                        {importedPicks.map((pick) => (
+                          <div
+                            key={pick.id}
+                            className="flex items-center justify-between p-2 bg-primary/10 rounded border border-primary/20"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-primary truncate">
+                                {pick.title}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {pick.odds} @ {pick.book} • {pick.confidence}% conf
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveImportedPick(pick.id)}
+                              className="text-red-400 hover:bg-red-400/20 ml-2"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          id="includePicks"
+                          checked={includePicksInAnalysis}
+                          onChange={(e) => setIncludePicksInAnalysis(e.target.checked)}
+                          className="rounded"
+                        />
+                        <label htmlFor="includePicks" className="text-gray-300">
+                          Include these picks in the analysis prompt
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <h3 className="text-xl font-gaming text-neon-green mb-4">
                     STRATEGY INPUT
                   </h3>

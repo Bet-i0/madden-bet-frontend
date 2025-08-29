@@ -21,16 +21,23 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTrendingData } from "@/hooks/useTrendingData";
-import { useAIInsights } from "@/hooks/useAIInsights";
+import { useAIInsights, SuggestionPick } from "@/hooks/useAIInsights";
 import BackToHome from "@/components/BackToHome";
+import SuggestionDetailsDialog from "@/components/SuggestionDetailsDialog";
 
 const TrendingNow = () => {
   const [selectedTrend, setSelectedTrend] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const navigate = useNavigate();
   
+  // Suggestion dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogCategory, setDialogCategory] = useState<string | null>(null);
+  const [dialogPicks, setDialogPicks] = useState<SuggestionPick[]>([]);
+  const [dialogLoading, setDialogLoading] = useState(false);
+  
   const { trendingTopics, loading: dataLoading, lastUpdated } = useTrendingData();
-  const { loading: insightLoading, currentInsight, generateInsight, clearInsight } = useAIInsights();
+  const { loading: insightLoading, currentInsight, generateInsight, clearInsight, getSuggestionPicks } = useAIInsights();
 
   // Update time every second
   useEffect(() => {
@@ -49,6 +56,41 @@ const TrendingNow = () => {
     
     setSelectedTrend(trendId);
     await generateInsight(trendId);
+  };
+
+  const handleSuggestionChipClick = async (e: React.MouseEvent, category: string) => {
+    e.stopPropagation();
+    if (!selectedTrend) return;
+    
+    setDialogCategory(category);
+    setDialogOpen(true);
+    setDialogLoading(true);
+    
+    try {
+      const picks = await getSuggestionPicks(selectedTrend, category);
+      setDialogPicks(picks);
+    } catch (error) {
+      console.error('Failed to get suggestion picks:', error);
+      setDialogPicks([]);
+    } finally {
+      setDialogLoading(false);
+    }
+  };
+
+  const handleSuggestionConfirm = (selectedPicks: SuggestionPick[]) => {
+    const trendData = trendingTopics.find(t => t.id === selectedTrend);
+    
+    navigate('/analyze-strategies', {
+      state: {
+        from: 'ai-suggestion',
+        trendId: selectedTrend,
+        hashtag: trendData?.hashtag,
+        category: dialogCategory,
+        picks: selectedPicks
+      }
+    });
+    
+    setDialogOpen(false);
   };
 
   const getSentimentColor = (sentiment: string) => {
@@ -342,7 +384,9 @@ const TrendingNow = () => {
                             key={idx}
                             variant="outline" 
                             size="sm" 
-                            className="w-full justify-start"
+                            className="w-full justify-start hover:bg-primary/20 transition-colors"
+                            onClick={(e) => handleSuggestionChipClick(e, bet)}
+                            data-testid={`suggestion-chip-${bet}`}
                           >
                             <Target className="w-3 h-3 mr-2" />
                             {bet}
@@ -393,6 +437,17 @@ const TrendingNow = () => {
             </Card>
           ))}
         </div>
+
+        {/* Suggestion Details Dialog */}
+        <SuggestionDetailsDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          categoryLabel={dialogCategory || ''}
+          trendHashtag={selectedTrend ? trendingTopics.find(t => t.id === selectedTrend)?.hashtag : undefined}
+          picks={dialogPicks}
+          loading={dialogLoading}
+          onConfirm={handleSuggestionConfirm}
+        />
       </div>
     </div>
   );
