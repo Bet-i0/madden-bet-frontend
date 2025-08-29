@@ -168,9 +168,9 @@ const SuggestionDetailsDialog = ({
                             <TrendingUp className="w-3 h-3 text-neon-blue" />
                             <span className="font-bold text-neon-blue">{pick.odds}</span>
                           </div>
-                          {pick.book && (
+                          {pick.bookmaker && (
                             <div className="text-gray-400">
-                              @ {pick.book}
+                              @ {pick.bookmaker}
                             </div>
                           )}
                           {pick.game && (

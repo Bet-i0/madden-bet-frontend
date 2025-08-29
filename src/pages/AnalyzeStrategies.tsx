@@ -34,7 +34,7 @@ const AnalyzeStrategies = () => {
       
       // Generate prefilled prompt with pick details
       const picksList = picks?.map((pick: SuggestionPick) => 
-        `• ${pick.title} (${pick.odds}, ${pick.book}) — ${pick.confidence}% conf. ${pick.rationale}`
+        `• ${pick.title} (${pick.odds}, ${pick.bookmaker}) — ${pick.confidence}% conf. ${pick.rationale}`
       ).join('\n') || '';
       
       setCustomPrompt(
@@ -215,7 +215,7 @@ const AnalyzeStrategies = () => {
     // Append imported picks if enabled
     if (includePicksInAnalysis && importedPicks.length > 0) {
       const picksText = importedPicks.map(pick => 
-        `• ${pick.title} (${pick.odds}, ${pick.book}) — ${pick.confidence}% confidence: ${pick.rationale}`
+        `• ${pick.title} (${pick.odds}, ${pick.bookmaker}) — ${pick.confidence}% confidence: ${pick.rationale}`
       ).join('\n');
       finalPrompt = `${customPrompt}\n\nImported AI Picks:\n${picksText}`;
     }
@@ -544,7 +544,7 @@ const AnalyzeStrategies = () => {
                                 {pick.title}
                               </div>
                               <div className="text-xs text-gray-400">
-                                {pick.odds} @ {pick.book} • {pick.confidence}% conf
+                                {pick.odds} @ {pick.bookmaker} • {pick.confidence}% conf
                               </div>
                             </div>
                             <Button

@@ -1,1 +1,166 @@
 project_id = "avyqvcvalvtuqncexnbf"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[graphql]
+enabled = true
+port = 54324
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[inbound_mail]
+enabled = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[realtime]
+enabled = true
+ip_version = "ipv4"
+max_concurrent_users = 200
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1:54321"
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_refresh_token_reuse_interval = 10
+enable_signup = true
+enable_email_confirmations = false
+enable_email_change_confirmations = true
+enable_phone_confirmations = false
+enable_phone_change_confirmations = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+max_frequency = "1 per minute"
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = false
+template = "Your code is {{ .Code }} ."
+max_frequency = "1 per minute"
+
+[auth.external.apple]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.azure]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.bitbucket]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.discord]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.facebook]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.figma]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.github]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.gitlab]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.keycloak]
+enabled = false
+client_id = ""
+secret = ""
+url = ""
+
+[auth.external.linkedin]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.notion]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.twitch]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.twitter]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.slack]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.spotify]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.workos]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.zoom]
+enabled = false
+client_id = ""
+secret = ""
+
+[edge_runtime]
+enabled = true
+ip_version = "ipv4"
+
+[functions.fetch-odds]
+verify_jwt = false
+
+[functions.ai-suggestions]
+verify_jwt = true
+
+[analytics]
+enabled = false
+port = 54327
+vector_port = 54328
+backend = "postgres"

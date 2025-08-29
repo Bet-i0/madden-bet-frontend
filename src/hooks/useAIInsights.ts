@@ -1,4 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AIInsight {
   recommendation: 'STRONG ADD' | 'MODERATE ADD' | 'AVOID' | 'MONITOR';
@@ -15,15 +17,15 @@ export type SuggestionCategory = string;
 export interface SuggestionPick {
   id: string;
   category: string;
-  market: 'SPREAD' | 'TOTAL' | 'MONEYLINE' | 'PROP' | 'ALT_SPREAD' | 'LIVE';
-  title: string;        // e.g., "Chiefs -3.5"
-  odds: string;         // e.g., "-110"
-  book?: string;        // e.g., "DraftKings"
-  confidence: number;   // 0-100
+  market: string;
+  title: string;
+  odds: number;
+  bookmaker: string;
+  confidence: number;
   rationale: string;
-  game?: string;        // e.g., "Chiefs vs Bills"
-  league?: string;      // e.g., "NFL"
-  startTime?: string;   // ISO
+  game: string;
+  league: string;
+  startTime: string;
 }
 
 export const useAIInsights = () => {
@@ -82,7 +84,7 @@ export const useAIInsights = () => {
     return insight;
   };
 
-  const getSuggestionPicks = async (trendId: number, category: SuggestionCategory): Promise<SuggestionPick[]> => {
+  const getSuggestionPicks = useCallback(async (trendId: number, category: SuggestionCategory): Promise<SuggestionPick[]> => {
     const cacheKey = `${trendId}:${category}`;
     
     // Check cache first
@@ -90,95 +92,78 @@ export const useAIInsights = () => {
       return suggestionCache.current.get(cacheKey)!;
     }
 
-    // Simulate AI processing time
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
+    try {
+      // Call the ai-suggestions Edge Function
+      const { data, error } = await supabase.functions.invoke('ai-suggestions', {
+        body: { trendId, category },
+      });
 
-    // Mock data generators based on category
-    const generateMockPicks = (category: string, count: number = 4): SuggestionPick[] => {
-      const markets: SuggestionPick['market'][] = ['SPREAD', 'TOTAL', 'MONEYLINE', 'PROP', 'ALT_SPREAD'];
-      const books = ['DraftKings', 'FanDuel', 'BetMGM', 'Caesars', 'BetRivers'];
-      const leagues = ['NFL', 'NBA', 'MLB', 'NHL', 'NCAAF'];
-      const teams = [
-        'Chiefs vs Bills', 'Lakers vs Warriors', 'Cowboys vs Giants', 
-        'Celtics vs Heat', 'Dodgers vs Yankees', 'Rangers vs Bruins'
-      ];
-
-      const categoryData = {
-        'Over/Under Total Points': {
-          titles: ['Over 47.5 Total Points', 'Under 52.5 Total Points', 'Over 215.5 Total Points', 'Under 6.5 Total Goals'],
-          markets: ['TOTAL' as const],
-          rationales: [
-            'High-scoring teams averaging 28+ PPG in last 5 games',
-            'Weather conditions favor under with 15mph winds',
-            'Both defenses ranked bottom 10 in points allowed',
-            'Recent games between these teams averaged 51+ points'
-          ]
-        },
-        'Spread Coverage': {
-          titles: ['Chiefs -3.5', 'Lakers +7.5', 'Cowboys -6.0', 'Celtics -2.5'],
-          markets: ['SPREAD' as const],
-          rationales: [
-            'Home team 8-2 ATS in last 10 games',
-            'Road dog getting too many points after back-to-back',
-            'Key injury to opposing star player creates value',
-            'Public heavily on favorite, sharp money on underdog'
-          ]
-        },
-        'Player Performance Props': {
-          titles: ['Mahomes Over 2.5 TD Passes', 'LeBron Over 26.5 Points', 'Dak Under 275.5 Passing Yards', 'Tatum Over 8.5 Rebounds'],
-          markets: ['PROP' as const],
-          rationales: [
-            'Player averaging 3.2 TD passes in last 6 home games',
-            'Matchup advantage against bottom-ranked defense',
-            'Weather conditions limiting passing game effectiveness',
-            'Increased usage with teammate injury'
-          ]
-        },
-        'Parlay Leg Candidates': {
-          titles: ['Chiefs ML', 'Over 47.5 Total', 'Lakers +7.5', 'Mahomes Over 275.5 Yards'],
-          markets: ['MONEYLINE' as const, 'TOTAL' as const, 'SPREAD' as const, 'PROP' as const],
-          rationales: [
-            'Strong home favorite with playoff implications',
-            'High-total game with weak defenses and perfect conditions',
-            'Road dog getting inflated line due to public perception',
-            'QB facing bottom-ranked pass defense'
-          ]
-        },
-        'Live Betting Opportunities': {
-          titles: ['Live Under 44.5 Total', 'Live Chiefs +3.5', 'Live Over 1.5 Goals 2nd Period', 'Live Lakers ML'],
-          markets: ['TOTAL' as const, 'SPREAD' as const, 'PROP' as const, 'MONEYLINE' as const],
-          rationales: [
-            'Game tempo slower than expected, live total inflated',
-            'Key injury occurred during game, line overreaction',
-            'Teams playing aggressive in period after slow start',
-            'Momentum shift after technical foul sequence'
-          ]
+      if (error) {
+        console.error('Error calling ai-suggestions function:', error);
+        // Check if it's a rate limit error
+        if (error.message?.includes('usage limit')) {
+          toast.error('AI suggestion limit reached for this month. Upgrade your plan for more suggestions.');
         }
-      };
+        // Fallback to mock data
+        return generateFallbackSuggestions(trendId, category);
+      }
 
-      const data = categoryData[category as keyof typeof categoryData] || categoryData['Parlay Leg Candidates'];
+      const suggestions = data.suggestions || [];
       
-      return Array.from({ length: count }, (_, i) => ({
-        id: `pick_${trendId}_${category}_${i}`,
-        category,
-        market: data.markets[i % data.markets.length],
-        title: data.titles[i % data.titles.length],
-        odds: ['-110', '-105', '+105', '+120', '-115'][i % 5],
-        book: books[i % books.length],
-        confidence: Math.floor(Math.random() * 20) + 75, // 75-95%
-        rationale: data.rationales[i % data.rationales.length],
-        game: teams[i % teams.length],
-        league: leagues[i % leagues.length],
-        startTime: new Date(Date.now() + (i + 1) * 3600000).toISOString()
-      }));
-    };
+      // Cache the results
+      suggestionCache.current.set(cacheKey, suggestions);
+      
+      return suggestions;
+    } catch (error) {
+      console.error('Error fetching AI suggestions:', error);
+      // Fallback to mock data
+      return generateFallbackSuggestions(trendId, category);
+    }
+  }, []);
 
-    const picks = generateMockPicks(category);
-    
-    // Cache the result
-    suggestionCache.current.set(cacheKey, picks);
-    
-    return picks;
+  // Fallback mock data when API fails
+  const generateFallbackSuggestions = (trendId: number, category: SuggestionCategory): SuggestionPick[] => {
+    return [
+      {
+        id: `fallback-${trendId}-${category}-1`,
+        category,
+        market: "Moneyline",
+        title: "Chiefs to win vs Raiders", 
+        odds: -150,
+        bookmaker: "draftkings",
+        confidence: 78,
+        rationale: "Strong home field advantage and recent performance trends favor the Chiefs in this divisional matchup.",
+        game: "Kansas City Chiefs vs Las Vegas Raiders",
+        league: "NFL",
+        startTime: "2024-01-15T18:00:00Z",
+      },
+      {
+        id: `fallback-${trendId}-${category}-2`,
+        category,
+        market: "Point Spread",
+        title: "Lakers +3.5 vs Warriors",
+        odds: -110,
+        bookmaker: "fanduel", 
+        confidence: 65,
+        rationale: "Lakers have covered the spread in 4 of their last 5 games against Golden State, showing strong recent performance.",
+        game: "Los Angeles Lakers vs Golden State Warriors",
+        league: "NBA",
+        startTime: "2024-01-15T22:00:00Z",
+      },
+      {
+        id: `fallback-${trendId}-${category}-3`,
+        category,
+        market: "Over/Under",
+        title: "Over 52.5 total points",
+        odds: -105,
+        bookmaker: "caesars",
+        confidence: 82,
+        rationale: "Both teams averaging high-scoring games this season with favorable weather conditions expected.",
+        game: "Buffalo Bills vs Miami Dolphins", 
+        league: "NFL",
+        startTime: "2024-01-16T13:00:00Z",
+      }
+    ];
   };
 
   const clearInsight = () => {

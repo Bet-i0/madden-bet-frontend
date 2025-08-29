@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_suggestions_cache: {
+        Row: {
+          category: string
+          created_at: string
+          expires_at: string
+          id: string
+          suggestions: Json
+          trend_id: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          suggestions?: Json
+          trend_id: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          suggestions?: Json
+          trend_id?: number
+        }
+        Relationships: []
+      }
+      ai_usage_logs: {
+        Row: {
+          cost: number | null
+          created_at: string
+          endpoint: string
+          id: string
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       bankroll_transactions: {
         Row: {
           amount: number
@@ -351,6 +405,48 @@ export type Database = {
         }
         Relationships: []
       }
+      odds_snapshots: {
+        Row: {
+          bookmaker: string
+          created_at: string
+          game_date: string | null
+          id: string
+          last_updated: string
+          league: string
+          market: string
+          odds: number
+          sport: string
+          team1: string
+          team2: string
+        }
+        Insert: {
+          bookmaker: string
+          created_at?: string
+          game_date?: string | null
+          id?: string
+          last_updated?: string
+          league: string
+          market: string
+          odds: number
+          sport: string
+          team1: string
+          team2: string
+        }
+        Update: {
+          bookmaker?: string
+          created_at?: string
+          game_date?: string | null
+          id?: string
+          last_updated?: string
+          league?: string
+          market?: string
+          odds?: number
+          sport?: string
+          team1?: string
+          team2?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auto_save_bets: boolean | null
@@ -479,6 +575,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          ai_calls_per_month: number
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          price_per_month: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_calls_per_month: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price_per_month?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_calls_per_month?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_per_month?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          plan_id: string
+          starts_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          plan_id: string
+          starts_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          plan_id?: string
+          starts_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
