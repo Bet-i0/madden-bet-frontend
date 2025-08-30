@@ -10,7 +10,6 @@ import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
 import { SuggestionPick, useAIInsights } from "@/hooks/useAIInsights";
 import { useOddsForStrategies } from "@/hooks/useOddsForStrategies";
 import { useStrategyContent } from "@/hooks/useStrategyContent";
-import { AutoTrigger } from "@/components/TriggerStrategyGeneration";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
@@ -248,7 +247,6 @@ const AnalyzeStrategies = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gaming-dark via-gaming-primary to-gaming-dark">
-      <AutoTrigger />
       {/* Gaming HUD Header */}
       <div className="gaming-hud border-b border-neon-blue/30">
         <div className="container mx-auto px-4 py-4">
