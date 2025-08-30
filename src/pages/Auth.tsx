@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Zap, Check, X, Eye, EyeOff } from 'lucide-react';
-import stadiumBg from '@/assets/stadium-bg.jpg';
+import stadiumBg from '@/assets/stadium-bg-optimized.jpg';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
