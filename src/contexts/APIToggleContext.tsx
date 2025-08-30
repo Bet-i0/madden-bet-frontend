@@ -20,14 +20,14 @@ export const APIToggleProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       toast({
         title: "J.A.R.V.I.S Online",
         description: "All API systems activated",
-        className: "bg-green-500/10 border-green-500/20 text-green-700"
+        className: "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-300"
       });
     } else if (normalizedCommand === 'f.r.i.d.a.y.') {
       setIsAPIEnabled(false);
       toast({
         title: "F.R.I.D.A.Y. Protocol",
         description: "All API systems paused",
-        className: "bg-orange-500/10 border-orange-500/20 text-orange-700"
+        className: "bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-300"
       });
     }
   };

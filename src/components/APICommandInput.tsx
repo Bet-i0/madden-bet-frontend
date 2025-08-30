@@ -3,10 +3,17 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Power, PowerOff } from 'lucide-react';
 import { useAPIToggle } from '@/contexts/APIToggleContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export const APICommandInput = () => {
   const [command, setCommand] = useState('');
   const { isAPIEnabled, toggleAPI } = useAPIToggle();
+  const { isAdmin, loading } = useUserRole();
+
+  // Only show for admin users
+  if (loading || !isAdmin) {
+    return null;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
