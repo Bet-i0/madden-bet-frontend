@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAPIToggle } from '@/contexts/APIToggleContext';
 
 export interface AIChatMessage {
   id: string;
@@ -26,10 +27,22 @@ export const useAIChat = () => {
   const [loading, setLoading] = useState(false);
   const [usage, setUsage] = useState<UsageInfo>({ monthlyUsage: 0, maxCalls: 10 });
   const { user } = useAuth();
+  const { isAPIEnabled } = useAPIToggle();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(async (content: string, streaming: boolean = true) => {
     if (!user || !content.trim() || loading) return;
+
+    if (!isAPIEnabled) {
+      const errorMessage: AIChatMessage = {
+        id: `error_${Date.now()}`,
+        role: 'assistant',
+        content: "API calls are currently disabled. Use 'J.A.R.V.I.S' command to enable.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      return;
+    }
 
     const userMessage: AIChatMessage = {
       id: Date.now().toString(),

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAPIToggle } from '@/contexts/APIToggleContext';
 
 export interface StrategyContent {
   id: string;
@@ -19,6 +20,7 @@ export const useStrategyContent = () => {
   const [strategyContent, setStrategyContent] = useState<Record<string, StrategyContent>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAPIEnabled } = useAPIToggle();
 
   const fetchStrategyContent = async () => {
     try {
@@ -54,6 +56,11 @@ export const useStrategyContent = () => {
   };
 
   const generateNewContent = async () => {
+    if (!isAPIEnabled) {
+      console.log('API calls disabled - cannot generate new content');
+      return;
+    }
+
     try {
       setError(null);
       

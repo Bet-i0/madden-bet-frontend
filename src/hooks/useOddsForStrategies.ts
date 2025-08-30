@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAPIToggle } from '@/contexts/APIToggleContext';
 
 interface OddsData {
   id: string;
@@ -32,6 +33,7 @@ export const useOddsForStrategies = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { isAPIEnabled } = useAPIToggle();
 
   const fetchOdds = async () => {
       try {

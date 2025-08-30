@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAPIToggle } from '@/contexts/APIToggleContext';
 
 export interface StrategyAnalysis {
   id: string;
@@ -31,6 +32,7 @@ export interface StrategyAnalysis {
 export const useStrategyAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentAnalysis, setCurrentAnalysis] = useState<StrategyAnalysis | null>(null);
+  const { isAPIEnabled } = useAPIToggle();
 
   const analyzeStrategy = async (strategyId: string, strategyName: string, customPrompt?: string): Promise<StrategyAnalysis> => {
     setIsAnalyzing(true);

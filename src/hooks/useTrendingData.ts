@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAPIToggle } from '@/contexts/APIToggleContext';
 
 export interface TrendingTopic {
   id: number;
@@ -18,8 +19,15 @@ export const useTrendingData = () => {
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const { isAPIEnabled } = useAPIToggle();
 
   const fetchTrendingData = async () => {
+    if (!isAPIEnabled) {
+      setTrendingTopics(getFallbackTopics());
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       

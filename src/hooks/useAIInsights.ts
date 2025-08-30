@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAPIToggle } from '@/contexts/APIToggleContext';
 
 export interface AIInsight {
   recommendation: 'STRONG ADD' | 'MODERATE ADD' | 'AVOID' | 'MONITOR';
@@ -31,6 +32,7 @@ export interface SuggestionPick {
 export const useAIInsights = () => {
   const [loading, setLoading] = useState(false);
   const [currentInsight, setCurrentInsight] = useState<AIInsight | null>(null);
+  const { isAPIEnabled } = useAPIToggle();
   const suggestionCache = useRef(new Map<string, SuggestionPick[]>());
 
   const generateInsight = async (trendId: number): Promise<AIInsight> => {

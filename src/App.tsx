@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { APIToggleProvider } from "./contexts/APIToggleContext";
+import { APICommandInput } from "./components/APICommandInput";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -43,8 +45,9 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <AuthProvider>
-            <Toaster />
-            <BrowserRouter>
+            <APIToggleProvider>
+              <Toaster />
+              <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
@@ -129,11 +132,13 @@ function App() {
               </Routes>
               <BottomNav />
               <RightSidePanel />
+              <APICommandInput />
             </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+          </APIToggleProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
   );
 }
 
