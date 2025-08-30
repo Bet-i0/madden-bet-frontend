@@ -68,56 +68,74 @@ serve(async (req) => {
       );
     }
 
-    // Check user's subscription and usage limits
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-    
-    // Get user's current subscription with better error handling
-    const { data: subscription, error: subError } = await supabase
-      .from('user_subscriptions')
-      .select(`
-        subscription_plans(ai_calls_per_month)
-      `)
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .maybeSingle();
+    // Check if user is admin (admins have unlimited calls)
+    const { data: isAdmin } = await supabase
+      .rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
 
-    const monthlyLimit = subscription?.subscription_plans?.ai_calls_per_month || 50; // Default to 50 for free plan
+    let shouldCheckLimits = !isAdmin;
+    console.log(`User ${user.id} admin status: ${isAdmin}, checking limits: ${shouldCheckLimits}`);
 
-    // Check current month usage with better date filtering
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    
-    const { data: usageData } = await supabase
-      .from('ai_usage_logs')
-      .select('id')
-      .eq('user_id', user.id)
-      .gte('created_at', startOfMonth.toISOString());
-
-    const currentUsage = usageData?.length || 0;
-
-    // More lenient rate limiting for development
-    if (currentUsage >= monthlyLimit) {
-      console.log(`Rate limit exceeded for user ${user.id}: ${currentUsage}/${monthlyLimit}`);
-      // Instead of blocking, return suggestions from live odds
-      const suggestions = buildSuggestionsFromOdds(oddsData || [], category);
+    // Check user's subscription and usage limits (unless admin)
+    if (shouldCheckLimits) {
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
       
-      // Cache and return the live odds-based suggestions
-      if (suggestions.length > 0) {
-        await supabase
-          .from('ai_suggestions_cache')
-          .upsert({
-            trend_id: trendId,
-            category: category,
-            suggestions: suggestions,
-            expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-          }, { onConflict: 'trend_id,category' });
-          
-        console.log(`Generated ${suggestions.length} suggestions from live odds for rate-limited user`);
-        return new Response(
-          JSON.stringify({ suggestions }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      // Get user's current subscription with better error handling
+      const { data: subscription, error: subError } = await supabase
+        .from('user_subscriptions')
+        .select(`
+          subscription_plans(ai_calls_per_month)
+        `)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      const monthlyLimit = subscription?.subscription_plans?.ai_calls_per_month || 50; // Default to 50 for free plan
+
+      // Check current month usage with better date filtering
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const { data: usageData } = await supabase
+        .from('ai_usage_logs')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', startOfMonth.toISOString());
+
+      const currentUsage = usageData?.length || 0;
+
+      // More lenient rate limiting for development
+      if (currentUsage >= monthlyLimit) {
+        console.log(`Rate limit exceeded for user ${user.id}: ${currentUsage}/${monthlyLimit}`);
+        // Instead of blocking, return suggestions from live odds
+        const { data: oddsData } = await supabase
+          .from('odds_snapshots')
+          .select('*')
+          .gte('last_updated', new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()) // Last 6 hours
+          .limit(50);
+
+        const suggestions = buildSuggestionsFromOdds(oddsData || [], category);
+        
+        // Cache and return the live odds-based suggestions
+        if (suggestions.length > 0) {
+          await supabase
+            .from('ai_suggestions_cache')
+            .upsert({
+              trend_id: trendId,
+              category: category,
+              suggestions: suggestions,
+              expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+            }, { onConflict: 'trend_id,category' });
+            
+          console.log(`Generated ${suggestions.length} suggestions from live odds for rate-limited user`);
+          return new Response(
+            JSON.stringify({ suggestions }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
       }
     }
 
@@ -187,7 +205,7 @@ Respond in JSON format with array of objects containing: id, category, market, t
             suggestions = buildSuggestionsFromOdds(oddsData || [], category);
           }
           
-          // Log usage
+          // Log usage (for both admins and regular users - admins get unlimited but we still track for analytics)
           await supabase.from('ai_usage_logs').insert({
             user_id: user.id,
             endpoint: 'ai-suggestions',
@@ -216,7 +234,7 @@ Respond in JSON format with array of objects containing: id, category, market, t
         onConflict: 'trend_id,category'
       });
 
-    console.log(`Generated ${suggestions.length} suggestions for user ${user.id}`);
+    console.log(`Generated ${suggestions.length} suggestions for user ${user.id} (admin: ${isAdmin})`);
 
     return new Response(
       JSON.stringify({ suggestions }),
