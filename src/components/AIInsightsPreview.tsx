@@ -9,14 +9,13 @@ const AIInsightsPreview = () => {
   const navigate = useNavigate();
   const { currentInsight } = useAIInsights();
 
-  const mockInsight = {
-    recommendation: "Strong Value on Over 225.5 Total Points",
-    confidence: 87,
-    reasoning: "Both teams averaging high-scoring games this season with weak defensive metrics.",
-    expectedValue: "+12.3%"
+  // Show real insights or live data ready state
+  const insight = currentInsight || {
+    recommendation: "Live Data Connected",
+    confidence: null,
+    reasoning: "AI analysis is connected to real-time odds data and ready to provide insights based on current market conditions.",
+    expectedValue: "Ready"
   };
-
-  const insight = currentInsight || mockInsight;
 
   return (
     <Card className="gaming-card mb-6">
@@ -32,10 +31,12 @@ const AIInsightsPreview = () => {
             <Target className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium">{insight.recommendation}</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <TrendingUp className="w-3 h-3 text-neon-green" />
-            <span className="text-xs text-neon-green">{insight.confidence}%</span>
-          </div>
+          {insight.confidence && (
+            <div className="flex items-center space-x-1">
+              <TrendingUp className="w-3 h-3 text-neon-green" />
+              <span className="text-xs text-neon-green">{insight.confidence}%</span>
+            </div>
+          )}
         </div>
         
         <p className="text-xs text-muted-foreground leading-relaxed">

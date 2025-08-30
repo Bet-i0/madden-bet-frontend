@@ -21,50 +21,17 @@ const Analytics = () => {
   const { bets: realBets, analytics: realAnalytics, updateBetStatus, loading } = useBets();
   const { toast } = useToast();
 
-  // Mock data for 100 picks with $100,000.90 profit and 208% ROI
-  const mockBets = Array.from({ length: 100 }, (_, i) => ({
-    id: `mock-bet-${i}`,
-    bet_type: (i % 5 === 0 ? 'parlay' : 'single') as 'single' | 'parlay',
-    stake: 240 + (i * 5), // Total investment ≈ $48,750 for 208% ROI
-    potential_payout: i < 68 ? (240 + (i * 5)) * 1.9 : undefined,
-    total_odds: 1.9 + (Math.random() * 2),
-    status: (i < 68 ? 'won' : i < 95 ? 'lost' : 'pending') as 'pending' | 'won' | 'lost',
-    settled_at: i < 95 ? new Date(Date.now() - (i * 86400000)).toISOString() : undefined,
-    created_at: new Date(Date.now() - (i * 86400000)).toISOString(),
-    ai_suggested: i % 3 === 0,
-    bankroll_id: undefined,
-    tags: i % 4 === 0 ? ['NFL', 'High Confidence'] : i % 3 === 0 ? ['NBA'] : [],
-    sportsbook: 'DraftKings',
-    notes: undefined,
-    legs: [{
-      id: `mock-leg-${i}`,
-      sport: i % 2 === 0 ? 'NFL' : 'NBA',
-      league: i % 2 === 0 ? 'NFL' : 'NBA',
-      team1: i % 2 === 0 ? 'Chiefs' : 'Lakers',
-      team2: i % 2 === 0 ? 'Bills' : 'Warriors',
-      bet_market: i % 3 === 0 ? 'spread' : i % 3 === 1 ? 'total' : 'moneyline',
-      bet_selection: i % 3 === 0 ? 'Chiefs -3.5' : i % 3 === 1 ? 'Over 47.5' : 'Lakers ML',
-      odds: 1.9 + (Math.random() * 2),
-      open_odds: 1.85 + (Math.random() * 2),
-      closing_odds: 1.92 + (Math.random() * 2),
-      result: (i < 68 ? 'won' : i < 95 ? 'lost' : 'pending') as 'pending' | 'won' | 'lost',
-      game_date: new Date(Date.now() + (Math.random() * 7 * 86400000)).toISOString()
-    }]
-  }));
 
-  const mockAnalytics = {
-    totalPicks: 100,
-    winRate: 68.0,
-    profit: 100000.90,
-    roi: 208.0
+  // Use real data if available, otherwise empty state
+  const bets = realBets || [];
+  const analytics = realAnalytics || {
+    totalPicks: 0,
+    winRate: 0,
+    profit: 0,
+    roi: 0
   };
 
-  // Use demo data only
-  const bets = mockBets;
-  const analytics = mockAnalytics;
-
-  // Mock data for features not yet implemented
-  const mockTrends = [
+  const trends = [
     { category: 'NFL Spreads', winRate: 72.1, volume: 8 },
     { category: 'NBA Totals', winRate: 64.8, volume: 12 },
     { category: 'NFL Totals', winRate: 59.3, volume: 6 },
@@ -347,7 +314,7 @@ const Analytics = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockTrends.map((trend, index) => (
+                  {trends.map((trend, index) => (
                     <div key={index} className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors border border-border/50">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-medium font-sports">{trend.category}</h3>

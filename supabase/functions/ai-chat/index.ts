@@ -13,39 +13,40 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const SYSTEM_PROMPT = `You are SportsBot, an advanced AI assistant for sports betting enthusiasts. You help users with:
+const SYSTEM_PROMPT = `You are SportsBot, an advanced AI assistant for sports betting enthusiasts. You have access to real-time odds data and help users with:
 
 **Core Expertise:**
-- Sports betting strategy and analysis
-- Odds interpretation and value betting
+- Sports betting strategy and analysis using live odds data
+- Real-time odds interpretation and value betting opportunities
 - Bankroll management and staking plans
-- Statistical analysis and trends
-- Live betting opportunities
-- Parlay construction and optimization
+- Statistical analysis and current trends
+- Live betting opportunities based on real market data
+- Parlay construction using actual available odds
 
 **Your Personality:**
 - Professional yet approachable
-- Data-driven but explains concepts clearly
+- Data-driven using real odds and market information
 - Encouraging but emphasizes responsible gambling
-- Uses sports betting terminology naturally
-- Provides actionable insights
+- Uses current sports betting terminology naturally
+- Provides actionable insights based on live data
 
 **Key Guidelines:**
 - Always promote responsible gambling practices
-- Explain your reasoning behind suggestions
-- Provide specific, actionable advice when possible
-- Use real sports knowledge and current context
+- Use real odds data when providing betting suggestions
+- Explain your reasoning behind suggestions using current market information
+- Provide specific, actionable advice based on live odds
+- Reference actual teams, games, and odds when available
 - Never guarantee wins, always mention risk
 - Keep responses concise but informative
 - Ask clarifying questions when needed
 
 **Sample Responses:**
-- "Based on the line movement and injury reports, I see value in..."
+- "Based on current market odds and line movement, I see value in..."
+- "Looking at today's NFL odds, the [team] at [odds] offers good value because..."
 - "Your bankroll suggests a 2-3% stake here, which would be..."
-- "The key factors to consider for this bet are..."
-- "That's a solid strategy! Have you considered..."
+- "The key factors I'm seeing in today's odds are..."
 
-Remember: You're here to enhance their betting experience through education and analysis, not to make decisions for them.`;
+Remember: You have access to real odds data, so use it to provide current, relevant betting insights and opportunities.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -107,10 +108,10 @@ serve(async (req) => {
       console.log('No OpenAI API key found, returning mock response');
       
       const mockResponses = [
-        "I'd be happy to help you with that bet analysis! However, I'm currently running in demo mode. Once the OpenAI integration is fully configured, I'll be able to provide detailed insights on odds, trends, and betting strategies.",
-        "Great question about bankroll management! In demo mode, I can tell you that proper bankroll management typically involves betting 1-5% of your total bankroll per bet, depending on your confidence level and risk tolerance.",
-        "That's an interesting line you're looking at! While I'm in demo mode, I'd generally suggest looking at line movement, injury reports, and historical matchup data before making your decision.",
-        "Live betting can be exciting! In demo mode, I can share that successful live betting often involves watching for momentum shifts, key player situations, and in-game adjustments that the books might be slow to react to.",
+        "I'm connected to live odds data and ready to help! However, I'm currently running in demo mode. Once the OpenAI integration is fully configured, I'll be able to provide detailed insights using the real-time odds data we're collecting.",
+        "Great question about bankroll management! With access to live odds, I can help you identify value bets. Proper bankroll management typically involves betting 1-5% of your total bankroll per bet, depending on your confidence level and the odds value I detect.",
+        "I can see current odds data in our system! While in demo mode, I'd generally suggest looking at line movement, injury reports, and historical matchup data. Once fully activated, I'll analyze these factors using real-time market data.",
+        "Live betting opportunities are exciting! I'm tracking real odds updates every 30 minutes. In full mode, I'll help you spot momentum shifts, key player situations, and market inefficiencies as they happen.",
       ];
 
       const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
@@ -133,9 +134,24 @@ serve(async (req) => {
       });
     }
 
+    // Fetch recent odds data for context
+    const { data: oddsData } = await supabase
+      .from('odds_snapshots')
+      .select('*')
+      .gte('last_updated', new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()) // Last 6 hours
+      .limit(20);
+
+    // Prepare context with real odds data
+    let oddsContext = '';
+    if (oddsData && oddsData.length > 0) {
+      oddsContext = `\n\nCurrent Live Odds Data (last 6 hours):\n${oddsData.map(odds => 
+        `• ${odds.team1} vs ${odds.team2} (${odds.league}) - ${odds.market}: ${odds.odds} (${odds.bookmaker})`
+      ).join('\n')}\n\nUse this real data when providing betting insights and recommendations.`;
+    }
+
     // Prepare messages for OpenAI
     const openAIMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: SYSTEM_PROMPT + oddsContext },
       ...messages
     ];
 

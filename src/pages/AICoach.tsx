@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import SaveBetDialog from "@/components/SaveBetDialog";
 import { useProfile } from "@/hooks/useProfile";
 import { useOddsLastUpdated } from "@/hooks/useOddsLastUpdated";
+import { supabase } from "@/integrations/supabase/client";
 import BackToHome from "@/components/BackToHome";
 
 interface Message {
@@ -32,7 +33,7 @@ const AICoach = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Welcome to your AI Coach! I'm here to help you analyze games, build strategies, and understand betting insights. What would you like to discuss today?",
+      text: "Welcome to your AI Coach! I'm connected to live odds data and ready to help you analyze games, build strategies, and find betting opportunities. What would you like to explore today?",
       sender: 'ai',
       timestamp: new Date()
     }
@@ -65,112 +66,67 @@ const AICoach = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const response = getAIResponse(inputValue);
+    try {
+      // Call the real AI chat function
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Please log in to use AI chat');
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: {
+          messages: [{ role: 'user', content: currentInput }],
+          stream: false
+        }
+      });
+
+      if (error) {
+        console.error('AI Chat error:', error);
+        throw new Error(error.message);
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: response.text,
+        text: data.message,
         sender: 'ai',
         timestamp: new Date(),
-        hasBetSuggestion: response.hasBetSuggestion
-      };
-      
-      if (response.hasBetSuggestion) {
-        setCurrentBetSuggestion(response.betData);
-      }
-      
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const getAIResponse = (userInput: string): { text: string; hasBetSuggestion: boolean; betData?: any } => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('parlay') || input.includes('combination')) {
-      return {
-        text: "For parlay strategies, I recommend starting with 2-3 legs maximum. Focus on correlated bets like same-game parlays where outcomes influence each other.\n\n**Suggested Parlay:**\n• Chiefs -3.5 (-110)\n• Over 47.5 (-105)\n• Mahomes 2+ TD passes (-150)\n\n**Total Odds:** +285 | **Confidence:** 72%\n\nWould you like me to analyze the correlation between these picks?",
-        hasBetSuggestion: true,
-        betData: {
-          bet_type: 'parlay',
-          total_odds: 285,
-          legs: [
-            {
-              sport: 'NFL',
-              league: 'NFL', 
-              team1: 'Chiefs',
-              team2: 'Bills',
-              bet_market: 'spread',
-              bet_selection: 'Chiefs -3.5',
-              odds: -110
-            },
-            {
-              sport: 'NFL',
-              league: 'NFL',
-              team1: 'Chiefs', 
-              team2: 'Bills',
-              bet_market: 'total',
-              bet_selection: 'Over 47.5',
-              odds: -105
-            },
-            {
-              sport: 'NFL',
-              league: 'NFL',
-              team1: 'Chiefs',
-              team2: 'Bills', 
-              bet_market: 'prop',
-              bet_selection: 'Mahomes 2+ TD passes',
-              odds: -150
-            }
-          ]
-        }
-      };
-    }
-    
-    if (input.includes('chiefs') || input.includes('mahomes')) {
-      return {
-        text: "The Chiefs are showing strong offensive metrics this season. Mahomes has a 68% completion rate with 2.1 TD/INT ratio. Their red zone efficiency is at 71%.\n\n**My Pick:** Chiefs -3.5 (-110)\n**Confidence:** 78%\n\nConsider their performance against divisional opponents when analyzing spreads.",
-        hasBetSuggestion: true,
-        betData: {
-          bet_type: 'single',
-          total_odds: -110,
-          legs: [
-            {
-              sport: 'NFL',
-              league: 'NFL',
-              team1: 'Chiefs',
-              team2: 'Bills',
-              bet_market: 'spread', 
-              bet_selection: 'Chiefs -3.5',
-              odds: -110
-            }
-          ]
-        }
-      };
-    }
-    
-    if (input.includes('injury') || input.includes('report')) {
-      return {
-        text: "Injury reports can significantly impact lines. Key positions to monitor: QB (4-7 point swing), RB1 (1-3 points), WR1/CB1 (1-2 points). I track real-time injury updates and their historical impact on team performance.",
         hasBetSuggestion: false
       };
+      
+      setMessages(prev => [...prev, aiResponse]);
+      
+    } catch (error) {
+      console.error('Error calling AI:', error);
+      
+      // Fallback to local response on error
+      const fallbackResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I'm having trouble connecting right now. Please try again in a moment. In the meantime, I can help you analyze odds and trends using the real-time data we have available.",
+        sender: 'ai',
+        timestamp: new Date(),
+        hasBetSuggestion: false
+      };
+      
+      setMessages(prev => [...prev, fallbackResponse]);
+    } finally {
+      setIsTyping(false);
     }
-    
-    return {
-      text: "That's an interesting question! Based on current data trends and team analytics, I'd recommend focusing on situational advantages like home/away splits, weather conditions, and recent team momentum. What specific matchup are you analyzing?",
-      hasBetSuggestion: false
-    };
   };
 
+
   const quickActions = [
-    { icon: Target, label: "Analyze Game", action: "Help me analyze today's featured games" },
-    { icon: TrendingUp, label: "Line Movement", action: "Show me significant line movements today" },
-    { icon: Activity, label: "Injury Impact", action: "What injuries should I be aware of?" },
-    { icon: Zap, label: "Hot Picks", action: "What are your highest confidence picks?" }
+    { icon: Target, label: "Analyze Game", action: "Help me analyze today's featured games with real odds data" },
+    { icon: TrendingUp, label: "Line Movement", action: "Show me significant line movements in today's real odds" },
+    { icon: Activity, label: "Live Opportunities", action: "What live betting opportunities do you see right now?" },
+    { icon: Zap, label: "Best Value", action: "What are the best value bets in current odds?" }
   ];
 
   const handleQuickAction = (action: string) => {
