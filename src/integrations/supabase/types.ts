@@ -735,6 +735,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      upsert_strategy_content: {
+        Args: {
+          p_confidence: number
+          p_content: Json
+          p_expected_roi: string
+          p_picks: Json
+          p_strategy_id: string
+          p_strategy_name: string
+          p_timeframe: string
+          p_valid_until: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

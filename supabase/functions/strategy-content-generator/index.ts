@@ -170,28 +170,20 @@ Format as a JSON object with: confidence, expectedRoi, timeframe, picks (array o
         const validUntil = new Date();
         validUntil.setHours(validUntil.getHours() + 5);
 
-        // Delete existing content for this strategy
-        await supabase
-          .from('strategy_content')
-          .delete()
-          .eq('strategy_id', template.id);
+        // Use the upsert function instead of manual insert/delete
+        const { error: upsertError } = await supabase.rpc('upsert_strategy_content', {
+          p_strategy_id: template.id,
+          p_strategy_name: template.name,
+          p_content: parsedContent,
+          p_picks: parsedContent.picks || [],
+          p_confidence: parsedContent.confidence || 85,
+          p_expected_roi: parsedContent.expectedRoi || '+5.2%',
+          p_timeframe: parsedContent.timeframe || '4h',
+          p_valid_until: validUntil.toISOString()
+        });
 
-        // Insert new content
-        const { error: insertError } = await supabase
-          .from('strategy_content')
-          .insert({
-            strategy_id: template.id,
-            strategy_name: template.name,
-            content: parsedContent,
-            picks: parsedContent.picks || [],
-            confidence: parsedContent.confidence || 85,
-            expected_roi: parsedContent.expectedRoi || '+5.2%',
-            timeframe: parsedContent.timeframe || '4h',
-            valid_until: validUntil.toISOString()
-          });
-
-        if (insertError) {
-          console.error(`Error inserting strategy content for ${template.id}:`, insertError);
+        if (upsertError) {
+          console.error(`Error upserting strategy content for ${template.id}:`, upsertError);
         } else {
           console.log(`Successfully generated content for ${template.id}`);
         }
