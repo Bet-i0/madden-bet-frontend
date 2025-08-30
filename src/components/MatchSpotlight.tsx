@@ -26,9 +26,9 @@ const MatchSpotlight = () => {
         const { data, error } = await supabase
           .from('odds_snapshots')
           .select('*')
-          .eq('market', 'h2h') // head-to-head/moneyline odds
+          .like('market', 'h2h%') // head-to-head/moneyline odds (includes team selections)
           .order('last_updated', { ascending: false })
-          .limit(8);
+          .limit(16);
 
         if (error) {
           console.error('Error fetching odds:', error);

@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
-import { SuggestionPick } from "@/hooks/useAIInsights";
+import { SuggestionPick, useAIInsights } from "@/hooks/useAIInsights";
+import { useOddsForStrategies } from "@/hooks/useOddsForStrategies";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
@@ -18,6 +19,8 @@ const AnalyzeStrategies = () => {
   const location = useLocation();
   
   const { isAnalyzing, currentAnalysis, analyzeStrategy, clearAnalysis } = useStrategyAnalysis();
+  const { getSuggestionPicks } = useAIInsights();
+  const { odds: liveOdds, loading: oddsLoading } = useOddsForStrategies();
 
   // Handle navigation context from trending or other pages
   useEffect(() => {
@@ -43,15 +46,37 @@ const AnalyzeStrategies = () => {
     }
   }, [location.state]);
 
-  // Mock live odds data from major sportsbooks
-  const liveOdds = [
-    { sportsbook: "DraftKings", team1: "Chiefs", team2: "Bills", odds1: "-110", odds2: "+105", spread: "-2.5" },
-    { sportsbook: "FanDuel", team1: "Chiefs", team2: "Bills", odds1: "-115", odds2: "+110", spread: "-2.5" },
-    { sportsbook: "BetMGM", team1: "Chiefs", team2: "Bills", odds1: "-108", odds2: "+102", spread: "-3.0" },
-    { sportsbook: "Caesars", team1: "Chiefs", team2: "Bills", odds1: "-112", odds2: "+108", spread: "-2.5" },
-  ];
+  // Live odds data from Supabase - will be populated by useOddsForStrategies hook
 
-  // GPT-picked strategies with mock betting data
+  // AI-powered strategies connected to real odds data
+  const [strategyPicks, setStrategyPicks] = useState<Record<string, SuggestionPick[]>>({});
+  
+  useEffect(() => {
+    // Fetch real AI suggestions for each strategy
+    const fetchStrategyPicks = async () => {
+      const strategies = ['value-hunter', 'momentum-play', 'injury-impact', 'weather-edge'];
+      const picksPromises = strategies.map(async (strategyId) => {
+        try {
+          const picks = await getSuggestionPicks(1, strategyId);
+          return { strategyId, picks };
+        } catch (error) {
+          console.error(`Error fetching picks for ${strategyId}:`, error);
+          return { strategyId, picks: [] };
+        }
+      });
+      
+      const results = await Promise.all(picksPromises);
+      const picksMap = results.reduce((acc, { strategyId, picks }) => {
+        acc[strategyId] = picks;
+        return acc;
+      }, {} as Record<string, SuggestionPick[]>);
+      
+      setStrategyPicks(picksMap);
+    };
+
+    fetchStrategyPicks();
+  }, [getSuggestionPicks]);
+
   const gptStrategies = [
     {
       id: "value-hunter",
@@ -61,33 +86,7 @@ const AnalyzeStrategies = () => {
       expectedRoi: "+12.3%",
       timeframe: "Live",
       tags: ["Line Shopping", "Value Betting", "AI Powered"],
-      activeBets: [
-        {
-          type: "3-Leg Parlay",
-          odds: "+285",
-          stake: "$50",
-          legs: [
-            "Chiefs -2.5 vs Bills (-110 → -105 DK)",
-            "Over 47.5 total points (-108 → -102 FD)", 
-            "Mahomes Over 1.5 TD passes (-125 → -115 MGM)"
-          ],
-          valueEdge: "+4.2% vs market average",
-          status: "pending"
-        },
-        {
-          type: "Single Bet",
-          odds: "+105", 
-          stake: "$75",
-          legs: ["Lakers ML vs Warriors (+105 vs +100 market)"],
-          valueEdge: "+2.1% line discrepancy",
-          status: "won"
-        }
-      ],
-      suggestedProps: [
-        "Travis Kelce Over 6.5 receptions (-110 → -105)",
-        "Josh Allen Under 2.5 TD passes (+115 → +120)",
-        "Total rushing yards Over 185.5 (-108 → -102)"
-      ]
+      picks: strategyPicks['value-hunter'] || []
     },
     {
       id: "momentum-play",
@@ -97,34 +96,7 @@ const AnalyzeStrategies = () => {
       expectedRoi: "+18.7%",
       timeframe: "2-4 hours",
       tags: ["Line Movement", "Public Betting", "Contrarian"],
-      activeBets: [
-        {
-          type: "4-Leg Parlay",
-          odds: "+650",
-          stake: "$25",
-          legs: [
-            "Celtics +3.5 (line moved from +6)",
-            "Under 228.5 Lakers/Warriors (sharp money)",
-            "76ers ML (contrarian vs 85% public on Knicks)",
-            "Suns +7.5 (reverse line movement)"
-          ],
-          valueEdge: "Following sharp money indicators",
-          status: "pending"
-        },
-        {
-          type: "Live Bet",
-          odds: "+140",
-          stake: "$100", 
-          legs: ["Cowboys +7.5 live (opened +3.5)"],
-          valueEdge: "Injury news created line overreaction",
-          status: "won"
-        }
-      ],
-      suggestedProps: [
-        "Jayson Tatum Over 28.5 points (momentum from hot streak)",
-        "Steph Curry Under 4.5 threes (public fading opportunity)",
-        "Joel Embiid Double-Double (+110) vs tired legs narrative"
-      ]
+      picks: strategyPicks['momentum-play'] || []
     },
     {
       id: "injury-impact",
@@ -134,32 +106,7 @@ const AnalyzeStrategies = () => {
       expectedRoi: "+9.4%",
       timeframe: "30 mins",
       tags: ["Breaking News", "Player Props", "Fast Action"],
-      activeBets: [
-        {
-          type: "2-Leg Parlay",
-          odds: "+180",
-          stake: "$40",
-          legs: [
-            "Backup QB Under 225.5 passing yards",
-            "Team total Under 21.5 points"
-          ],
-          valueEdge: "Star QB ruled out 20 mins ago",
-          status: "pending"
-        },
-        {
-          type: "Player Props",
-          odds: "+165",
-          stake: "$60",
-          legs: ["WR1 Over 8.5 receptions (target share increase)"],
-          valueEdge: "WR2 injury creates target funnel",
-          status: "won"
-        }
-      ],
-      suggestedProps: [
-        "Backup RB Over 75.5 rushing yards (starter questionable)",
-        "Team total Under 24.5 (key offensive line injuries)",
-        "Defense sacks Over 2.5 (opposing QB mobility limited)"
-      ]
+      picks: strategyPicks['injury-impact'] || []
     },
     {
       id: "weather-edge",
@@ -169,36 +116,7 @@ const AnalyzeStrategies = () => {
       expectedRoi: "+14.2%",
       timeframe: "24 hours",
       tags: ["Weather", "Totals", "Game Environment"],
-      activeBets: [
-        {
-          type: "Same Game Parlay",
-          odds: "+220",
-          stake: "$80",
-          legs: [
-            "Under 42.5 total points (20mph winds)",
-            "Under 275.5 combined passing yards",
-            "Over 45.5 total rush attempts"
-          ],
-          valueEdge: "Weather not factored into totals yet",
-          status: "pending"
-        },
-        {
-          type: "Player Props Combo",
-          odds: "+190", 
-          stake: "$35",
-          legs: [
-            "QB Under 2.5 TD passes (wind/rain)",
-            "Kicker Under 1.5 FGs made (conditions)"
-          ],
-          valueEdge: "Severe weather forecast updated",
-          status: "won"
-        }
-      ],
-      suggestedProps: [
-        "Game total Under 38.5 (snow/wind combo)",
-        "Both teams Under 150.5 passing yards each",
-        "Total turnovers Over 3.5 (slippery conditions)"
-      ]
+      picks: strategyPicks['weather-edge'] || []
     }
   ];
 
@@ -355,56 +273,37 @@ const AnalyzeStrategies = () => {
                       ))}
                     </div>
 
-                    {/* Active Bets Section */}
+                    {/* AI Picks Section */}
                     <div className="mb-4">
                       <h4 className="text-sm font-gaming text-neon-green mb-2 flex items-center">
                         <Trophy className="w-3 h-3 mr-1" />
-                        ACTIVE BETS ({strategy.activeBets.length})
+                        AI PICKS ({strategy.picks.length})
                       </h4>
                       <div className="space-y-2">
-                        {strategy.activeBets.map((bet, idx) => (
+                        {strategy.picks.length > 0 ? strategy.picks.slice(0, 3).map((pick, idx) => (
                           <div key={idx} className="p-2 bg-gray-800/50 rounded border border-gray-700">
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-xs font-bold text-neon-blue">{bet.type}</span>
+                              <span className="text-xs font-bold text-neon-blue">{pick.title}</span>
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-neon-green">{bet.odds}</span>
-                                <span className="text-xs text-gray-400">{bet.stake}</span>
-                                <span className={`text-xs px-1 rounded ${
-                                  bet.status === 'won' ? 'bg-neon-green/20 text-neon-green' : 
-                                  bet.status === 'pending' ? 'bg-gold/20 text-gold' : 'bg-red-400/20 text-red-400'
-                                }`}>
-                                  {bet.status}
+                                <span className="text-xs text-neon-green">{pick.odds}</span>
+                                <span className="text-xs text-gray-400">{pick.bookmaker}</span>
+                                <span className="text-xs px-1 rounded bg-neon-green/20 text-neon-green">
+                                  {pick.confidence}%
                                 </span>
                               </div>
                             </div>
-                            <div className="space-y-1">
-                              {bet.legs.map((leg, legIdx) => (
-                                <div key={legIdx} className="text-xs text-gray-300 flex items-start">
-                                  <div className="w-1 h-1 bg-neon-blue rounded-full mt-1.5 mr-2 flex-shrink-0" />
-                                  {leg}
-                                </div>
-                              ))}
+                            <div className="text-xs text-gray-300 mb-1">
+                              {pick.game} - {pick.league}
                             </div>
-                            <div className="text-xs text-purple-400 mt-1 italic">
-                              {bet.valueEdge}
+                            <div className="text-xs text-purple-400 italic">
+                              {pick.rationale}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Suggested Props Section */}
-                    <div className="mb-4">
-                      <h4 className="text-sm font-gaming text-gold mb-2 flex items-center">
-                        <Target className="w-3 h-3 mr-1" />
-                        SUGGESTED PROPS
-                      </h4>
-                      <div className="space-y-1">
-                        {strategy.suggestedProps.map((prop, idx) => (
-                          <div key={idx} className="text-xs text-gray-300 p-1.5 bg-gold/10 rounded border border-gold/20">
-                            {prop}
+                        )) : (
+                          <div className="text-xs text-gray-400 text-center py-2">
+                            Loading AI picks...
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
 
@@ -433,71 +332,109 @@ const AnalyzeStrategies = () => {
           <TabsContent value="live-odds" className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-gaming text-neon-blue mb-2">
-                LIVE ODDS COMPARISON
+                LIVE SPORTSBOOK ODDS
               </h2>
               <p className="text-gray-300">
-                Real-time odds comparison for analysis - Updated every 30 seconds via API
+                Real-time odds comparison across NFL, NCAAF, NBA, MLB, MLS, EPL
               </p>
             </div>
 
-            <Card className="gaming-card">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-gaming text-neon-green">
-                    CHIEFS @ BILLS
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-                    <span className="text-neon-green text-sm">LIVE</span>
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-neon-blue/30">
-                        <th className="text-left py-3 text-neon-blue font-gaming">SPORTSBOOK</th>
-                        <th className="text-center py-3 text-neon-blue font-gaming">SPREAD</th>
-                        <th className="text-center py-3 text-neon-blue font-gaming">CHIEFS</th>
-                        <th className="text-center py-3 text-neon-blue font-gaming">BILLS</th>
-                        <th className="text-center py-3 text-neon-blue font-gaming">ACTION</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {liveOdds.map((odds, index) => (
-                        <tr key={index} className="border-b border-gray-700 hover:bg-gray-800/30">
-                          <td className="py-4 text-white font-bold">{odds.sportsbook}</td>
-                          <td className="py-4 text-center text-neon-green">{odds.spread}</td>
-                          <td className="py-4 text-center text-white">{odds.odds1}</td>
-                          <td className="py-4 text-center text-white">{odds.odds2}</td>
-                          <td className="py-4 text-center">
-                            <Button 
-                              size="sm" 
-                              variant="neon" 
-                              className="text-xs"
-                              onClick={() => handleAnalyzeStrategy(`odds-${index}`, `${odds.sportsbook} Analysis`)}
-                            >
-                              ANALYZE
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-6 p-4 bg-neon-green/10 border border-neon-green/30 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Target className="w-4 h-4 text-neon-green" />
-                    <span className="text-neon-green font-gaming">VALUE OPPORTUNITY DETECTED</span>
-                  </div>
-                  <p className="text-gray-300 text-sm">
-                    BetMGM showing +102 on Bills while market average is +106. 
-                    Potential 4-point value edge identified.
-                  </p>
-                </div>
+            {oddsLoading ? (
+              <div className="grid gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className="gaming-card animate-pulse">
+                    <div className="p-6">
+                      <div className="h-20 bg-gray-700 rounded"></div>
+                    </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
+            ) : liveOdds.length > 0 ? (
+              <div className="grid gap-4">
+                {liveOdds.map((game, index) => (
+                  <Card key={index} className="gaming-card">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-gaming text-neon-blue">
+                          {game.team1} vs {game.team2}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary">
+                            {game.league}
+                          </span>
+                          <div className="text-sm text-gray-400">
+                            {game.game_date ? new Date(game.game_date).toLocaleDateString() : 'TBD'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Moneyline Odds */}
+                        {game.h2h_odds.length > 0 && (
+                          <div className="gaming-stat-card">
+                            <span className="text-xs text-gray-400 mb-2 block">Moneyline</span>
+                            {game.h2h_odds.slice(0, 2).map((odd, i) => (
+                              <div key={i} className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-gray-300">{odd.bookmaker}</span>
+                                <span className="text-neon-green font-bold">
+                                  {odd.odds > 0 ? `+${odd.odds}` : odd.odds}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Spread Odds */}
+                        {game.spread_odds.length > 0 && (
+                          <div className="gaming-stat-card">
+                            <span className="text-xs text-gray-400 mb-2 block">Spread</span>
+                            {game.spread_odds.slice(0, 2).map((odd, i) => (
+                              <div key={i} className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-gray-300">{odd.bookmaker}</span>
+                                <span className="text-white font-bold">
+                                  {odd.odds > 0 ? `+${odd.odds}` : odd.odds}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Total Odds */}
+                        {game.total_odds.length > 0 && (
+                          <div className="gaming-stat-card">
+                            <span className="text-xs text-gray-400 mb-2 block">Total</span>
+                            {game.total_odds.slice(0, 2).map((odd, i) => (
+                              <div key={i} className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-gray-300">{odd.bookmaker}</span>
+                                <span className="text-gold font-bold">
+                                  {odd.odds > 0 ? `+${odd.odds}` : odd.odds}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="mt-4">
+                        <Button 
+                          size="sm" 
+                          variant="gaming" 
+                          className="w-full hover-glow"
+                          onClick={() => handleAnalyzeStrategy(`odds-${index}`, `${game.team1} vs ${game.team2} Analysis`)}
+                        >
+                          ANALYZE GAME
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-400">No live odds available</p>
+                <p className="text-sm text-gray-500">Odds update every 30 minutes</p>
+              </div>
+            )}
           </TabsContent>
 
           {/* Custom Builder Tab */}

@@ -30,8 +30,15 @@ serve(async (req) => {
 
     console.log('Starting odds fetch process...');
 
-    // Sports to fetch odds for
-    const sports = ['americanfootball_nfl', 'basketball_nba', 'soccer_epl'];
+    // Sports to fetch odds for - expanded coverage
+    const sports = [
+      'americanfootball_nfl', 
+      'americanfootball_ncaaf',
+      'basketball_nba', 
+      'baseball_mlb',
+      'soccer_mls',
+      'soccer_epl'
+    ];
     const regions = 'us';
     const markets = 'h2h,spreads,totals';
 
