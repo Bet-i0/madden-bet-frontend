@@ -91,6 +91,70 @@ serve(async (req) => {
       }
     }
 
+    // Fetch real odds data to enhance AI responses
+    let oddsContext = '';
+    
+    try {
+      // Get recent odds data for college football and NFL
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dayAfter = new Date();
+      dayAfter.setDate(dayAfter.getDate() + 2);
+      
+      const { data: oddsData } = await supabase
+        .from('odds_snapshots')
+        .select('*')
+        .in('sport', ['americanfootball_nfl', 'americanfootball_ncaaf'])
+        .in('bookmaker', ['draftkings', 'fanduel', 'betmgm', 'caesars'])
+        .like('market', 'h2h%')
+        .gte('game_date', tomorrow.toISOString().split('T')[0])
+        .lte('game_date', dayAfter.toISOString().split('T')[0])
+        .order('last_updated', { ascending: false })
+        .limit(50);
+
+      if (oddsData && oddsData.length > 0) {
+        // Group odds by game and analyze line movements
+        const gameMap = new Map();
+        
+        oddsData.forEach(odd => {
+          const gameKey = `${odd.team1} vs ${odd.team2}`;
+          if (!gameMap.has(gameKey)) {
+            gameMap.set(gameKey, {
+              sport: odd.sport,
+              league: odd.league,
+              team1: odd.team1,
+              team2: odd.team2,
+              game_date: odd.game_date,
+              odds: []
+            });
+          }
+          gameMap.get(gameKey).odds.push({
+            bookmaker: odd.bookmaker,
+            market: odd.market,
+            odds: odd.odds,
+            last_updated: odd.last_updated
+          });
+        });
+
+        // Build context with actual game data
+        oddsContext = `\n\nCURRENT GAMES & ODDS DATA:\n`;
+        Array.from(gameMap.values()).slice(0, 10).forEach(game => {
+          oddsContext += `\n${game.league}: ${game.team1} vs ${game.team2} (${new Date(game.game_date).toLocaleDateString()})\n`;
+          
+          // Group odds by team
+          const team1Odds = game.odds.filter(o => o.market.includes(game.team1)).map(o => `${o.bookmaker}: ${o.odds}`).join(', ');
+          const team2Odds = game.odds.filter(o => o.market.includes(game.team2)).map(o => `${o.bookmaker}: ${o.odds}`).join(', ');
+          
+          if (team1Odds) oddsContext += `${game.team1}: ${team1Odds}\n`;
+          if (team2Odds) oddsContext += `${game.team2}: ${team2Odds}\n`;
+        });
+        
+        oddsContext += `\nLast Updated: ${new Date(oddsData[0]?.last_updated).toLocaleString()}\n`;
+      }
+    } catch (error) {
+      console.error('Error fetching odds data:', error);
+    }
+
     // Enhanced system prompt for advanced sports betting assistant
     const systemPrompt = `You are SportsBot, an elite AI sports betting assistant with extensive knowledge of:
 
@@ -108,6 +172,7 @@ CURRENT CONTEXT:
 - You understand betting market dynamics and can identify value
 - You're familiar with all major sportsbooks and their characteristics
 - You can analyze trends, patterns, and statistical edges
+- Use the CURRENT GAMES & ODDS DATA below to provide specific recommendations
 
 RESPONSE STYLE:
 - Be conversational yet professional
@@ -115,9 +180,12 @@ RESPONSE STYLE:
 - Always emphasize responsible gambling practices
 - Include confidence levels and reasoning for recommendations
 - Reference real data and market conditions when available
-- Ask clarifying questions when context is needed
+- When discussing games, use the actual data provided below
+- Highlight line movements and value opportunities you identify
 
 IMPORTANT: You provide analysis and insights for educational purposes. Always remind users that no bet is guaranteed and to only bet what they can afford to lose.
+
+${oddsContext}
 
 Current conversation context: The user is seeking betting advice, strategy help, or analysis.`;
 
