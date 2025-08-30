@@ -115,6 +115,11 @@ export const useAIChat = () => {
             }
           }
         }
+        // Ensure we don't leave an empty assistant message
+        setMessages(prev => prev.map(msg => msg.id === assistantMessage.id && (msg.content.trim() === '')
+          ? { ...msg, content: "I'm having trouble generating a response right now. Could you try rephrasing your question or ask about something specific like odds analysis or betting strategies?" }
+          : msg
+        ));
       } else if (response.data?.message) {
         // Handle non-streaming response
         const assistantMessage: AIChatMessage = {

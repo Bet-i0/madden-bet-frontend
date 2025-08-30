@@ -167,8 +167,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'gpt-5-mini-2025-08-07',
         messages: openAIMessages,
-        max_completion_tokens: 1000,
-        stream,
+        max_completion_tokens: 1000
       }),
     });
 
@@ -178,44 +177,36 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${error}`);
     }
 
+    // Parse OpenAI JSON (non-streaming) and build response content
+    const data = await openAIResponse.json();
+    console.log('OpenAI response data:', JSON.stringify(data, null, 2));
+
+    let responseContent: string = data.choices?.[0]?.message?.content || '';
+
+    // Fallback if response is empty or missing
+    if (!responseContent || responseContent.trim() === '') {
+      console.log('Empty response from OpenAI, using fallback');
+      responseContent = "I'm having trouble generating a response right now. Could you try rephrasing your question or ask about something specific like odds analysis or betting strategies?";
+    }
+
     if (stream) {
-      // Handle streaming response
-      const stream = new TransformStream();
-      const writer = stream.writable.getWriter();
+      // Simulate SSE stream to the client from a non-streaming OpenAI response
+      const sse = new TransformStream();
+      const writer = sse.writable.getWriter();
       const encoder = new TextEncoder();
 
-      // Process the streaming response
       (async () => {
         try {
-          const reader = openAIResponse.body?.getReader();
-          if (!reader) return;
+          // Split content into small chunks to provide a smooth streaming experience
+          const chunks = responseContent.match(/.{1,80}/g) || [responseContent];
 
-          let totalTokens = 0;
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.choices?.[0]?.delta?.content) {
-                    totalTokens += 1; // Approximate token counting
-                    await writer.write(encoder.encode(`data: ${JSON.stringify(parsed)}\n\n`));
-                  }
-                } catch (e) {
-                  console.error('Error parsing chunk:', e);
-                }
-              }
-            }
+          for (const chunk of chunks) {
+            const payload = { choices: [{ delta: { content: chunk } }] };
+            await writer.write(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
           }
+
+          // Optionally send a done marker (client already ignores it if present)
+          // await writer.write(encoder.encode('data: [DONE]\n\n'));
 
           // Log usage
           await supabase
@@ -223,18 +214,18 @@ serve(async (req) => {
             .insert({
               user_id: user.id,
               endpoint: 'ai-chat',
-              tokens_used: totalTokens,
-              cost: totalTokens * 0.0001 // Approximate cost calculation
+              tokens_used: data.usage?.total_tokens || Math.ceil(responseContent.length / 4),
+              cost: (data.usage?.total_tokens || Math.ceil(responseContent.length / 4)) * 0.0001
             });
 
           await writer.close();
         } catch (error) {
-          console.error('Streaming error:', error);
+          console.error('SSE emit error:', error);
           await writer.abort(error);
         }
       })();
 
-      return new Response(stream.readable, {
+      return new Response(sse.readable, {
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/event-stream',
@@ -243,29 +234,18 @@ serve(async (req) => {
         },
       });
     } else {
-      // Handle non-streaming response
-      const data = await openAIResponse.json();
-      console.log('OpenAI response data:', JSON.stringify(data, null, 2));
-      
-      let responseContent = data.choices?.[0]?.message?.content;
-      
-      // Fallback if response is empty or missing
-      if (!responseContent || responseContent.trim() === '') {
-        console.log('Empty response from OpenAI, using fallback');
-        responseContent = "I'm having trouble generating a response right now. Could you try rephrasing your question or ask about something specific like odds analysis or betting strategies?";
-      }
-
+      // Non-streaming JSON response
       // Log usage
       await supabase
         .from('ai_usage_logs')
         .insert({
           user_id: user.id,
           endpoint: 'ai-chat',
-          tokens_used: data.usage?.total_tokens || 0,
-          cost: (data.usage?.total_tokens || 0) * 0.0001
+          tokens_used: data.usage?.total_tokens || Math.ceil(responseContent.length / 4),
+          cost: (data.usage?.total_tokens || Math.ceil(responseContent.length / 4)) * 0.0001
         });
 
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         message: responseContent,
         usage: { monthlyUsage: monthlyUsage + 1, maxCalls }
       }), {

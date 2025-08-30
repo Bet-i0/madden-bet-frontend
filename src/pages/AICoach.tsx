@@ -112,7 +112,7 @@ const AICoach = () => {
               
               <Card className={`max-w-[80%] ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted border-primary/20'}`}>
                 <CardContent className="p-3">
-                  <p className="leading-relaxed whitespace-pre-line font-normal text-base text-foreground">
+                  <p className="leading-relaxed whitespace-pre-line font-normal text-base">
                     {message.content || "I'm thinking..."}
                   </p>
                   <div className="text-xs opacity-70 mt-2">
