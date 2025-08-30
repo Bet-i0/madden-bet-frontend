@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer, X } from "lucide-react";
+import { ArrowLeft, TrendingUp, Target, Zap, Brain, DollarSign, Users, Clock, CheckCircle, AlertTriangle, TrendingDown, BarChart3, Trophy, Timer, X, RefreshCw } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
 import { SuggestionPick, useAIInsights } from "@/hooks/useAIInsights";
@@ -20,7 +20,7 @@ const AnalyzeStrategies = () => {
   
   const { isAnalyzing, currentAnalysis, analyzeStrategy, clearAnalysis } = useStrategyAnalysis();
   const { getSuggestionPicks } = useAIInsights();
-  const { odds: liveOdds, loading: oddsLoading } = useOddsForStrategies();
+  const { odds: liveOdds, loading: oddsLoading, error: oddsError, refreshing, refreshOdds } = useOddsForStrategies();
 
   // Handle navigation context from trending or other pages
   useEffect(() => {
@@ -337,6 +337,30 @@ const AnalyzeStrategies = () => {
               <p className="text-gray-300">
                 Real-time odds comparison across NFL, NCAAF, NBA, MLB, MLS, EPL
               </p>
+              <div className="mt-4">
+                <Button
+                  variant="gaming"
+                  size="sm"
+                  onClick={refreshOdds}
+                  disabled={refreshing || oddsLoading}
+                  className="hover-glow"
+                >
+                  {refreshing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-neon-green border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Fetching...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh Odds Now
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-gray-500 mt-2">
+                  Note: Manual refresh uses API quota
+                </p>
+              </div>
             </div>
 
             {oddsLoading ? (

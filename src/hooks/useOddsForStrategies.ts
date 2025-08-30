@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface OddsData {
   id: string;
@@ -30,9 +31,9 @@ export const useOddsForStrategies = () => {
   const [odds, setOdds] = useState<GroupedOdds[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchOdds = async () => {
+  const fetchOdds = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -118,13 +119,51 @@ export const useOddsForStrategies = () => {
       } catch (err) {
         console.error('Error fetching strategy odds:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch odds');
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOdds();
   }, []);
 
-  return { odds, loading, error };
+  const refreshOdds = async () => {
+    try {
+      setRefreshing(true);
+      
+      // Call the fetch-odds edge function to get fresh data
+      const { error: functionError } = await supabase.functions.invoke('fetch-odds');
+      
+      if (functionError) {
+        throw functionError;
+      }
+      
+      // Wait a moment for the function to complete and data to be inserted
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Fetch the updated odds
+      await fetchOdds();
+      
+      toast({
+        title: "Odds refreshed",
+        description: "Live odds have been updated successfully.",
+      });
+      
+    } catch (err) {
+      console.error('Error refreshing odds:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to refresh odds';
+      setError(errorMessage);
+      
+      toast({
+        title: "Refresh failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  return { odds, loading, error, refreshing, refreshOdds };
 };
