@@ -7,7 +7,8 @@ import {
   Target,
   TrendingUp,
   Activity,
-  Bookmark
+  Bookmark,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import SaveBetDialog from "@/components/SaveBetDialog";
 import { useProfile } from "@/hooks/useProfile";
+import { useOddsLastUpdated } from "@/hooks/useOddsLastUpdated";
 import BackToHome from "@/components/BackToHome";
 
 interface Message {
@@ -42,6 +44,7 @@ const AICoach = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { lastUpdated: oddsLastUpdated, loading: oddsLoading } = useOddsLastUpdated();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -205,6 +208,18 @@ const AICoach = () => {
             <div className="text-xs text-muted-foreground">
               {new Date().toLocaleTimeString()}
             </div>
+            {profile && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <Clock className="h-3 w-3" />
+                <span>
+                  Odds: {oddsLoading ? '—' : 
+                    oddsLastUpdated ? 
+                      oddsLastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
+                      'No odds yet'
+                  }
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
