@@ -9,7 +9,10 @@ interface APIToggleContextType {
 const APIToggleContext = createContext<APIToggleContextType | undefined>(undefined);
 
 export const APIToggleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAPIEnabled, setIsAPIEnabled] = useState(true);
+  const [isAPIEnabled, setIsAPIEnabled] = useState(() => {
+    const saved = localStorage.getItem('api-toggle-state');
+    return saved ? JSON.parse(saved) : true;
+  });
   const { toast } = useToast();
 
   const toggleAPI = (command: string) => {
@@ -17,6 +20,7 @@ export const APIToggleProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     if (normalizedCommand === 'j.a.r.v.i.s') {
       setIsAPIEnabled(true);
+      localStorage.setItem('api-toggle-state', 'true');
       toast({
         title: "J.A.R.V.I.S Online",
         description: "All API systems activated",
@@ -24,6 +28,7 @@ export const APIToggleProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
     } else if (normalizedCommand === 'f.r.i.d.a.y.') {
       setIsAPIEnabled(false);
+      localStorage.setItem('api-toggle-state', 'false');
       toast({
         title: "F.R.I.D.A.Y. Protocol",
         description: "All API systems paused",
