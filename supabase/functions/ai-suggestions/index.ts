@@ -30,7 +30,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY_SUGGESTIONS');
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
