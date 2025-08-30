@@ -30,17 +30,16 @@ serve(async (req) => {
 
     console.log('Starting odds fetch process...');
 
-    // Sports to fetch odds for - expanded coverage
+    // Sports to fetch odds for - focusing on football only
     const sports = [
       'americanfootball_nfl', 
-      'americanfootball_ncaaf',
-      'basketball_nba', 
-      'baseball_mlb',
-      'soccer_mls',
-      'soccer_epl'
+      'americanfootball_ncaaf'
     ];
     const regions = 'us';
     const markets = 'h2h,spreads,totals';
+    
+    // Target bookmakers to reduce data load
+    const targetBookmakers = ['draftkings', 'betmgm', 'fanduel', 'williamhill_us'];
 
     let totalOddsInserted = 0;
 
@@ -83,6 +82,11 @@ serve(async (req) => {
           const league = sport.replace('_', ' ').toUpperCase();
           
           for (const bookmaker of game.bookmakers) {
+            // Filter to only target bookmakers
+            if (!targetBookmakers.includes(bookmaker.key)) {
+              continue;
+            }
+            
             for (const market of bookmaker.markets) {
               for (const outcome of market.outcomes) {
                 const oddsSnapshot = {
