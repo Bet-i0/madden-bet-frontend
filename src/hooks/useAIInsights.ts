@@ -121,51 +121,7 @@ export const useAIInsights = () => {
     }
   }, []);
 
-  // Fallback mock data when API fails
-  const generateFallbackSuggestions = (trendId: number, category: SuggestionCategory): SuggestionPick[] => {
-    return [
-      {
-        id: `fallback-${trendId}-${category}-1`,
-        category,
-        market: "Moneyline",
-        title: "Chiefs to win vs Raiders", 
-        odds: -150,
-        bookmaker: "draftkings",
-        confidence: 78,
-        rationale: "Strong home field advantage and recent performance trends favor the Chiefs in this divisional matchup.",
-        game: "Kansas City Chiefs vs Las Vegas Raiders",
-        league: "NFL",
-        startTime: "2024-01-15T18:00:00Z",
-      },
-      {
-        id: `fallback-${trendId}-${category}-2`,
-        category,
-        market: "Point Spread",
-        title: "Lakers +3.5 vs Warriors",
-        odds: -110,
-        bookmaker: "fanduel", 
-        confidence: 65,
-        rationale: "Lakers have covered the spread in 4 of their last 5 games against Golden State, showing strong recent performance.",
-        game: "Los Angeles Lakers vs Golden State Warriors",
-        league: "NBA",
-        startTime: "2024-01-15T22:00:00Z",
-      },
-      {
-        id: `fallback-${trendId}-${category}-3`,
-        category,
-        market: "Over/Under",
-        title: "Over 52.5 total points",
-        odds: -105,
-        bookmaker: "caesars",
-        confidence: 82,
-        rationale: "Both teams averaging high-scoring games this season with favorable weather conditions expected.",
-        game: "Buffalo Bills vs Miami Dolphins", 
-        league: "NFL",
-        startTime: "2024-01-16T13:00:00Z",
-      }
-    ];
-  };
-
+  // Clear insight
   const clearInsight = () => {
     setCurrentInsight(null);
   };

@@ -135,37 +135,73 @@ serve(async (req) => {
 
       const prompt = customPrompt || getStrategyPrompt(strategyId, strategyName);
       
-      const fullPrompt = `Analyze this betting strategy in detail:
+      const fullPrompt = `As a senior sports betting strategist and quantitative analyst with 20+ years of experience managing professional betting operations, conduct a comprehensive analysis of this betting strategy:
 
+STRATEGY TO ANALYZE:
 ${prompt}
 
-Current market context:
+CURRENT MARKET CONDITIONS:
 ${oddsContext}
 
-Provide a comprehensive analysis in JSON format with the following structure:
+ANALYSIS FRAMEWORK:
+Evaluate this strategy across multiple dimensions using professional betting industry standards:
+
+1. STATISTICAL FOUNDATION
+   - Historical win rate analysis and sample size adequacy
+   - Expected value calculations and long-term profitability
+   - Variance analysis and bankroll requirements
+   - Market efficiency considerations
+
+2. IMPLEMENTATION LOGISTICS
+   - Required capital and time commitments
+   - Technical skill level needed for execution
+   - Market access and liquidity requirements
+   - Scalability limitations and optimal bet sizing
+
+3. RISK ASSESSMENT
+   - Maximum drawdown scenarios and recovery time
+   - Market condition dependencies (volume, volatility)
+   - Regulatory and operational risks
+   - Psychological and emotional challenges
+
+4. COMPETITIVE LANDSCAPE
+   - Market saturation and edge degradation
+   - Professional vs recreational applicability
+   - Technology and data requirements
+   - Adaptation strategies for changing markets
+
+Provide a detailed JSON analysis including realistic performance metrics based on current market conditions. Consider that successful betting strategies typically have:
+- Win rates between 52-58% for spread betting
+- ROI expectations of 3-15% annually for professional operations  
+- Drawdown periods of 15-25% in challenging market conditions
+- Sample sizes of 500+ bets for statistical significance
+
+JSON Response Format:
 {
-  "confidence": number (60-95),
-  "expectedRoi": string (e.g., "+12.3%"),
-  "riskLevel": "LOW" | "MEDIUM" | "HIGH",
-  "timeframe": string (e.g., "Live execution", "2-4 hours", "24 hours"),
-  "strengths": [list of 3-4 strength points],
-  "weaknesses": [list of 2-3 weakness points],
-  "recommendations": [list of 3-4 actionable recommendations],
+  "confidence": number (60-95 based on strategy viability),
+  "expectedRoi": string (realistic annual ROI expectation),
+  "riskLevel": "LOW" | "MEDIUM" | "HIGH" (based on volatility and requirements),
+  "timeframe": string (realistic timeline for strategy execution),
+  "strengths": [detailed strength analysis with specific examples],
+  "weaknesses": [honest weakness assessment with mitigation strategies],
+  "recommendations": [actionable implementation steps with specific guidance],
   "historicalPerformance": {
-    "totalBets": number,
-    "winRate": number (percentage),
-    "avgReturn": number (percentage),
-    "bestStreak": number,
-    "worstStreak": number (negative)
+    "totalBets": realistic sample size,
+    "winRate": percentage based on strategy type,
+    "avgReturn": percentage per bet,
+    "bestStreak": realistic winning streak,
+    "worstStreak": realistic losing streak (negative number)
   },
-  "marketConditions": [list of 2-3 optimal market conditions],
+  "marketConditions": [specific market scenarios where strategy excels],
   "keyMetrics": {
-    "sharpeRatio": number,
-    "maxDrawdown": string (e.g., "-12.8%"),
-    "profitFactor": number,
-    "avgHoldTime": string
+    "sharpeRatio": realistic risk-adjusted return ratio,
+    "maxDrawdown": realistic maximum losing streak percentage,
+    "profitFactor": realistic gross wins to gross losses ratio,
+    "avgHoldTime": realistic position holding duration
   }
-}`;
+}
+
+Base your analysis on real market dynamics, professional betting industry standards, and current sportsbook limitations.`;
 
       try {
         const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -177,7 +213,10 @@ Provide a comprehensive analysis in JSON format with the following structure:
           body: JSON.stringify({
             model: 'gpt-5-2025-08-07',
             messages: [
-              { role: 'system', content: 'You are an expert sports betting strategist. Provide detailed, realistic analysis based on actual betting principles and market dynamics.' },
+              { 
+                role: 'system', 
+                content: 'You are a senior quantitative analyst and professional sports bettor with extensive experience in strategy development, risk management, and market analysis. You understand the nuances of sports betting markets, including line movement, public vs sharp money, and the mathematical foundations of profitable betting strategies. Provide detailed, realistic analysis based on actual market conditions and professional betting industry standards.' 
+              },
               { role: 'user', content: fullPrompt }
             ],
             max_completion_tokens: 2000,

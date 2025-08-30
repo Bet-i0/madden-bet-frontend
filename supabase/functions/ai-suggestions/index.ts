@@ -160,17 +160,38 @@ serve(async (req) => {
         `${odds.team1} vs ${odds.team2} (${odds.league}) - ${odds.market}: ${odds.odds} (${odds.bookmaker})`
       ).join('\n');
 
-      const prompt = `Based on trending topic #${trendId} and category "${category}", analyze these current sports betting odds and generate 3-5 betting suggestions:
+      const prompt = `As an elite sports betting analyst with 15+ years of experience, analyze the trending topic "${trendId}" in category "${category}" alongside current sports betting market data.
 
+CURRENT MARKET DATA:
 ${oddsContext}
 
-For each suggestion, provide:
-1. A clear betting recommendation
-2. Confidence level (1-100)
-3. Brief rationale
-4. Relevant game and market
+ANALYSIS REQUIREMENTS:
+1. Identify 3-5 high-value betting opportunities based on the trending topic and current odds
+2. Consider line movement, public sentiment, and sharp money indicators
+3. Account for the specific category focus: ${category}
+4. Provide detailed reasoning for each recommendation
+5. Include confidence levels based on data strength and market inefficiencies
 
-Respond in JSON format with array of objects containing: id, category, market, title, odds, bookmaker, confidence, rationale, game, league, startTime`;
+STRATEGY CONTEXT:
+- Value Hunter: Focus on line discrepancies and closing line value
+- Momentum Play: Identify reverse line movement and public vs sharp money
+- Injury Impact: React to late-breaking news affecting odds
+- Weather Edge: Consider environmental factors for outdoor sports
+
+For each betting suggestion, provide a JSON object with:
+- id: unique identifier
+- category: "${category}"
+- market: specific betting market (Moneyline/Point Spread/Over-Under/Player Props)
+- title: clear, concise bet description
+- odds: American odds format (+/-)
+- bookmaker: specific sportsbook offering best value
+- confidence: percentage (60-95) based on data strength
+- rationale: detailed explanation (2-3 sentences) of why this bet offers value
+- game: full team names
+- league: sport league
+- startTime: ISO timestamp of game start
+
+Respond with a JSON array of betting suggestions. Focus on actionable insights with clear value propositions.`;
 
       try {
         const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -182,7 +203,10 @@ Respond in JSON format with array of objects containing: id, category, market, t
           body: JSON.stringify({
             model: 'gpt-4o-mini',
             messages: [
-              { role: 'system', content: 'You are an expert sports betting analyst. Provide detailed, data-driven betting suggestions.' },
+              { 
+                role: 'system', 
+                content: 'You are a professional sports betting analyst with expertise in market inefficiencies, line movement analysis, and value identification. You have access to real-time odds data and understand how public sentiment affects betting markets. Always provide data-driven recommendations with clear reasoning.' 
+              },
               { role: 'user', content: prompt }
             ],
             max_tokens: 2000,

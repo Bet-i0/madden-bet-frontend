@@ -161,3 +161,9 @@ verify_jwt = true
 
 [functions.ai-chat]
 verify_jwt = true
+
+[functions.ai-strategy-analysis]
+verify_jwt = true
+
+[functions.trending-data]
+verify_jwt = true
