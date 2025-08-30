@@ -39,7 +39,7 @@ serve(async (req) => {
     const markets = 'h2h,spreads,totals';
     
     // Target bookmakers to reduce data load
-    const targetBookmakers = ['draftkings', 'betmgm', 'fanduel', 'williamhill_us'];
+    const targetBookmakers = ['draftkings', 'betmgm', 'fanduel', 'caesars', 'williamhill_us'];
 
     let totalOddsInserted = 0;
 
@@ -79,7 +79,8 @@ serve(async (req) => {
             continue;
           }
           
-          const league = sport.replace('_', ' ').toUpperCase();
+          // Normalize league for consistent filtering
+          const league = sport === 'americanfootball_nfl' ? 'NFL' : 'NCAAF';
           
           for (const bookmaker of game.bookmakers) {
             // Filter to only target bookmakers

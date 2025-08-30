@@ -46,8 +46,8 @@ export const useOddsForStrategies = () => {
         const { data: allOdds, error: fetchError } = await supabase
           .from('odds_snapshots')
           .select('*')
-          .in('league', ['NFL', 'NCAAF']) // Focus strictly on football
-          .in('bookmaker', ['draftkings', 'betmgm', 'fanduel', 'williamhill_us']) // Target bookmakers only
+          .in('sport', ['americanfootball_nfl', 'americanfootball_ncaaf']) // Focus strictly on football
+          .in('bookmaker', ['draftkings', 'betmgm', 'fanduel', 'caesars', 'williamhill_us']) // Target bookmakers only
           .gte('game_date', sixHoursAgo.toISOString())
           .lte('game_date', oneDayFromNow.toISOString())
           .order('last_updated', { ascending: false })

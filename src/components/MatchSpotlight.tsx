@@ -30,6 +30,8 @@ const MatchSpotlight = () => {
         const { data, error } = await supabase
           .from('odds_snapshots')
           .select('*')
+          .in('sport', ['americanfootball_nfl', 'americanfootball_ncaaf']) // Focus strictly on football
+          .in('bookmaker', ['draftkings', 'betmgm', 'fanduel', 'caesars', 'williamhill_us']) // Target bookmakers only
           .like('market', 'h2h%') // head-to-head/moneyline odds (includes team selections)
           .gte('game_date', sixHoursAgo.toISOString())
           .lte('game_date', oneDayFromNow.toISOString())
