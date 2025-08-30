@@ -335,7 +335,7 @@ const AnalyzeStrategies = () => {
                 LIVE SPORTSBOOK ODDS
               </h2>
               <p className="text-gray-300">
-                Real-time odds comparison across NFL, NCAAF, NBA, MLB, MLS, EPL
+                Real-time football odds comparison (NFL & NCAAF only)
               </p>
               <div className="mt-4">
                 <Button

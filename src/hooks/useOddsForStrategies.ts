@@ -46,10 +46,11 @@ export const useOddsForStrategies = () => {
         const { data: allOdds, error: fetchError } = await supabase
           .from('odds_snapshots')
           .select('*')
+          .in('league', ['NFL', 'NCAAF']) // Focus strictly on football
           .gte('game_date', sixHoursAgo.toISOString())
           .lte('game_date', oneDayFromNow.toISOString())
           .order('last_updated', { ascending: false })
-          .limit(200); // Get enough data to work with
+          .limit(100); // Reduced limit for better performance
 
         if (fetchError) {
           throw fetchError;
