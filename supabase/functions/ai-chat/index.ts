@@ -245,7 +245,15 @@ serve(async (req) => {
     } else {
       // Handle non-streaming response
       const data = await openAIResponse.json();
-      const responseContent = data.choices[0].message.content;
+      console.log('OpenAI response data:', JSON.stringify(data, null, 2));
+      
+      let responseContent = data.choices?.[0]?.message?.content;
+      
+      // Fallback if response is empty or missing
+      if (!responseContent || responseContent.trim() === '') {
+        console.log('Empty response from OpenAI, using fallback');
+        responseContent = "I'm having trouble generating a response right now. Could you try rephrasing your question or ask about something specific like odds analysis or betting strategies?";
+      }
 
       // Log usage
       await supabase
