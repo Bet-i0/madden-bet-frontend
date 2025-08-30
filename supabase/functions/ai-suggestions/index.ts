@@ -115,9 +115,9 @@ serve(async (req) => {
     let suggestions: SuggestionPick[] = [];
 
     if (!openaiApiKey) {
-      console.log('OpenAI API key not found, returning mock data');
-      // Generate mock suggestions when OpenAI key is not available
-      suggestions = generateMockSuggestions(trendId, category);
+      console.log('OpenAI API key not found, building suggestions from live odds');
+      // Build real suggestions from live odds when OpenAI key is not available
+      suggestions = buildSuggestionsFromOdds(oddsData || [], category);
     } else {
       // Generate AI suggestions using OpenAI
       console.log('Generating AI suggestions with OpenAI...');
@@ -158,8 +158,18 @@ Respond in JSON format with array of objects containing: id, category, market, t
 
         if (openaiResponse.ok) {
           const aiData = await openaiResponse.json();
-          const aiSuggestions = JSON.parse(aiData.choices[0].message.content);
-          suggestions = Array.isArray(aiSuggestions) ? aiSuggestions : aiSuggestions.suggestions || [];
+          const raw = aiData?.choices?.[0]?.message?.content ?? '[]';
+          const cleaned = String(raw).replace(/```json|```/g, '').trim();
+          let aiSuggestionsParsed: any = [];
+          try {
+            aiSuggestionsParsed = JSON.parse(cleaned);
+          } catch (e) {
+            console.error('Failed to parse OpenAI JSON, falling back to live odds:', e);
+          }
+          suggestions = Array.isArray(aiSuggestionsParsed) ? aiSuggestionsParsed : (aiSuggestionsParsed?.suggestions || []);
+          if (!suggestions || suggestions.length === 0) {
+            suggestions = buildSuggestionsFromOdds(oddsData || [], category);
+          }
           
           // Log usage
           await supabase.from('ai_usage_logs').insert({
@@ -170,11 +180,11 @@ Respond in JSON format with array of objects containing: id, category, market, t
           });
         } else {
           console.error('OpenAI API error:', await openaiResponse.text());
-          suggestions = generateMockSuggestions(trendId, category);
+          suggestions = buildSuggestionsFromOdds(oddsData || [], category);
         }
       } catch (error) {
         console.error('Error calling OpenAI API:', error);
-        suggestions = generateMockSuggestions(trendId, category);
+        suggestions = buildSuggestionsFromOdds(oddsData || [], category);
       }
     }
 
@@ -205,6 +215,127 @@ Respond in JSON format with array of objects containing: id, category, market, t
     );
   }
 });
+
+// Build real suggestions from live odds
+function toAmerican(decimal: number): number {
+  if (!decimal || decimal <= 1) return 0;
+  if (decimal >= 2) return Math.round((decimal - 1) * 100);
+  return Math.round(-100 / (decimal - 1));
+}
+
+function marketInfo(market: string): { type: string; selection: string } {
+  if (market.startsWith('h2h_')) return { type: 'Moneyline', selection: market.slice(4) };
+  if (market.startsWith('spreads_')) return { type: 'Point Spread', selection: market.slice(8) };
+  if (market.startsWith('totals_')) return { type: 'Over/Under', selection: market.slice(7) };
+  return { type: 'Market', selection: market };
+}
+
+function buildTitle(row: any): string {
+  const info = marketInfo(row.market);
+  if (info.type === 'Moneyline') {
+    const opponent = row.team1 === info.selection ? row.team2 : row.team1;
+    return `${info.selection} ML vs ${opponent}`;
+  }
+  if (info.type === 'Point Spread') {
+    return `${info.selection} Spread`;
+  }
+  if (info.type === 'Over/Under') {
+    return `${info.selection} ${row.team1} vs ${row.team2}`;
+  }
+  return `${info.type} ${info.selection}`;
+}
+
+function buildSuggestionsFromOdds(oddsData: any[] = [], category: string): SuggestionPick[] {
+  if (!oddsData || oddsData.length === 0) return [];
+
+  const byKey = new Map<string, any[]>();
+  for (const row of oddsData) {
+    const key = `${row.team1}|${row.team2}|${row.market}`;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key)!.push(row);
+  }
+
+  const groups = Array.from(byKey.values());
+
+  function pickBestByDiscrepancy(filter: (r: any) => boolean): SuggestionPick[] {
+    const candidates: { row: any; diffPct: number }[] = [];
+    for (const group of groups) {
+      const rows = group.filter(filter);
+      if (rows.length < 2) continue;
+      const avg = rows.reduce((s, r) => s + Number(r.odds), 0) / rows.length;
+      const best = rows.reduce((a, b) => (Number(a.odds) > Number(b.odds) ? a : b));
+      const diffPct = (Number(best.odds) - avg) / avg;
+      candidates.push({ row: best, diffPct });
+    }
+    candidates.sort((a, b) => b.diffPct - a.diffPct);
+    return candidates.slice(0, 4).map(({ row, diffPct }, i) => {
+      const info = marketInfo(row.market);
+      const american = toAmerican(Number(row.odds));
+      const confidence = Math.min(92, Math.max(65, Math.round(70 + diffPct * 100)));
+      return {
+        id: `${category}-${row.id}`,
+        category,
+        market: info.type,
+        title: buildTitle(row),
+        odds: american,
+        bookmaker: row.bookmaker,
+        confidence,
+        rationale: `Best price vs market average (+${(diffPct*100).toFixed(1)}%). Line value from live odds across books.`,
+        game: `${row.team1} vs ${row.team2}`,
+        league: row.league || row.sport,
+        startTime: row.game_date || row.last_updated || new Date().toISOString(),
+      } as SuggestionPick;
+    });
+  }
+
+  if (category === 'value-hunter') {
+    return pickBestByDiscrepancy(() => true).slice(0, 3);
+  }
+
+  if (category === 'momentum-play') {
+    const recent = [...oddsData]
+      .filter(r => String(r.market).startsWith('h2h_') || String(r.market).startsWith('spreads_'))
+      .sort((a, b) => new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime())
+      .slice(0, 20);
+
+    const seen = new Set<string>();
+    const picks: SuggestionPick[] = [];
+    for (const row of recent) {
+      const key = `${row.team1}|${row.team2}|${row.market}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const info = marketInfo(row.market);
+      picks.push({
+        id: `${category}-${row.id}`,
+        category,
+        market: info.type,
+        title: buildTitle(row),
+        odds: toAmerican(Number(row.odds)),
+        bookmaker: row.bookmaker,
+        confidence: 75,
+        rationale: `Recent line update detected (${new Date(row.last_updated).toLocaleTimeString()} UTC). Potential momentum opportunity.`,
+        game: `${row.team1} vs ${row.team2}`,
+        league: row.league || row.sport,
+        startTime: row.game_date || row.last_updated || new Date().toISOString(),
+      });
+      if (picks.length >= 3) break;
+    }
+    if (picks.length) return picks;
+    return pickBestByDiscrepancy(r => String(r.market).startsWith('h2h_') || String(r.market).startsWith('spreads_')).slice(0, 3);
+  }
+
+  if (category === 'injury-impact') {
+    return pickBestByDiscrepancy(r => String(r.market).startsWith('spreads_')).slice(0, 3);
+  }
+
+  if (category === 'weather-edge') {
+    const totals = pickBestByDiscrepancy(r => String(r.market).startsWith('totals_'));
+    return totals.slice(0, 3);
+  }
+
+  // Default
+  return pickBestByDiscrepancy(() => true).slice(0, 3);
+}
 
 function generateMockSuggestions(trendId: number, category: string): SuggestionPick[] {
   const baseTime = Date.now();

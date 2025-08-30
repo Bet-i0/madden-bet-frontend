@@ -100,12 +100,12 @@ export const useAIInsights = () => {
 
       if (error) {
         console.error('Error calling ai-suggestions function:', error);
-        // Check if it's a rate limit error
-        if (error.message?.includes('usage limit')) {
-          toast.error('AI suggestion limit reached for this month. Upgrade your plan for more suggestions.');
+        if ((error as any).message?.includes('usage limit')) {
+          toast.error('AI suggestion limit reached this month.');
+        } else {
+          toast.error('Unable to load AI suggestions right now.');
         }
-        // Fallback to mock data
-        return generateFallbackSuggestions(trendId, category);
+        return [];
       }
 
       const suggestions = data.suggestions || [];
@@ -116,8 +116,8 @@ export const useAIInsights = () => {
       return suggestions;
     } catch (error) {
       console.error('Error fetching AI suggestions:', error);
-      // Fallback to mock data
-      return generateFallbackSuggestions(trendId, category);
+      toast.error('Unable to load AI suggestions right now.');
+      return [];
     }
   }, []);
 
