@@ -70,7 +70,8 @@ export const useAIChat = () => {
       if (response.error) throw response.error;
 
       if (streaming && response.data) {
-        // Handle streaming response
+        console.debug('Handling streaming response, type:', typeof response.data);
+        
         const assistantMessage: AIChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -80,16 +81,47 @@ export const useAIChat = () => {
 
         setMessages(prev => [...prev, assistantMessage]);
 
-        // Parse the streaming response
-        const reader = response.data.getReader();
-        const decoder = new TextDecoder();
+        // Check if we have a true ReadableStream
+        if (typeof response.data?.getReader === 'function') {
+          console.debug('Using ReadableStream.getReader()');
+          const reader = response.data.getReader();
+          const decoder = new TextDecoder();
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim());
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim());
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta?.content;
+                  
+                  if (delta) {
+                    setMessages(prev => 
+                      prev.map(msg => 
+                        msg.id === assistantMessage.id 
+                          ? { ...msg, content: msg.content + delta }
+                          : msg
+                      )
+                    );
+                  }
+                } catch (e) {
+                  console.error('Error parsing streaming chunk:', e);
+                }
+              }
+            }
+          }
+        } else if (typeof response.data === 'string') {
+          // Handle SSE delivered as a single string
+          console.debug('Parsing SSE string response');
+          const lines = response.data.split('\n').filter(line => line.trim());
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
@@ -110,18 +142,39 @@ export const useAIChat = () => {
                   );
                 }
               } catch (e) {
-                console.error('Error parsing streaming chunk:', e);
+                console.error('Error parsing SSE string chunk:', e);
               }
             }
           }
+        } else if (response.data?.message) {
+          // Handle JSON response with message
+          console.debug('Using JSON message response');
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === assistantMessage.id 
+                ? { ...msg, content: response.data.message }
+                : msg
+            )
+          );
+        } else {
+          console.debug('Unknown response format, using fallback');
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === assistantMessage.id 
+                ? { ...msg, content: "I'm having trouble generating a response right now. Could you try rephrasing your question or ask about something specific like odds analysis or betting strategies?" }
+                : msg
+            )
+          );
         }
+
         // Ensure we don't leave an empty assistant message
-        setMessages(prev => prev.map(msg => msg.id === assistantMessage.id && (msg.content.trim() === '')
+        setMessages(prev => prev.map(msg => msg.id === assistantMessage.id && msg.content.trim() === ''
           ? { ...msg, content: "I'm having trouble generating a response right now. Could you try rephrasing your question or ask about something specific like odds analysis or betting strategies?" }
           : msg
         ));
       } else if (response.data?.message) {
         // Handle non-streaming response
+        console.debug('Using non-streaming JSON response');
         const assistantMessage: AIChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
