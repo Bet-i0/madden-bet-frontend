@@ -71,8 +71,8 @@ export default {
 				'card': 'var(--shadow-card)'
 			},
 			fontFamily: {
-				'gaming': ['Orbitron', 'Exo 2', 'Rajdhani', 'sans-serif'],
-				'sports': ['Bebas Neue', 'Anton', 'Oswald', 'sans-serif']
+				'gaming': ['Orbitron', 'sans-serif'],
+				'sports': ['Bebas Neue', 'sans-serif']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

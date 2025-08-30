@@ -11,7 +11,7 @@ import {
   Zap,
   Wrench
 } from 'lucide-react';
-import stadiumBg from '@/assets/stadium-bg.jpg';
+import stadiumBg from '@/assets/stadium-bg-optimized.jpg';
 import TopBar from '@/components/TopBar';
 import MatchSpotlight from '@/components/MatchSpotlight';
 import AIInsightsPreview from '@/components/AIInsightsPreview';
@@ -57,7 +57,10 @@ const Index = () => {
       <section className="relative overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${stadiumBg})` }}
+          style={{ 
+            backgroundImage: `url(${stadiumBg})`,
+            willChange: 'transform'
+          }}
         />
         <div className="absolute inset-0 bg-gradient-hero" />
         
