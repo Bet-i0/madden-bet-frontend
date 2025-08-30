@@ -576,6 +576,48 @@ export type Database = {
         }
         Relationships: []
       }
+      strategy_content: {
+        Row: {
+          confidence: number
+          content: Json
+          created_at: string
+          expected_roi: string
+          id: string
+          picks: Json
+          strategy_id: string
+          strategy_name: string
+          timeframe: string
+          updated_at: string
+          valid_until: string
+        }
+        Insert: {
+          confidence?: number
+          content: Json
+          created_at?: string
+          expected_roi?: string
+          id?: string
+          picks?: Json
+          strategy_id: string
+          strategy_name: string
+          timeframe?: string
+          updated_at?: string
+          valid_until: string
+        }
+        Update: {
+          confidence?: number
+          content?: Json
+          created_at?: string
+          expected_roi?: string
+          id?: string
+          picks?: Json
+          strategy_id?: string
+          strategy_name?: string
+          timeframe?: string
+          updated_at?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           ai_calls_per_month: number

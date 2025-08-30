@@ -9,6 +9,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useStrategyAnalysis } from "@/hooks/useStrategyAnalysis";
 import { SuggestionPick, useAIInsights } from "@/hooks/useAIInsights";
 import { useOddsForStrategies } from "@/hooks/useOddsForStrategies";
+import { useStrategyContent } from "@/hooks/useStrategyContent";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
@@ -21,6 +22,7 @@ const AnalyzeStrategies = () => {
   const { isAnalyzing, currentAnalysis, analyzeStrategy, clearAnalysis } = useStrategyAnalysis();
   const { getSuggestionPicks } = useAIInsights();
   const { odds: liveOdds, loading: oddsLoading, error: oddsError, refreshing, refreshOdds } = useOddsForStrategies();
+  const { strategyContent, loading: contentLoading, generateNewContent } = useStrategyContent();
 
   // Handle navigation context from trending or other pages
   useEffect(() => {
@@ -175,41 +177,41 @@ const AnalyzeStrategies = () => {
       id: "value-hunter",
       title: "Value Hunter Pro",
       description: "AI identifies line discrepancies across books for maximum value",
-      confidence: 87,
-      expectedRoi: calculateExpectedROI(strategyPicks['value-hunter'] || []),
-      timeframe: calculateTimeframe(strategyPicks['value-hunter'] || [], 'value-hunter'),
+      confidence: strategyContent['value-hunter']?.confidence || 87,
+      expectedRoi: strategyContent['value-hunter']?.expected_roi || calculateExpectedROI(strategyPicks['value-hunter'] || []),
+      timeframe: strategyContent['value-hunter']?.timeframe || calculateTimeframe(strategyPicks['value-hunter'] || [], 'value-hunter'),
       tags: ["Line Shopping", "Value Betting", "AI Powered"],
-      picks: strategyPicks['value-hunter'] || []
+      picks: Array.isArray(strategyContent['value-hunter']?.picks) ? strategyContent['value-hunter'].picks : (strategyPicks['value-hunter'] || [])
     },
     {
       id: "momentum-play",
       title: "Momentum Surge",
       description: "Capitalize on rapid line movements and public sentiment shifts",
-      confidence: 92,
-      expectedRoi: calculateExpectedROI(strategyPicks['momentum-play'] || []),
-      timeframe: calculateTimeframe(strategyPicks['momentum-play'] || [], 'momentum-play'),
+      confidence: strategyContent['momentum-play']?.confidence || 92,
+      expectedRoi: strategyContent['momentum-play']?.expected_roi || calculateExpectedROI(strategyPicks['momentum-play'] || []),
+      timeframe: strategyContent['momentum-play']?.timeframe || calculateTimeframe(strategyPicks['momentum-play'] || [], 'momentum-play'),
       tags: ["Line Movement", "Public Betting", "Contrarian"],
-      picks: strategyPicks['momentum-play'] || []
+      picks: Array.isArray(strategyContent['momentum-play']?.picks) ? strategyContent['momentum-play'].picks : (strategyPicks['momentum-play'] || [])
     },
     {
       id: "injury-impact",
       title: "Injury Intelligence", 
       description: "React to late-breaking injury news before lines adjust",
-      confidence: 78,
-      expectedRoi: calculateExpectedROI(strategyPicks['injury-impact'] || []),
-      timeframe: calculateTimeframe(strategyPicks['injury-impact'] || [], 'injury-impact'),
+      confidence: strategyContent['injury-impact']?.confidence || 78,
+      expectedRoi: strategyContent['injury-impact']?.expected_roi || calculateExpectedROI(strategyPicks['injury-impact'] || []),
+      timeframe: strategyContent['injury-impact']?.timeframe || calculateTimeframe(strategyPicks['injury-impact'] || [], 'injury-impact'),
       tags: ["Breaking News", "Player Props", "Fast Action"],
-      picks: strategyPicks['injury-impact'] || []
+      picks: Array.isArray(strategyContent['injury-impact']?.picks) ? strategyContent['injury-impact'].picks : (strategyPicks['injury-impact'] || [])
     },
     {
       id: "weather-edge",
       title: "Weather Warrior",
       description: "Exploit weather-dependent betting opportunities in outdoor games",
-      confidence: 85,
-      expectedRoi: calculateExpectedROI(strategyPicks['weather-edge'] || []),
-      timeframe: calculateTimeframe(strategyPicks['weather-edge'] || [], 'weather-edge'),
+      confidence: strategyContent['weather-edge']?.confidence || 85,
+      expectedRoi: strategyContent['weather-edge']?.expected_roi || calculateExpectedROI(strategyPicks['weather-edge'] || []),
+      timeframe: strategyContent['weather-edge']?.timeframe || calculateTimeframe(strategyPicks['weather-edge'] || [], 'weather-edge'),
       tags: ["Weather", "Totals", "Game Environment"],
-      picks: strategyPicks['weather-edge'] || []
+      picks: Array.isArray(strategyContent['weather-edge']?.picks) ? strategyContent['weather-edge'].picks : (strategyPicks['weather-edge'] || [])
     }
   ];
 
@@ -327,33 +329,31 @@ const AnalyzeStrategies = () => {
                         {strategy.title}
                       </h3>
                       <div className="flex items-center space-x-2">
-                        {(strategy.id === 'value-hunter' || strategy.id === 'momentum-play') && (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                refreshStrategyPicks(strategy.id);
-                              }}
-                              disabled={refreshingPicks[strategy.id]}
-                              className="h-6 w-6 p-0 border-neon-blue/50 hover:border-neon-blue"
-                            >
-                              <RefreshCw className={`w-3 h-3 text-neon-blue ${refreshingPicks[strategy.id] ? 'animate-spin' : ''}`} />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                copyStrategyToBuilder(strategy.id, strategy.title);
-                              }}
-                              className="h-6 px-2 text-xs border-neon-green/50 hover:border-neon-green text-neon-green"
-                            >
-                              Copy
-                            </Button>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              generateNewContent();
+                            }}
+                            disabled={contentLoading}
+                            className="h-6 w-6 p-0 border-neon-blue/50 hover:border-neon-blue"
+                          >
+                            <RefreshCw className={`w-3 h-3 text-neon-blue ${contentLoading ? 'animate-spin' : ''}`} />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyStrategyToBuilder(strategy.id, strategy.title);
+                            }}
+                            className="h-6 px-2 text-xs border-neon-green/50 hover:border-neon-green text-neon-green"
+                          >
+                            Copy
+                          </Button>
+                        </div>
                         <Zap className="w-4 h-4 text-neon-green" />
                         <span className="text-neon-green font-bold">
                           {strategy.confidence}%
