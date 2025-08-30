@@ -66,9 +66,20 @@ serve(async (req) => {
         const oddsData = await oddsResponse.json();
         console.log(`Retrieved ${oddsData.length} games for ${sport}`);
 
-        // Process and insert odds data
+        // Filter for live and upcoming games within 1 day
+        const now = new Date();
+        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        
+        // Process and insert odds data only for relevant games
         for (const game of oddsData) {
           const gameDate = new Date(game.commence_time);
+          
+          // Skip games outside our time window (live + upcoming within 1 day)
+          if (gameDate < sixHoursAgo || gameDate > oneDayFromNow) {
+            continue;
+          }
+          
           const league = sport.replace('_', ' ').toUpperCase();
           
           for (const bookmaker of game.bookmakers) {

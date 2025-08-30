@@ -23,10 +23,16 @@ const MatchSpotlight = () => {
   useEffect(() => {
     const fetchLiveGames = async () => {
       try {
+        const now = new Date();
+        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        
         const { data, error } = await supabase
           .from('odds_snapshots')
           .select('*')
           .like('market', 'h2h%') // head-to-head/moneyline odds (includes team selections)
+          .gte('game_date', sixHoursAgo.toISOString())
+          .lte('game_date', oneDayFromNow.toISOString())
           .order('last_updated', { ascending: false })
           .limit(16);
 
@@ -109,7 +115,7 @@ const MatchSpotlight = () => {
           )) : (
             <div className="text-center py-8 text-muted-foreground w-full">
               <p>No live odds available</p>
-              <p className="text-sm">Odds update every 30 minutes</p>
+              <p className="text-sm">Odds refresh every 4 hours</p>
             </div>
           )}
         </div>

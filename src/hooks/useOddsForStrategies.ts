@@ -37,10 +37,16 @@ export const useOddsForStrategies = () => {
         setLoading(true);
         setError(null);
 
-        // Get the most recent odds - prioritize live games, fallback to upcoming
+        // Get odds for live and upcoming games within 1 day
+        const now = new Date();
+        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+        const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        
         const { data: allOdds, error: fetchError } = await supabase
           .from('odds_snapshots')
           .select('*')
+          .gte('game_date', sixHoursAgo.toISOString())
+          .lte('game_date', oneDayFromNow.toISOString())
           .order('last_updated', { ascending: false })
           .limit(200); // Get enough data to work with
 
