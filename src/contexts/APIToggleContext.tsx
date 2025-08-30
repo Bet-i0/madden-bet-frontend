@@ -37,21 +37,6 @@ export const APIToggleProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Listen for global commands
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Allow commands via chat or direct typing
-      if (event.ctrlKey && event.key === '/') {
-        const command = prompt('Enter command (J.A.R.V.I.S or F.R.I.D.A.Y.):');
-        if (command) {
-          toggleAPI(command);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   return (
     <APIToggleContext.Provider value={{ isAPIEnabled, toggleAPI }}>
