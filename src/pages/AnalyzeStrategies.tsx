@@ -335,7 +335,7 @@ const AnalyzeStrategies = () => {
                 LIVE SPORTSBOOK ODDS
               </h2>
               <p className="text-gray-300">
-                Real-time football odds comparison (NFL & NCAAF only)
+                Real-time football odds comparison (NFL & NCAAF)
               </p>
               <div className="mt-4">
                 <Button
@@ -580,6 +580,7 @@ const AnalyzeStrategies = () => {
                         <select className="gaming-input w-full">
                           <option>All Sports</option>
                           <option>NFL</option>
+                          <option>NCAAF</option>
                           <option>NBA</option>
                           <option>MLB</option>
                         </select>

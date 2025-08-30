@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { getDisplaySportName } from '@/lib/sports';
 
 interface OddsSnapshot {
   id: string;
@@ -93,7 +94,7 @@ const MatchSpotlight = () => {
               <CardContent className="p-3">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary">
-                    {game.league}
+                    {getDisplaySportName(game.sport)}
                   </span>
                   <span className="text-xs text-muted-foreground">{game.bookmaker}</span>
                 </div>

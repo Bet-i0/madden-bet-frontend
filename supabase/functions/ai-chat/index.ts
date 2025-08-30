@@ -2,6 +2,54 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// Sports utilities
+const SPORTS_MAP = {
+  NFL: 'americanfootball_nfl',
+  NCAAF: 'americanfootball_ncaaf',
+  NBA: 'basketball_nba',
+  NCAAB: 'basketball_ncaab',
+  MLB: 'baseball_mlb',
+  NHL: 'icehockey_nhl',
+} as const;
+
+const REVERSE_SPORTS_MAP = {
+  americanfootball_nfl: 'NFL',
+  americanfootball_ncaaf: 'NCAAF', 
+  basketball_nba: 'NBA',
+  basketball_ncaab: 'NCAAB',
+  baseball_mlb: 'MLB',
+  icehockey_nhl: 'NHL',
+} as const;
+
+const LEAGUE_ALIASES = {
+  'nfl': ['nfl', 'national football league', 'american football nfl', 'pro football'],
+  'ncaaf': ['ncaaf', 'college football', 'ncaa football', 'american football ncaaf', 'college'],
+  'nba': ['nba', 'national basketball association', 'pro basketball'],
+  'ncaab': ['ncaab', 'college basketball', 'ncaa basketball', 'march madness'],
+  'mlb': ['mlb', 'major league baseball', 'baseball'],
+  'nhl': ['nhl', 'national hockey league', 'hockey', 'ice hockey'],
+} as const;
+
+function getDisplaySportName(dbKey: string): string {
+  return REVERSE_SPORTS_MAP[dbKey as keyof typeof REVERSE_SPORTS_MAP] || dbKey;
+}
+
+function detectLeagueFromMessage(message: string): string[] {
+  const lowerMessage = message.toLowerCase();
+  const detectedLeagues: string[] = [];
+  
+  for (const [league, aliases] of Object.entries(LEAGUE_ALIASES)) {
+    if (aliases.some(alias => lowerMessage.includes(alias))) {
+      const dbKey = SPORTS_MAP[league.toUpperCase() as keyof typeof SPORTS_MAP];
+      if (dbKey && !detectedLeagues.includes(dbKey)) {
+        detectedLeagues.push(dbKey);
+      }
+    }
+  }
+  
+  return detectedLeagues;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -30,6 +78,13 @@ const SYSTEM_PROMPT = `You are SportsBot, an advanced AI assistant for sports be
 - Uses current sports betting terminology naturally
 - Provides actionable insights based on live data
 
+**Sports Data Information:**
+- NFL refers to American Football NFL (database key: americanfootball_nfl)
+- NCAAF refers to College Football (database key: americanfootball_ncaaf)
+- When users mention "NFL", "pro football", "national football league" they mean NFL
+- When users mention "NCAAF", "college football", "NCAA football" they mean NCAAF
+- Other leagues: NBA (basketball_nba), NCAAB (basketball_ncaab), MLB (baseball_mlb), NHL (icehockey_nhl)
+
 **Key Guidelines:**
 - Always promote responsible gambling practices
 - Use real odds data when providing betting suggestions
@@ -39,14 +94,15 @@ const SYSTEM_PROMPT = `You are SportsBot, an advanced AI assistant for sports be
 - Never guarantee wins, always mention risk
 - Keep responses concise but informative
 - Ask clarifying questions when needed
+- When users ask about specific leagues, focus your analysis on odds data from those leagues
 
 **Sample Responses:**
-- "Based on current market odds and line movement, I see value in..."
-- "Looking at today's NFL odds, the [team] at [odds] offers good value because..."
+- "Based on current NFL market odds and line movement, I see value in..."
+- "Looking at today's NCAAF odds, the [team] at [odds] offers good value because..."
 - "Your bankroll suggests a 2-3% stake here, which would be..."
 - "The key factors I'm seeing in today's odds are..."
 
-Remember: You have access to real odds data, so use it to provide current, relevant betting insights and opportunities.`;
+Remember: You have access to real odds data, so use it to provide current, relevant betting insights and opportunities. Focus on the specific leagues users mention.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -68,6 +124,10 @@ serve(async (req) => {
     }
 
     const { messages, stream = true } = await req.json();
+
+    // Detect specific leagues from user message
+    const userMessage = messages[messages.length - 1]?.content || '';
+    const detectedLeagues = detectLeagueFromMessage(userMessage);
 
     // Check user subscription and usage limits
     const { data: subscription } = await supabase
@@ -135,17 +195,26 @@ serve(async (req) => {
     }
 
     // Fetch recent odds data for context
-    const { data: oddsData } = await supabase
+    let oddsQuery = supabase
       .from('odds_snapshots')
       .select('*')
       .gte('last_updated', new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()) // Last 6 hours
       .limit(20);
 
+    // Filter by detected leagues if any
+    if (detectedLeagues.length > 0) {
+      console.log('Filtering odds for leagues:', detectedLeagues);
+      oddsQuery = oddsQuery.in('sport', detectedLeagues);
+    }
+
+    const { data: oddsData } = await oddsQuery;
+
     // Prepare context with real odds data
     let oddsContext = '';
     if (oddsData && oddsData.length > 0) {
-      oddsContext = `\n\nCurrent Live Odds Data (last 6 hours):\n${oddsData.map(odds => 
-        `• ${odds.team1} vs ${odds.team2} (${odds.league}) - ${odds.market}: ${odds.odds} (${odds.bookmaker})`
+      const leagueFilter = detectedLeagues.length > 0 ? ` (filtered for: ${detectedLeagues.map(getDisplaySportName).join(', ')})` : '';
+      oddsContext = `\n\nCurrent Live Odds Data (last 6 hours)${leagueFilter}:\n${oddsData.map(odds => 
+        `• ${odds.team1} vs ${odds.team2} (${getDisplaySportName(odds.sport)}) - ${odds.market}: ${odds.odds} (${odds.bookmaker})`
       ).join('\n')}\n\nUse this real data when providing betting insights and recommendations.`;
     }
 

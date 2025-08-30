@@ -124,7 +124,7 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
     }));
   };
 
-  const commonTags = ['NFL', 'NBA', 'MLB', 'NHL', 'Spread', 'Total', 'Moneyline', 'Parlay', 'Prop', 'Same Game'];
+  const commonTags = ['NFL', 'NCAAF', 'NBA', 'MLB', 'NHL', 'Spread', 'Total', 'Moneyline', 'Parlay', 'Prop', 'Same Game'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
