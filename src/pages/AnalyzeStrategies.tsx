@@ -50,6 +50,7 @@ const AnalyzeStrategies = () => {
 
   // AI-powered strategies connected to real odds data
   const [strategyPicks, setStrategyPicks] = useState<Record<string, SuggestionPick[]>>({});
+  const [refreshingPicks, setRefreshingPicks] = useState<Record<string, boolean>>({});
   
   useEffect(() => {
     // Fetch real AI suggestions for each strategy
@@ -77,14 +78,106 @@ const AnalyzeStrategies = () => {
     fetchStrategyPicks();
   }, [getSuggestionPicks]);
 
+  // Calculate dynamic ROI based on AI picks
+  const calculateExpectedROI = (picks: SuggestionPick[]) => {
+    if (!picks.length) return "+0.0%";
+    
+    const avgConfidence = picks.reduce((sum, pick) => sum + pick.confidence, 0) / picks.length;
+    const highConfidencePicks = picks.filter(pick => pick.confidence >= 80).length;
+    
+    // Base ROI calculation on confidence and number of high-confidence picks
+    const baseROI = (avgConfidence - 50) * 0.3 + (highConfidencePicks * 2.5);
+    const adjustedROI = Math.max(baseROI, 0);
+    
+    return `+${adjustedROI.toFixed(1)}%`;
+  };
+
+  // Calculate dynamic timeframe based on AI picks
+  const calculateTimeframe = (picks: SuggestionPick[], strategyId: string) => {
+    if (!picks.length) return "TBD";
+    
+    const now = new Date();
+    const upcomingGames = picks.filter(pick => {
+      if (!pick.startTime) return false;
+      const gameTime = new Date(pick.startTime);
+      return gameTime > now;
+    });
+
+    if (upcomingGames.length === 0) return "Live";
+
+    const nearestGame = upcomingGames.reduce((nearest, pick) => {
+      const gameTime = new Date(pick.startTime!);
+      const nearestTime = new Date(nearest.startTime!);
+      return gameTime < nearestTime ? pick : nearest;
+    });
+
+    const timeDiff = new Date(nearestGame.startTime!).getTime() - now.getTime();
+    const hoursUntil = Math.round(timeDiff / (1000 * 60 * 60));
+
+    if (strategyId === 'value-hunter') {
+      return hoursUntil <= 2 ? "Live" : `${hoursUntil}h`;
+    }
+    if (strategyId === 'momentum-play') {
+      return hoursUntil <= 4 ? `${Math.max(hoursUntil, 1)}h` : "4+ hours";
+    }
+    
+    return `${hoursUntil}h`;
+  };
+
+  // Generate tailored prompt for strategy
+  const generateStrategyPrompt = (strategyId: string, picks: SuggestionPick[]) => {
+    const basePrompts: Record<string, string> = {
+      'value-hunter': `Analyze value betting opportunities using line shopping and market inefficiencies. Focus on finding the best odds across multiple sportsbooks for maximum expected value.`,
+      'momentum-play': `Develop a momentum-based betting strategy that capitalizes on rapid line movements and public sentiment shifts. Target contrarian opportunities when the public overreacts.`,
+      'injury-impact': `Create an injury news reaction strategy for immediate betting opportunities when player status changes affect game lines.`,
+      'weather-edge': `Design a weather-dependent betting strategy for outdoor games, focusing on total bets and game environment factors.`
+    };
+
+    let prompt = basePrompts[strategyId] || "Analyze this betting strategy.";
+    
+    if (picks.length > 0) {
+      const picksList = picks.map(pick => 
+        `• ${pick.title} (${pick.odds} at ${pick.bookmaker}) - ${pick.confidence}% confidence: ${pick.rationale}`
+      ).join('\n');
+      
+      prompt += `\n\nCurrent AI Picks:\n${picksList}\n\nAnalyze these picks and provide strategic recommendations.`;
+    }
+
+    return prompt;
+  };
+
+  // Refresh picks for specific strategy
+  const refreshStrategyPicks = async (strategyId: string) => {
+    setRefreshingPicks(prev => ({ ...prev, [strategyId]: true }));
+    
+    try {
+      const picks = await getSuggestionPicks(1, strategyId);
+      setStrategyPicks(prev => ({ ...prev, [strategyId]: picks }));
+    } catch (error) {
+      console.error(`Error refreshing picks for ${strategyId}:`, error);
+    } finally {
+      setRefreshingPicks(prev => ({ ...prev, [strategyId]: false }));
+    }
+  };
+
+  // Copy strategy prompt to custom builder
+  const copyStrategyToBuilder = (strategyId: string, strategyTitle: string) => {
+    const picks = strategyPicks[strategyId] || [];
+    const prompt = generateStrategyPrompt(strategyId, picks);
+    
+    setCustomPrompt(prompt);
+    setImportedPicks(picks);
+    setActiveTab("custom-builder");
+  };
+
   const gptStrategies = [
     {
       id: "value-hunter",
       title: "Value Hunter Pro",
       description: "AI identifies line discrepancies across books for maximum value",
       confidence: 87,
-      expectedRoi: "+12.3%",
-      timeframe: "Live",
+      expectedRoi: calculateExpectedROI(strategyPicks['value-hunter'] || []),
+      timeframe: calculateTimeframe(strategyPicks['value-hunter'] || [], 'value-hunter'),
       tags: ["Line Shopping", "Value Betting", "AI Powered"],
       picks: strategyPicks['value-hunter'] || []
     },
@@ -93,8 +186,8 @@ const AnalyzeStrategies = () => {
       title: "Momentum Surge",
       description: "Capitalize on rapid line movements and public sentiment shifts",
       confidence: 92,
-      expectedRoi: "+18.7%",
-      timeframe: "2-4 hours",
+      expectedRoi: calculateExpectedROI(strategyPicks['momentum-play'] || []),
+      timeframe: calculateTimeframe(strategyPicks['momentum-play'] || [], 'momentum-play'),
       tags: ["Line Movement", "Public Betting", "Contrarian"],
       picks: strategyPicks['momentum-play'] || []
     },
@@ -234,6 +327,33 @@ const AnalyzeStrategies = () => {
                         {strategy.title}
                       </h3>
                       <div className="flex items-center space-x-2">
+                        {(strategy.id === 'value-hunter' || strategy.id === 'momentum-play') && (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                refreshStrategyPicks(strategy.id);
+                              }}
+                              disabled={refreshingPicks[strategy.id]}
+                              className="h-6 w-6 p-0 border-neon-blue/50 hover:border-neon-blue"
+                            >
+                              <RefreshCw className={`w-3 h-3 text-neon-blue ${refreshingPicks[strategy.id] ? 'animate-spin' : ''}`} />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyStrategyToBuilder(strategy.id, strategy.title);
+                              }}
+                              className="h-6 px-2 text-xs border-neon-green/50 hover:border-neon-green text-neon-green"
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                        )}
                         <Zap className="w-4 h-4 text-neon-green" />
                         <span className="text-neon-green font-bold">
                           {strategy.confidence}%
