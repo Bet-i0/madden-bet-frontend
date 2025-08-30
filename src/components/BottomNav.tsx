@@ -62,19 +62,19 @@ const BottomNav = () => {
     return location.pathname.startsWith(path);
   };
 
-  const handleItemClick = (item: any) => {
+  const handleItemClick = (item: typeof navItems[0]) => {
     if (item.action === 'settings') {
       if (!user) {
         navigate('/auth');
       } else {
         setIsSettingsOpen(true);
       }
-    } else {
+    } else if (item.path) {
       navigate(item.path);
     }
   };
 
-  const getNotificationText = (notification: any) => {
+  const getNotificationText = (notification: { type: string; data: any }) => {
     switch (notification.type) {
       case 'new_follower':
         return `${notification.data.follower_name} started following you`;

@@ -140,7 +140,7 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Bet Type</Label>
-              <Select value={bet.bet_type} onValueChange={(value) => setBet(prev => ({ ...prev, bet_type: value as any }))}>
+              <Select value={bet.bet_type} onValueChange={(value) => setBet(prev => ({ ...prev, bet_type: value as 'single' | 'parlay' | 'teaser' | 'round_robin' }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

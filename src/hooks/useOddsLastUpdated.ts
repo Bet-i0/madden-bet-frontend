@@ -26,7 +26,7 @@ export const useOddsLastUpdated = (): UseOddsLastUpdatedReturn => {
         .maybeSingle();
 
       if (fetchError) {
-        console.warn('Error fetching odds last updated:', fetchError);
+        // Error fetching odds last updated
         setError(fetchError.message);
         setLastUpdated(null);
       } else if (data) {
@@ -35,7 +35,7 @@ export const useOddsLastUpdated = (): UseOddsLastUpdatedReturn => {
         setLastUpdated(null);
       }
     } catch (err) {
-      console.warn('Unexpected error fetching odds:', err);
+      // Unexpected error fetching odds
       setError('Failed to fetch odds timestamp');
       setLastUpdated(null);
     } finally {

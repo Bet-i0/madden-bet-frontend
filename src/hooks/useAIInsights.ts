@@ -99,7 +99,7 @@ export const useAIInsights = () => {
       });
 
       if (error) {
-        console.error('Error calling ai-suggestions function:', error);
+        // Handle AI suggestions function error
         if ((error as any).message?.includes('usage limit')) {
           toast.error('AI suggestion limit reached this month.');
         } else {
@@ -115,7 +115,7 @@ export const useAIInsights = () => {
       
       return suggestions;
     } catch (error) {
-      console.error('Error fetching AI suggestions:', error);
+      // Error fetching AI suggestions
       toast.error('Unable to load AI suggestions right now.');
       return [];
     }

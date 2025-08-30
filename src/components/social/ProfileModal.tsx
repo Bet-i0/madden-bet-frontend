@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -59,13 +59,7 @@ const ProfileModal = ({ isOpen, onClose, userId }: ProfileModalProps) => {
   const { followUser, unfollowUser, isFollowing } = useFollows();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (isOpen && userId) {
-      fetchProfileData();
-    }
-  }, [isOpen, userId]);
-
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch profile
@@ -115,7 +109,6 @@ const ProfileModal = ({ isOpen, onClose, userId }: ProfileModalProps) => {
       if (betsError) throw betsError;
       setRecentBets(betsData || []);
     } catch (error) {
-      console.error('Error fetching profile data:', error);
       toast({
         title: "Error",
         description: "Failed to load profile data",
@@ -124,7 +117,13 @@ const ProfileModal = ({ isOpen, onClose, userId }: ProfileModalProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
+
+  useEffect(() => {
+    if (isOpen && userId) {
+      fetchProfileData();
+    }
+  }, [isOpen, userId, fetchProfileData]);
 
   const handleFollowToggle = async () => {
     try {

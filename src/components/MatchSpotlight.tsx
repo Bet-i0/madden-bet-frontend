@@ -40,7 +40,7 @@ const MatchSpotlight = () => {
           .limit(16);
 
         if (error) {
-          console.error('Error fetching odds:', error);
+          // Error fetching odds data
           return;
         }
 
@@ -55,7 +55,7 @@ const MatchSpotlight = () => {
 
         setGames(Object.values(uniqueGames || {}).slice(0, 4));
       } catch (error) {
-        console.error('Error fetching games:', error);
+        // Error in fetch operation
       } finally {
         setLoading(false);
       }

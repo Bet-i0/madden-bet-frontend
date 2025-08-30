@@ -216,18 +216,37 @@ Respond with a JSON array of betting suggestions. Focus on actionable insights w
 
         if (openaiResponse.ok) {
           const aiData = await openaiResponse.json();
-          const raw = aiData?.choices?.[0]?.message?.content ?? '[]';
-          const cleaned = String(raw).replace(/```json|```/g, '').trim();
-          let aiSuggestionsParsed: any = [];
+          const rawContent = aiData?.choices?.[0]?.message?.content ?? '[]';
+          
+          // Clean the response and extract JSON
+          let cleaned = String(rawContent).trim();
+          
+          // Remove any markdown code blocks
+          cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          
+          // Find JSON array bounds
+          const arrayStart = cleaned.indexOf('[');
+          const arrayEnd = cleaned.lastIndexOf(']');
+          
+          if (arrayStart !== -1 && arrayEnd !== -1 && arrayEnd > arrayStart) {
+            cleaned = cleaned.substring(arrayStart, arrayEnd + 1);
+          }
+          
+          let aiSuggestionsParsed: SuggestionPick[] = [];
           try {
-            aiSuggestionsParsed = JSON.parse(cleaned);
-          } catch (e) {
-            console.error('Failed to parse OpenAI JSON, falling back to live odds:', e);
+            const parsed = JSON.parse(cleaned);
+            aiSuggestionsParsed = Array.isArray(parsed) ? parsed : (parsed?.suggestions || []);
+          } catch (parseError) {
+            console.error('Failed to parse OpenAI JSON response:', {
+              error: parseError,
+              rawContent: rawContent.substring(0, 200) + '...',
+              cleaned: cleaned.substring(0, 200) + '...'
+            });
+            // Fallback to live odds
+            aiSuggestionsParsed = [];
           }
-          suggestions = Array.isArray(aiSuggestionsParsed) ? aiSuggestionsParsed : (aiSuggestionsParsed?.suggestions || []);
-          if (!suggestions || suggestions.length === 0) {
-            suggestions = buildSuggestionsFromOdds(oddsData || [], category);
-          }
+          
+          suggestions = aiSuggestionsParsed.length > 0 ? aiSuggestionsParsed : buildSuggestionsFromOdds(oddsData || [], category);
           
           // Log usage (for both admins and regular users - admins get unlimited but we still track for analytics)
           await supabase.from('ai_usage_logs').insert({

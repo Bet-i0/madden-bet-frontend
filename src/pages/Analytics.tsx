@@ -42,7 +42,7 @@ const Analytics = () => {
     setIsGeneratingPDF(true);
     setTimeout(() => {
       setIsGeneratingPDF(false);
-      console.log('PDF generated and downloaded');
+      // PDF generation completed
     }, 2000);
   };
 

@@ -70,7 +70,7 @@ const TrendingNow = () => {
       const picks = await getSuggestionPicks(selectedTrend, category);
       setDialogPicks(picks);
     } catch (error) {
-      console.error('Failed to get suggestion picks:', error);
+      // Failed to get suggestion picks
       setDialogPicks([]);
     } finally {
       setDialogLoading(false);

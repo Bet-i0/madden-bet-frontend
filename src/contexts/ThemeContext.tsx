@@ -40,7 +40,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
           }
         }
       } catch (error) {
-        console.warn('Failed to parse saved theme:', error);
+        // Failed to parse saved theme, continue with default
       }
     }
   }, []);

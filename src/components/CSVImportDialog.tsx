@@ -51,7 +51,7 @@ const CSVImportDialog = ({ open, onOpenChange }: CSVImportDialogProps) => {
 
     try {
       const headers = csvData[0];
-      console.log('CSV Headers:', headers);
+      // Process CSV headers
       
       // Expected headers: Date, Sport, League, Teams, Market, Selection, Odds, Open Odds, Closing Odds, Bet Type, Stake, Potential Payout, Status, Sportsbook, Tags, Notes
       const dataRows = csvData.slice(1);
@@ -65,7 +65,7 @@ const CSVImportDialog = ({ open, onOpenChange }: CSVImportDialogProps) => {
           const [team1 = '', team2 = ''] = teamsStr.split(' vs ').map(t => t.trim());
 
           if (!team1 || !team2) {
-            console.warn('Skipping row with invalid teams:', row);
+            // Skip row with invalid teams
             errorCount++;
             continue;
           }
@@ -94,7 +94,7 @@ const CSVImportDialog = ({ open, onOpenChange }: CSVImportDialogProps) => {
           };
 
           if (bet.stake <= 0) {
-            console.warn('Skipping row with invalid stake:', row);
+            // Skip row with invalid stake
             errorCount++;
             continue;
           }
@@ -102,7 +102,6 @@ const CSVImportDialog = ({ open, onOpenChange }: CSVImportDialogProps) => {
           await saveBet(bet);
           importedCount++;
         } catch (err) {
-          console.error('Error importing row:', row, err);
           errorCount++;
         }
       }
@@ -115,7 +114,6 @@ const CSVImportDialog = ({ open, onOpenChange }: CSVImportDialogProps) => {
       onOpenChange(false);
     } catch (err) {
       setError('Failed to import bets. Please check the file format.');
-      console.error('Import error:', err);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,13 +71,7 @@ const Profile = () => {
   const isOwnProfile = !userId || userId === 'me' || userId === user?.id;
   const targetUserId = isOwnProfile ? user?.id : userId;
 
-  useEffect(() => {
-    if (targetUserId) {
-      fetchProfileData();
-    }
-  }, [targetUserId]);
-
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     if (!targetUserId) return;
     
     setLoading(true);
@@ -142,7 +136,6 @@ const Profile = () => {
       if (betsError) throw betsError;
       setRecentBets(betsData || []);
     } catch (error) {
-      console.error('Error fetching profile data:', error);
       toast({
         title: "Error",
         description: "Failed to load profile data",
@@ -151,7 +144,13 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [targetUserId, isOwnProfile, toast]);
+
+  useEffect(() => {
+    if (targetUserId) {
+      fetchProfileData();
+    }
+  }, [targetUserId, fetchProfileData]);
 
   const handleFollowToggle = async () => {
     if (!targetUserId || isOwnProfile) return;

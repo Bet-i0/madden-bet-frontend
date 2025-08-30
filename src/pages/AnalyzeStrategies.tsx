@@ -61,7 +61,7 @@ const AnalyzeStrategies = () => {
           const picks = await getSuggestionPicks(1, strategyId);
           return { strategyId, picks };
         } catch (error) {
-          console.error(`Error fetching picks for ${strategyId}:`, error);
+          // Error fetching picks for strategy
           return { strategyId, picks: [] };
         }
       });
@@ -154,7 +154,7 @@ const AnalyzeStrategies = () => {
       const picks = await getSuggestionPicks(1, strategyId);
       setStrategyPicks(prev => ({ ...prev, [strategyId]: picks }));
     } catch (error) {
-      console.error(`Error refreshing picks for ${strategyId}:`, error);
+      // Error refreshing picks
     } finally {
       setRefreshingPicks(prev => ({ ...prev, [strategyId]: false }));
     }

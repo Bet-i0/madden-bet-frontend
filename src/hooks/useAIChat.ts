@@ -70,7 +70,7 @@ export const useAIChat = () => {
       if (response.error) throw response.error;
 
       if (streaming && response.data) {
-        console.debug('Handling streaming response, type:', typeof response.data);
+        // Handle streaming response
         
         const assistantMessage: AIChatMessage = {
           id: (Date.now() + 1).toString(),
@@ -83,7 +83,7 @@ export const useAIChat = () => {
 
         // Check if we have a true ReadableStream
         if (typeof response.data?.getReader === 'function') {
-          console.debug('Using ReadableStream.getReader()');
+          // Using ReadableStream.getReader()
           const reader = response.data.getReader();
           const decoder = new TextDecoder();
 
@@ -113,14 +113,13 @@ export const useAIChat = () => {
                     );
                   }
                 } catch (e) {
-                  console.error('Error parsing streaming chunk:', e);
+                  // Error parsing streaming chunk
                 }
               }
             }
           }
         } else if (typeof response.data === 'string') {
           // Handle SSE delivered as a single string
-          console.debug('Parsing SSE string response');
           const lines = response.data.split('\n').filter(line => line.trim());
 
           for (const line of lines) {
@@ -142,14 +141,13 @@ export const useAIChat = () => {
                   );
                 }
               } catch (e) {
-                console.error('Error parsing SSE string chunk:', e);
+                // Error parsing SSE string chunk
               }
             }
           }
         } else if (response.data?.message) {
           // Handle JSON response with message
-          console.debug('Using JSON message response');
-          setMessages(prev => 
+          setMessages(prev =>
             prev.map(msg => 
               msg.id === assistantMessage.id 
                 ? { ...msg, content: response.data.message }
@@ -157,7 +155,7 @@ export const useAIChat = () => {
             )
           );
         } else {
-          console.debug('Unknown response format, using fallback');
+          // Unknown response format, using fallback
           setMessages(prev => 
             prev.map(msg => 
               msg.id === assistantMessage.id 
@@ -174,7 +172,6 @@ export const useAIChat = () => {
         ));
       } else if (response.data?.message) {
         // Handle non-streaming response
-        console.debug('Using non-streaming JSON response');
         const assistantMessage: AIChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -189,7 +186,7 @@ export const useAIChat = () => {
         }
       }
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      // Error sending message
       
       if (error.name === 'AbortError') return;
 
