@@ -196,8 +196,8 @@ const AnalyzeStrategies = () => {
       title: "Injury Intelligence", 
       description: "React to late-breaking injury news before lines adjust",
       confidence: 78,
-      expectedRoi: "+9.4%",
-      timeframe: "30 mins",
+      expectedRoi: calculateExpectedROI(strategyPicks['injury-impact'] || []),
+      timeframe: calculateTimeframe(strategyPicks['injury-impact'] || [], 'injury-impact'),
       tags: ["Breaking News", "Player Props", "Fast Action"],
       picks: strategyPicks['injury-impact'] || []
     },
@@ -206,8 +206,8 @@ const AnalyzeStrategies = () => {
       title: "Weather Warrior",
       description: "Exploit weather-dependent betting opportunities in outdoor games",
       confidence: 85,
-      expectedRoi: "+14.2%",
-      timeframe: "24 hours",
+      expectedRoi: calculateExpectedROI(strategyPicks['weather-edge'] || []),
+      timeframe: calculateTimeframe(strategyPicks['weather-edge'] || [], 'weather-edge'),
       tags: ["Weather", "Totals", "Game Environment"],
       picks: strategyPicks['weather-edge'] || []
     }
@@ -231,7 +231,7 @@ const AnalyzeStrategies = () => {
       finalPrompt = `${customPrompt}\n\nImported AI Picks:\n${picksText}`;
     }
     
-    await analyzeStrategy("custom", "Custom Strategy");
+    await analyzeStrategy("custom", "Custom Strategy", finalPrompt);
     setActiveTab("analysis-results");
   };
 
