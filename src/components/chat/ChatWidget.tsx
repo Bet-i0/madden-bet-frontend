@@ -109,7 +109,7 @@ export const ChatWidget = () => {
                             : 'bg-muted'
                         )}
                       >
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        <div className="whitespace-pre-wrap text-xs text-muted-foreground">{msg.content}</div>
                       </div>
                     </div>
                     <div className={`flex text-xs text-muted-foreground ${
@@ -150,7 +150,7 @@ export const ChatWidget = () => {
                       ? "Usage limit reached..." 
                       : "Ask SportsBot anything..."
                   }
-                  className="flex-1 text-sm"
+                  className="flex-1 text-xs text-muted-foreground"
                   disabled={loading || usage.monthlyUsage >= usage.maxCalls}
                   maxLength={500}
                 />
