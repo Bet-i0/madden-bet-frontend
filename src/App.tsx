@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import RightSidePanel from "./components/RightSidePanel";
+import LoadingFallback from "./components/LoadingFallback";
 import {
   LazyAnalytics,
   LazySocial,
@@ -52,79 +53,57 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/analytics" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyAnalytics />
                   </Suspense>
                 } />
                 <Route path="/social" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazySocial />
                   </Suspense>
                 } />
                 <Route path="/profile" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyProfile />
                   </Suspense>
                 } />
                 <Route path="/profile/me" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyProfile />
                   </Suspense>
                 } />
                 <Route path="/profile/:userId" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyProfile />
                   </Suspense>
                 } />
                 <Route path="/trending" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyTrendingNow />
                   </Suspense>
                 } />
                 <Route path="/injuries" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyInjuries />
                   </Suspense>
                 } />
                 <Route path="/strategies" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyAnalyzeStrategies />
                   </Suspense>
                 } />
                 <Route path="/analyze-strategies" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyAnalyzeStrategies />
                   </Suspense>
                 } />
                 <Route path="/build-strategy" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyAnalyzeStrategies />
                   </Suspense>
                 } />
                 <Route path="/ai-coach" element={
-                  <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>}>
+                  <Suspense fallback={<LoadingFallback />}>
                     <LazyAICoach />
                   </Suspense>
                 } />
