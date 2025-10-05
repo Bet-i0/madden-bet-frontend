@@ -196,33 +196,53 @@ serve(async (req) => {
                 
                 for (const outcome of (market.outcomes ?? [])) {
                   try {
-                    // Log the actual outcome data for debugging
-                    console.log(`Outcome data: name="${outcome.name}", description="${outcome.description}", point=${outcome.point}`);
-                    
-                    // Extract player name and side from outcome.name
-                    // Example: "Josh Allen Over 231.5" → player: "Josh Allen", side: "Over"
-                    const nameMatch = (outcome.name || '').match(/^(.+?)\s+(Over|Under|Yes|No)\s+/i);
-                    const playerName = nameMatch?.[1]?.trim() || '';
-                    const side = nameMatch?.[2] || null;
-                    
+                    // Robustly parse player name and side across bookmakers
+                    const rawName = (outcome.name || '').trim();
+                    const rawDesc = (outcome.description || '').trim();
+                    console.log(`Outcome data: name="${rawName}", description="${rawDesc}", point=${outcome.point}`);
+
+                    let playerName = '';
+                    let side: string | null = null;
+
+                    // Pattern 1: "Josh Allen Over 231.5"
+                    const nameMatch = rawName.match(/^(.+?)\s+(Over|Under|Yes|No)\b/i);
+                    if (nameMatch) {
+                      playerName = nameMatch[1].trim();
+                      side = nameMatch[2];
+                    } else {
+                      // Pattern 2: name is "Over/Under/Yes/No" and description is the player name
+                      if (/^(Over|Under|Yes|No)$/i.test(rawName) && rawDesc) {
+                        playerName = rawDesc;
+                        side = rawName;
+                      } else if (rawDesc) {
+                        // Pattern 3: player in description, side embedded in name somewhere
+                        playerName = rawDesc;
+                        const sideMatch = rawName.match(/\b(Over|Under|Yes|No)\b/i);
+                        if (sideMatch) side = sideMatch[1];
+                      } else {
+                        // Pattern 4: fallback - try to treat the whole name as a player
+                        const onlyName = rawName.match(/^([A-Za-z'. -]{2,})$/);
+                        if (onlyName) playerName = onlyName[1].trim();
+                      }
+                    }
+
                     console.log(`Parsed: playerName="${playerName}", side="${side}"`);
-                    
                     if (!playerName) {
-                      console.log(`Skipping outcome - no player name parsed`);
+                      console.log('Skipping outcome - no player name parsed');
                       continue;
                     }
-                    
+
                     // Extract line (point, if present)
                     const line = outcome.point ?? null;
-                    
+
                     // Convert American odds to Decimal
                     const americanOdds = Number(outcome.price);
                     if (!Number.isFinite(americanOdds)) {
                       continue;
                     }
-                    
+
                     const decimalOdds = americanToDecimal(americanOdds);
-                    
+
                     // Sanity check (both upper and lower bounds)
                     if (decimalOdds <= 1.01 || decimalOdds >= 1000) {
                       console.warn(`Invalid odds for ${playerName} ${normalizedMarket}: ${decimalOdds}`);
