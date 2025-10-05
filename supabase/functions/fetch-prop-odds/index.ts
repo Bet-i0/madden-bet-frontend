@@ -196,13 +196,19 @@ serve(async (req) => {
                 
                 for (const outcome of (market.outcomes ?? [])) {
                   try {
+                    // Log the actual outcome data for debugging
+                    console.log(`Outcome data: name="${outcome.name}", description="${outcome.description}", point=${outcome.point}`);
+                    
                     // Extract player name and side from outcome.name
                     // Example: "Josh Allen Over 231.5" → player: "Josh Allen", side: "Over"
                     const nameMatch = (outcome.name || '').match(/^(.+?)\s+(Over|Under|Yes|No)\s+/i);
                     const playerName = nameMatch?.[1]?.trim() || '';
                     const side = nameMatch?.[2] || null;
                     
+                    console.log(`Parsed: playerName="${playerName}", side="${side}"`);
+                    
                     if (!playerName) {
+                      console.log(`Skipping outcome - no player name parsed`);
                       continue;
                     }
                     
