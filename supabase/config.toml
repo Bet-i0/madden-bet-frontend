@@ -4,6 +4,10 @@ project_id = "avyqvcvalvtuqncexnbf"
 [functions.fetch-prop-odds.cron]
 schedule = "*/10 * * * *"
 
+# Cron schedule for refreshing best prop odds materialized view every 10 minutes
+[functions.refresh-best-prop-odds.cron]
+schedule = "*/10 * * * *"
+
 [functions.ai-edge-detection]
 verify_jwt = false
 
@@ -195,6 +199,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.fetch-prop-odds]
+verify_jwt = false
+
+[functions.refresh-best-prop-odds]
 verify_jwt = false
 
 [functions.strategy-content-generator]
