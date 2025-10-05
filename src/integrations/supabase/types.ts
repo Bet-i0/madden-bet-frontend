@@ -378,6 +378,30 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          key: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          key: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          key?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -396,6 +420,42 @@ export type Database = {
           followed_id?: string
           follower_id?: string
           id?: string
+        }
+        Relationships: []
+      }
+      ingest_runs: {
+        Row: {
+          books_seen: Json | null
+          created_at: string
+          duration_ms: number
+          error: string | null
+          function: string
+          id: number
+          rows_inserted: number
+          sport: string | null
+          success: boolean
+        }
+        Insert: {
+          books_seen?: Json | null
+          created_at?: string
+          duration_ms: number
+          error?: string | null
+          function: string
+          id?: number
+          rows_inserted: number
+          sport?: string | null
+          success: boolean
+        }
+        Update: {
+          books_seen?: Json | null
+          created_at?: string
+          duration_ms?: number
+          error?: string | null
+          function?: string
+          id?: number
+          rows_inserted?: number
+          sport?: string | null
+          success?: boolean
         }
         Relationships: []
       }
@@ -463,6 +523,57 @@ export type Database = {
           market?: string
           odds?: number
           sport?: string
+          team1?: string
+          team2?: string
+        }
+        Relationships: []
+      }
+      player_props_snapshots: {
+        Row: {
+          bookmaker: string
+          created_at: string
+          game_date: string
+          id: string
+          last_updated: string
+          league: string
+          line: number | null
+          market: string
+          odds: number
+          player: string
+          sport: string
+          team: string | null
+          team1: string
+          team2: string
+        }
+        Insert: {
+          bookmaker: string
+          created_at?: string
+          game_date: string
+          id?: string
+          last_updated?: string
+          league: string
+          line?: number | null
+          market: string
+          odds: number
+          player: string
+          sport: string
+          team?: string | null
+          team1: string
+          team2: string
+        }
+        Update: {
+          bookmaker?: string
+          created_at?: string
+          game_date?: string
+          id?: string
+          last_updated?: string
+          league?: string
+          line?: number | null
+          market?: string
+          odds?: number
+          player?: string
+          sport?: string
+          team?: string | null
           team1?: string
           team2?: string
         }
@@ -791,6 +902,10 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_old_player_props: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

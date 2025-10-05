@@ -8,18 +8,20 @@ const corsHeaders = {
 };
 
 // Market normalization map: Odds API keys → Our standard codes
+// Phase 1: Football markets only (US-only scope)
 const MARKET_MAP: Record<string, string> = {
-  'player_points': 'PTS',
-  'player_rebounds': 'REB',
-  'player_assists': 'AST',
-  'player_threes': '3PM',
-  'player_blocks': 'BLK',
-  'player_steals': 'STL',
-  'player_turnovers': 'TO',
-  'player_points_rebounds_assists': 'PRA',
-  'player_points_rebounds': 'PR',
-  'player_points_assists': 'PA',
-  'player_rebounds_assists': 'RA',
+  'player_pass_yds': 'PA',
+  'player_rush_yds': 'RY',
+  'player_receptions': 'REC',
+  'player_reception_yds': 'RECY',
+  'player_pass_tds': 'PTD',
+  'player_rush_tds': 'RTD',
+  
+  // Phase 2: Basketball markets (commented out for now)
+  // 'player_points': 'PTS',
+  // 'player_rebounds': 'REB',
+  // 'player_assists': 'AST',
+  // 'player_threes': '3PM',
 };
 
 // Convert American odds to Decimal odds
@@ -68,15 +70,15 @@ serve(async (req) => {
 
     console.log('Starting player prop odds fetch...');
 
-    // Sports to fetch player props for
+    // Sports to fetch player props for (Phase 1: Football only)
     const sports = [
       'americanfootball_nfl',
-      'basketball_nba',
+      'americanfootball_ncaaf',
     ];
     const regions = 'us';
     
-    // Target bookmakers
-    const targetBookmakers = ['draftkings', 'betmgm', 'fanduel', 'caesars', 'williamhill_us'];
+    // Target bookmakers (US-only, williamhill_us is Caesars in the US)
+    const targetBookmakers = ['draftkings', 'fanduel', 'betmgm', 'williamhill_us'];
     
     // Player prop markets to fetch
     const playerMarkets = Object.keys(MARKET_MAP).join(',');
@@ -122,6 +124,7 @@ serve(async (req) => {
           
           // Normalize league
           const league = sport === 'americanfootball_nfl' ? 'NFL' : 
+                        sport === 'americanfootball_ncaaf' ? 'NCAAF' :
                         sport === 'basketball_nba' ? 'NBA' : sport;
           
           for (const bookmaker of game.bookmakers) {
@@ -131,6 +134,16 @@ serve(async (req) => {
             }
             
             for (const market of bookmaker.markets) {
+              // Skip _alternate markets (ladders)
+              if (market.key.endsWith('_alternate')) {
+                continue;
+              }
+              
+              // Skip unmapped markets
+              if (!MARKET_MAP[market.key]) {
+                continue;
+              }
+              
               const normalizedMarket = normalizeMarket(market.key);
               
               for (const outcome of market.outcomes) {
@@ -144,8 +157,8 @@ serve(async (req) => {
                   // CRITICAL: Convert American odds to Decimal
                   const decimalOdds = americanToDecimal(parseFloat(outcome.price));
                   
-                  // Sanity check
-                  if (decimalOdds <= 1.01) {
+                  // Sanity check (both upper and lower bounds)
+                  if (decimalOdds <= 1.01 || decimalOdds >= 1000) {
                     console.warn(`Invalid odds for ${playerName} ${normalizedMarket}: ${decimalOdds}`);
                     continue;
                   }
