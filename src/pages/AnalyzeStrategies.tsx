@@ -11,6 +11,7 @@ import { SuggestionPick, useAIInsights } from "@/hooks/useAIInsights";
 import { useOddsForStrategies } from "@/hooks/useOddsForStrategies";
 import { useStrategyContent } from "@/hooks/useStrategyContent";
 import { useValueHunter } from "@/hooks/useValueHunter";
+import { useMomentumSurge } from "@/hooks/useMomentumSurge";
 
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
@@ -25,6 +26,7 @@ const AnalyzeStrategies = () => {
   const { odds: liveOdds, loading: oddsLoading, error: oddsError, refreshing, refreshOdds } = useOddsForStrategies();
   const { strategyContent, loading: contentLoading, generateNewContent } = useStrategyContent();
   const { picks: valueHunterPicks, loading: valueHunterLoading, refresh: refreshValueHunter, fetchRationales, rationalesLoading } = useValueHunter();
+  const { picks: momentumPicks, loading: momentumLoading, refresh: refreshMomentum, fetchRationales: fetchMomentumRationales, rationalesLoading: momentumRationalesLoading } = useMomentumSurge();
 
   // Handle navigation context from trending or other pages
   useEffect(() => {
@@ -373,6 +375,99 @@ const AnalyzeStrategies = () => {
                         <div className="bg-gray-800/50 p-1.5 rounded">
                           <span className="text-gray-400 block text-[10px]">Cons.</span>
                           <span className="text-white font-bold">{pick.consensus_odds.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {pick.rationale && (
+                        <div className="p-1.5 bg-purple-500/10 border border-purple-500/30 rounded text-[10px] text-purple-300 italic leading-tight">
+                          {pick.rationale}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Momentum Surge Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-2xl font-gaming text-neon-blue mb-1">
+                    MOMENTUM SURGE
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    Rapid line movement detection: Capture steam before books adjust
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="gaming"
+                    size="sm"
+                    onClick={() => refreshMomentum(false)}
+                    disabled={momentumLoading}
+                    className="hover-glow"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${momentumLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchMomentumRationales()}
+                    disabled={momentumRationalesLoading || momentumPicks.length === 0}
+                    className="border-neon-green/50 hover:border-neon-green text-neon-green"
+                  >
+                    <Brain className={`w-4 h-4 mr-2 ${momentumRationalesLoading ? 'animate-spin' : ''}`} />
+                    AI Rationales
+                  </Button>
+                </div>
+              </div>
+
+              {momentumLoading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-2 border-neon-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400">Analyzing line movements...</p>
+                </div>
+              ) : momentumPicks.length === 0 ? (
+                <Card className="gaming-card p-6 text-center">
+                  <TrendingUp className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No momentum detected (5%+ consensus change required)</p>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {momentumPicks.slice(0, 6).map((pick, idx) => (
+                    <Card key={idx} className="gaming-card p-3 hover:scale-102 transition-transform">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="text-sm font-gaming text-neon-blue mb-1">
+                            {pick.player}
+                          </div>
+                          <div className="text-xs text-gray-300">
+                            {pick.market} {pick.line} @ {pick.bookmaker}
+                          </div>
+                        </div>
+                        <div className="px-2 py-0.5 bg-neon-green/20 text-neon-green text-xs rounded-full border border-neon-green/30 font-bold">
+                          {pick.momentum_score.toFixed(2)}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1 mb-2 text-xs">
+                        <div className="bg-gray-800/50 p-1.5 rounded">
+                          <span className="text-gray-400 block text-[10px]">Now</span>
+                          <span className="text-white font-bold">{pick.odds_now.toFixed(2)}</span>
+                        </div>
+                        <div className="bg-gray-800/50 p-1.5 rounded">
+                          <span className="text-gray-400 block text-[10px]">15m</span>
+                          <span className={`font-bold ${pick.consensus_change_15m > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {pick.consensus_change_15m > 0 ? '+' : ''}{pick.consensus_change_15m.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="bg-gray-800/50 p-1.5 rounded">
+                          <span className="text-gray-400 block text-[10px]">60m</span>
+                          <span className={`font-bold ${pick.consensus_change_60m > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {pick.consensus_change_60m > 0 ? '+' : ''}{pick.consensus_change_60m.toFixed(2)}
+                          </span>
                         </div>
                       </div>
 

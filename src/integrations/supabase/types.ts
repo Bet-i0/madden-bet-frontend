@@ -997,6 +997,27 @@ export type Database = {
         }
         Relationships: []
       }
+      prop_momentum_15m: {
+        Row: {
+          bookmaker: string | null
+          consensus_15m_ago: number | null
+          consensus_60m_ago: number | null
+          consensus_change_15m: number | null
+          consensus_change_60m: number | null
+          consensus_now: number | null
+          game_date: string | null
+          last_seen: string | null
+          line: number | null
+          market: string | null
+          odds_15m_ago: number | null
+          odds_60m_ago: number | null
+          odds_change_15m: number | null
+          odds_change_60m: number | null
+          odds_now: number | null
+          player: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_old_player_props: {
@@ -1021,6 +1042,22 @@ export type Database = {
           sport: string
           team1: string
           team2: string
+        }[]
+      }
+      fn_momentum_surge: {
+        Args: { result_limit?: number }
+        Returns: {
+          bookmaker: string
+          consensus_change_15m: number
+          consensus_change_60m: number
+          game_date: string
+          line: number
+          market: string
+          momentum_score: number
+          odds_change_15m: number
+          odds_change_60m: number
+          odds_now: number
+          player: string
         }[]
       }
       fn_value_hunter: {
@@ -1050,6 +1087,10 @@ export type Database = {
         Returns: undefined
       }
       refresh_best_prop_odds: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_prop_momentum: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
