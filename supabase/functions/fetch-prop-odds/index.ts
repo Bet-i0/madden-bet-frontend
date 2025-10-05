@@ -24,6 +24,9 @@ const MARKET_MAP: Record<string, string> = {
   // 'player_threes': '3PM',
 };
 
+// Throttle utility to avoid rate limits
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
 // Convert American odds to Decimal odds
 function americanToDecimal(americanOdds: number): number {
   if (americanOdds >= 0) {
@@ -90,8 +93,9 @@ serve(async (req) => {
       try {
         console.log(`Fetching player props for ${sport}...`);
         
-        const oddsResponse = await fetch(
-          `https://api.the-odds-api.com/v4/sports/${sport}/events?apiKey=${oddsApiKey}&regions=${regions}&markets=${playerMarkets}&oddsFormat=american`,
+        // STEP 1: Fetch event list (metadata only, no bookmakers)
+        const eventsResponse = await fetch(
+          `https://api.the-odds-api.com/v4/sports/${sport}/events?apiKey=${oddsApiKey}`,
           {
             method: 'GET',
             headers: {
@@ -100,105 +104,161 @@ serve(async (req) => {
           }
         );
 
-        if (!oddsResponse.ok) {
-          const errorMsg = `Failed to fetch props for ${sport}: ${oddsResponse.status}`;
+        if (!eventsResponse.ok) {
+          const errorMsg = `Failed to fetch events for ${sport}: ${eventsResponse.status}`;
           console.error(errorMsg);
           errors.push(errorMsg);
           continue;
         }
 
-        const oddsData = await oddsResponse.json();
-        console.log(`Retrieved ${oddsData.length} games with player props for ${sport}`);
+        const events = await eventsResponse.json();
+        console.log(`Retrieved ${events.length} events for ${sport}`);
 
         // Filter for games within next 24 hours
         const now = new Date();
         const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
         
-        for (const game of oddsData) {
-          const gameDate = new Date(game.commence_time);
-          
-          // Skip games outside time window
-          if (gameDate > oneDayFromNow) {
-            continue;
-          }
-          
-          // Normalize league
-          const league = sport === 'americanfootball_nfl' ? 'NFL' : 
-                        sport === 'americanfootball_ncaaf' ? 'NCAAF' :
-                        sport === 'basketball_nba' ? 'NBA' : sport;
-          
-          for (const bookmaker of game.bookmakers) {
-            // Filter to target bookmakers only
-            if (!targetBookmakers.includes(bookmaker.key)) {
+        const upcomingEvents = events.filter((event: any) => {
+          const gameDate = new Date(event.commence_time);
+          return gameDate >= now && gameDate <= oneDayFromNow;
+        });
+
+        console.log(`${upcomingEvents.length} games in next 24h for ${sport}`);
+
+        // STEP 2: For each event, fetch odds with bookmakers
+        for (const event of upcomingEvents) {
+          // Throttle to avoid rate limits (120ms between calls)
+          await sleep(120);
+
+          const eventId = event.id;
+          const oddsUrl = `https://api.the-odds-api.com/v4/sports/${sport}/events/${eventId}/odds?regions=${regions}&oddsFormat=american&markets=${playerMarkets}&apiKey=${oddsApiKey}`;
+
+          try {
+            const oddsResponse = await fetch(oddsUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+
+            // Log quota usage
+            const requestsRemaining = oddsResponse.headers.get('x-requests-remaining');
+            if (requestsRemaining) {
+              console.log(`Quota remaining: ${requestsRemaining}`);
+            }
+
+            if (oddsResponse.status === 429) {
+              console.warn(`Rate limited for event ${eventId}`);
+              errors.push(`Rate limit for event ${eventId}`);
               continue;
             }
+
+            if (!oddsResponse.ok) {
+              console.warn(`Failed to fetch odds for event ${eventId}: ${oddsResponse.status}`);
+              errors.push(`Event ${eventId}: ${oddsResponse.status}`);
+              continue;
+            }
+
+            const oddsData = await oddsResponse.json();
             
-            for (const market of bookmaker.markets) {
-              // Skip _alternate markets (ladders)
-              if (market.key.endsWith('_alternate')) {
+            // Handle both response formats: {bookmakers: [...]} or [...] at root
+            const bookmakers = Array.isArray(oddsData) ? oddsData : (oddsData?.bookmakers ?? []);
+            
+            if (!Array.isArray(bookmakers) || bookmakers.length === 0) {
+              console.log(`No bookmakers for event ${eventId}`);
+              continue;
+            }
+
+            const gameDate = new Date(event.commence_time);
+            const league = sport === 'americanfootball_nfl' ? 'NFL' : 
+                          sport === 'americanfootball_ncaaf' ? 'NCAAF' :
+                          sport === 'basketball_nba' ? 'NBA' : sport;
+
+            // Process bookmakers/markets/outcomes
+            for (const bookmaker of bookmakers) {
+              // Filter to target bookmakers only
+              if (!targetBookmakers.includes(bookmaker.key)) {
                 continue;
               }
               
-              // Skip unmapped markets
-              if (!MARKET_MAP[market.key]) {
-                continue;
-              }
-              
-              const normalizedMarket = normalizeMarket(market.key);
-              
-              for (const outcome of market.outcomes) {
-                try {
-                  // Parse player name from outcome
-                  const playerName = parsePlayerName(outcome.name);
-                  
-                  // Extract line (point, if present)
-                  const line = outcome.point || null;
-                  
-                  // CRITICAL: Convert American odds to Decimal
-                  const decimalOdds = americanToDecimal(parseFloat(outcome.price));
-                  
-                  // Sanity check (both upper and lower bounds)
-                  if (decimalOdds <= 1.01 || decimalOdds >= 1000) {
-                    console.warn(`Invalid odds for ${playerName} ${normalizedMarket}: ${decimalOdds}`);
-                    continue;
-                  }
-                  
-                  const propSnapshot = {
-                    sport: sport,
-                    league: league,
-                    team1: game.home_team,
-                    team2: game.away_team,
-                    game_date: gameDate.toISOString(),
-                    player: playerName,
-                    team: outcome.description || game.home_team, // Team extracted from outcome or defaulted
-                    market: normalizedMarket,
-                    line: line,
-                    odds: decimalOdds,
-                    bookmaker: bookmaker.key,
-                  };
+              for (const market of (bookmaker.markets ?? [])) {
+                // Skip _alternate markets (ladders)
+                if (!market?.key || market.key.endsWith('_alternate')) {
+                  continue;
+                }
+                
+                // Skip unmapped markets
+                if (!MARKET_MAP[market.key]) {
+                  continue;
+                }
+                
+                const normalizedMarket = normalizeMarket(market.key);
+                
+                for (const outcome of (market.outcomes ?? [])) {
+                  try {
+                    // Parse player name from outcome
+                    const playerName = parsePlayerName(outcome.name || outcome.description || '');
+                    if (!playerName) {
+                      continue;
+                    }
+                    
+                    // Extract line (point, if present)
+                    const line = outcome.point ?? null;
+                    
+                    // Convert American odds to Decimal
+                    const americanOdds = Number(outcome.price);
+                    if (!Number.isFinite(americanOdds)) {
+                      continue;
+                    }
+                    
+                    const decimalOdds = americanToDecimal(americanOdds);
+                    
+                    // Sanity check (both upper and lower bounds)
+                    if (decimalOdds <= 1.01 || decimalOdds >= 1000) {
+                      console.warn(`Invalid odds for ${playerName} ${normalizedMarket}: ${decimalOdds}`);
+                      continue;
+                    }
+                    
+                    const propSnapshot = {
+                      sport: sport,
+                      league: league,
+                      team1: event.home_team,
+                      team2: event.away_team,
+                      game_date: gameDate.toISOString(),
+                      player: playerName,
+                      team: outcome.description || event.home_team || '', // Team from outcome or default
+                      market: normalizedMarket,
+                      line: line === null || typeof line === 'undefined' ? null : Number(line),
+                      odds: Number(decimalOdds.toFixed(3)),
+                      bookmaker: bookmaker.key,
+                    };
 
-                  // UPSERT with corrected conflict key (includes game_date)
-                  const { error: insertError } = await supabase
-                    .from('player_props_snapshots')
-                    .upsert(propSnapshot, { 
-                      onConflict: 'player,market,line,bookmaker,game_date'
-                    });
+                    // UPSERT with conflict key
+                    const { error: insertError } = await supabase
+                      .from('player_props_snapshots')
+                      .upsert(propSnapshot, { 
+                        onConflict: 'player,market,line,bookmaker,game_date'
+                      });
 
-                  if (insertError) {
-                    console.error('Error inserting prop:', insertError);
-                    errors.push(`Insert error: ${insertError.message}`);
-                  } else {
-                    totalPropsInserted++;
+                    if (insertError) {
+                      console.error('Error inserting prop:', insertError);
+                      errors.push(`Insert error: ${insertError.message}`);
+                    } else {
+                      totalPropsInserted++;
+                    }
+                  } catch (parseError: any) {
+                    console.error('Error parsing outcome:', parseError);
+                    errors.push(`Parse error: ${parseError.message}`);
                   }
-                } catch (parseError) {
-                  console.error('Error parsing outcome:', parseError);
-                  errors.push(`Parse error: ${parseError.message}`);
                 }
               }
             }
+          } catch (eventError: any) {
+            console.error(`Error fetching odds for event ${eventId}:`, eventError);
+            errors.push(`Event ${eventId}: ${eventError.message}`);
           }
         }
-      } catch (sportError) {
+      } catch (sportError: any) {
         console.error(`Error processing ${sport}:`, sportError);
         errors.push(`Sport error (${sport}): ${sportError.message}`);
       }
