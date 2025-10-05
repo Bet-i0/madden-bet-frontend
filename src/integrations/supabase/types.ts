@@ -542,6 +542,7 @@ export type Database = {
           player: string
           seen_at: string
           seen_minute: string
+          side: string | null
           sport: string
           team: string
           team1: string
@@ -560,6 +561,7 @@ export type Database = {
           player: string
           seen_at?: string
           seen_minute: string
+          side?: string | null
           sport: string
           team: string
           team1: string
@@ -578,6 +580,7 @@ export type Database = {
           player?: string
           seen_at?: string
           seen_minute?: string
+          side?: string | null
           sport?: string
           team?: string
           team1?: string
@@ -597,6 +600,7 @@ export type Database = {
           market: string
           odds: number
           player: string
+          side: string | null
           sport: string
           team: string | null
           team1: string
@@ -613,6 +617,7 @@ export type Database = {
           market: string
           odds: number
           player: string
+          side?: string | null
           sport: string
           team?: string | null
           team1: string
@@ -629,6 +634,7 @@ export type Database = {
           market?: string
           odds?: number
           player?: string
+          side?: string | null
           sport?: string
           team?: string | null
           team1?: string

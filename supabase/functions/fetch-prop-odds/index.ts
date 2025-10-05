@@ -219,6 +219,9 @@ serve(async (req) => {
                       continue;
                     }
                     
+                    // Extract side (Over/Under/Yes/No) from outcome description
+                    const side = outcome.description?.match(/^(Over|Under|Yes|No)$/i)?.[1] || null;
+                    
                     const propSnapshot = {
                       sport: sport,
                       league: league,
@@ -226,11 +229,12 @@ serve(async (req) => {
                       team2: event.away_team,
                       game_date: gameDate.toISOString(),
                       player: playerName,
-                      team: outcome.description || event.home_team || '', // Team from outcome or default
+                      team: '', // Team affiliation not reliably available from API for player props
                       market: normalizedMarket,
                       line: line === null || typeof line === 'undefined' ? null : Number(line),
                       odds: Number(decimalOdds.toFixed(3)),
                       bookmaker: bookmaker.key,
+                      side: side,
                     };
 
                     // UPSERT with conflict key
