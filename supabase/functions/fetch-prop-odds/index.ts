@@ -196,8 +196,12 @@ serve(async (req) => {
                 
                 for (const outcome of (market.outcomes ?? [])) {
                   try {
-                    // Parse player name from outcome
-                    const playerName = parsePlayerName(outcome.name || outcome.description || '');
+                    // Extract player name and side from outcome.name
+                    // Example: "Josh Allen Over 231.5" → player: "Josh Allen", side: "Over"
+                    const nameMatch = (outcome.name || '').match(/^(.+?)\s+(Over|Under|Yes|No)\s+/i);
+                    const playerName = nameMatch?.[1]?.trim() || '';
+                    const side = nameMatch?.[2] || null;
+                    
                     if (!playerName) {
                       continue;
                     }
@@ -218,9 +222,6 @@ serve(async (req) => {
                       console.warn(`Invalid odds for ${playerName} ${normalizedMarket}: ${decimalOdds}`);
                       continue;
                     }
-                    
-                    // Extract side (Over/Under/Yes/No) from outcome description
-                    const side = outcome.description?.match(/^(Over|Under|Yes|No)$/i)?.[1] || null;
                     
                     const propSnapshot = {
                       sport: sport,
