@@ -91,7 +91,7 @@ serve(async (req) => {
         console.log(`Fetching player props for ${sport}...`);
         
         const oddsResponse = await fetch(
-          `https://api.the-odds-api.com/v4/sports/${sport}/events?apiKey=${oddsApiKey}&regions=${regions}&markets=${playerMarkets}`,
+          `https://api.the-odds-api.com/v4/sports/${sport}/events?apiKey=${oddsApiKey}&regions=${regions}&markets=${playerMarkets}&oddsFormat=american`,
           {
             method: 'GET',
             headers: {
