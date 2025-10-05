@@ -15,7 +15,7 @@ import { useValueHunter } from "@/hooks/useValueHunter";
 const AnalyzeStrategies = () => {
   const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
-  const [activeTab, setActiveTab] = useState("value-hunter-pro");
+  const [activeTab, setActiveTab] = useState("gpt-strategies");
   const [importedPicks, setImportedPicks] = useState<SuggestionPick[]>([]);
   const [includePicksInAnalysis, setIncludePicksInAnalysis] = useState(true);
   const location = useLocation();
@@ -281,11 +281,7 @@ const AnalyzeStrategies = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8 gaming-tabs">
-            <TabsTrigger value="value-hunter-pro" className="gaming-tab">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Value Hunter Pro
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 mb-8 gaming-tabs">
             <TabsTrigger value="gpt-strategies" className="gaming-tab">
               <Brain className="w-4 h-4 mr-2" />
               GPT Strategies
@@ -304,108 +300,94 @@ const AnalyzeStrategies = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Value Hunter Pro Tab */}
-          <TabsContent value="value-hunter-pro" className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-gaming text-neon-blue mb-2">
-                VALUE HUNTER PRO
-              </h2>
-              <p className="text-gray-300 mb-4">
-                SQL-first value detection: Find the best price vs consensus for max edge
-              </p>
-              <div className="flex items-center justify-center gap-4">
-                <Button
-                  variant="gaming"
-                  size="sm"
-                  onClick={() => refreshValueHunter(false)}
-                  disabled={valueHunterLoading}
-                  className="hover-glow"
-                >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${valueHunterLoading ? 'animate-spin' : ''}`} />
-                  Refresh Picks
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchRationales()}
-                  disabled={rationalesLoading || valueHunterPicks.length === 0}
-                  className="border-neon-green/50 hover:border-neon-green text-neon-green"
-                >
-                  <Brain className={`w-4 h-4 mr-2 ${rationalesLoading ? 'animate-spin' : ''}`} />
-                  Add AI Rationales
-                </Button>
-              </div>
-            </div>
-
-            {valueHunterLoading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 border-2 border-neon-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-400">Analyzing prop odds...</p>
-              </div>
-            ) : valueHunterPicks.length === 0 ? (
-              <Card className="gaming-card p-8 text-center">
-                <Target className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <p className="text-gray-400">No value picks found with current filters</p>
-                <p className="text-gray-500 text-sm mt-2">Looking for 3%+ edge with 2+ books</p>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {valueHunterPicks.map((pick, idx) => (
-                  <Card key={idx} className="gaming-card p-4 hover:scale-102 transition-transform">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="text-lg font-gaming text-neon-blue mb-1">
-                          {pick.player}
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          {pick.market} {pick.line} @ {pick.best_book}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="px-2 py-1 bg-neon-green/20 text-neon-green text-xs rounded-full border border-neon-green/30 font-bold">
-                          +{pick.edge_bps.toFixed(0)} bps
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {pick.book_count} books
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                      <div className="gaming-stat-card">
-                        <span className="text-gray-400">Best Odds</span>
-                        <span className="text-neon-green font-bold block">
-                          {pick.best_odds.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="gaming-stat-card">
-                        <span className="text-gray-400">Consensus</span>
-                        <span className="text-white font-bold block">
-                          {pick.consensus_odds.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {pick.rationale && (
-                      <div className="p-2 bg-purple-500/10 border border-purple-500/30 rounded text-xs text-purple-300 italic">
-                        {pick.rationale}
-                      </div>
-                    )}
-
-                    {!pick.rationale && rationalesLoading && (
-                      <div className="p-2 bg-gray-800/50 border border-gray-700 rounded text-xs text-gray-400 text-center">
-                        <div className="w-3 h-3 border border-neon-blue border-t-transparent rounded-full animate-spin inline-block mr-2"></div>
-                        Loading rationale...
-                      </div>
-                    )}
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
           {/* GPT Strategies Tab */}
           <TabsContent value="gpt-strategies" className="space-y-6">
+            {/* Value Hunter Pro Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-2xl font-gaming text-neon-blue mb-1">
+                    VALUE HUNTER PRO
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    SQL-first value detection: Find best price vs consensus for max edge
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="gaming"
+                    size="sm"
+                    onClick={() => refreshValueHunter(false)}
+                    disabled={valueHunterLoading}
+                    className="hover-glow"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${valueHunterLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchRationales()}
+                    disabled={rationalesLoading || valueHunterPicks.length === 0}
+                    className="border-neon-green/50 hover:border-neon-green text-neon-green"
+                  >
+                    <Brain className={`w-4 h-4 mr-2 ${rationalesLoading ? 'animate-spin' : ''}`} />
+                    AI Rationales
+                  </Button>
+                </div>
+              </div>
+
+              {valueHunterLoading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-2 border-neon-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400">Analyzing prop odds...</p>
+                </div>
+              ) : valueHunterPicks.length === 0 ? (
+                <Card className="gaming-card p-6 text-center">
+                  <Target className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No value picks found (3%+ edge, 2+ books)</p>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {valueHunterPicks.slice(0, 6).map((pick, idx) => (
+                    <Card key={idx} className="gaming-card p-3 hover:scale-102 transition-transform">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="text-sm font-gaming text-neon-blue mb-1">
+                            {pick.player}
+                          </div>
+                          <div className="text-xs text-gray-300">
+                            {pick.market} {pick.line} @ {pick.best_book}
+                          </div>
+                        </div>
+                        <div className="px-2 py-0.5 bg-neon-green/20 text-neon-green text-xs rounded-full border border-neon-green/30 font-bold">
+                          +{pick.edge_bps.toFixed(0)}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 mb-2 text-xs">
+                        <div className="bg-gray-800/50 p-1.5 rounded">
+                          <span className="text-gray-400 block text-[10px]">Best</span>
+                          <span className="text-neon-green font-bold">{pick.best_odds.toFixed(2)}</span>
+                        </div>
+                        <div className="bg-gray-800/50 p-1.5 rounded">
+                          <span className="text-gray-400 block text-[10px]">Cons.</span>
+                          <span className="text-white font-bold">{pick.consensus_odds.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {pick.rationale && (
+                        <div className="p-1.5 bg-purple-500/10 border border-purple-500/30 rounded text-[10px] text-purple-300 italic leading-tight">
+                          {pick.rationale}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Other GPT Strategies */}
             <div className="text-center mb-8">
               <h2 className="text-3xl font-gaming text-neon-blue mb-2">
                 AI-POWERED STRATEGIES
