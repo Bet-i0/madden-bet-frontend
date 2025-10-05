@@ -333,6 +333,27 @@ export type Database = {
           },
         ]
       }
+      books: {
+        Row: {
+          code: string
+          created_at: string
+          id: number
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -648,6 +669,33 @@ export type Database = {
         }
         Relationships: []
       }
+      teams: {
+        Row: {
+          created_at: string
+          external_id: string | null
+          id: number
+          league: string
+          name: string
+          short_name: string
+        }
+        Insert: {
+          created_at?: string
+          external_id?: string | null
+          id?: number
+          league: string
+          name: string
+          short_name: string
+        }
+        Update: {
+          created_at?: string
+          external_id?: string | null
+          id?: number
+          league?: string
+          name?: string
+          short_name?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -709,6 +757,21 @@ export type Database = {
       }
     }
     Views: {
+      best_odds: {
+        Row: {
+          bookmaker: string | null
+          game_date: string | null
+          last_updated: string | null
+          league: string | null
+          market: string | null
+          odds: number | null
+          rank: number | null
+          sport: string | null
+          team1: string | null
+          team2: string | null
+        }
+        Relationships: []
+      }
       leaderboard_stats: {
         Row: {
           avatar_url: string | null
@@ -734,6 +797,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      refresh_best_odds: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       upsert_strategy_content: {
         Args: {
