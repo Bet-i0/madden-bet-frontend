@@ -185,6 +185,9 @@ verify_jwt = false
 [functions.ai-strategy-analysis]
 verify_jwt = false
 
+[functions.ai-strategy-rationale]
+verify_jwt = false
+
 [functions.ai-suggestions]
 verify_jwt = false
 

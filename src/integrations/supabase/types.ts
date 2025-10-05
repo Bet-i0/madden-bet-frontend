@@ -985,6 +985,18 @@ export type Database = {
         }
         Relationships: []
       }
+      prop_consensus_odds_v: {
+        Row: {
+          book_count: number | null
+          consensus_odds: number | null
+          consensus_prob: number | null
+          game_date: string | null
+          line: number | null
+          market: string | null
+          player: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_old_player_props: {
@@ -1009,6 +1021,21 @@ export type Database = {
           sport: string
           team1: string
           team2: string
+        }[]
+      }
+      fn_value_hunter: {
+        Args: { as_of?: string; top_n?: number }
+        Returns: {
+          best_book: string
+          best_odds: number
+          book_count: number
+          consensus_odds: number
+          edge_bps: number
+          edge_prob: number
+          game_date: string
+          line: number
+          market: string
+          player: string
         }[]
       }
       has_role: {
