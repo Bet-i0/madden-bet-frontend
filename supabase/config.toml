@@ -1,5 +1,12 @@
 project_id = "avyqvcvalvtuqncexnbf"
 
+# Cron schedule for fetching player props every 10 minutes
+[functions.fetch-prop-odds.cron]
+schedule = "*/10 * * * *"
+
+[functions.ai-edge-detection]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321

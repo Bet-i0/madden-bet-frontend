@@ -592,6 +592,7 @@ export type Database = {
         Row: {
           bookmaker: string
           created_at: string
+          event_id: string | null
           game_date: string
           id: string
           last_updated: string
@@ -609,6 +610,7 @@ export type Database = {
         Insert: {
           bookmaker: string
           created_at?: string
+          event_id?: string | null
           game_date: string
           id?: string
           last_updated?: string
@@ -626,6 +628,7 @@ export type Database = {
         Update: {
           bookmaker?: string
           created_at?: string
+          event_id?: string | null
           game_date?: string
           id?: string
           last_updated?: string
@@ -946,6 +949,22 @@ export type Database = {
         }
         Relationships: []
       }
+      best_prop_odds: {
+        Row: {
+          best_bookmaker: string | null
+          best_odds: number | null
+          book_count: number | null
+          game_date: string | null
+          last_updated: string | null
+          league: string | null
+          line: number | null
+          market: string | null
+          player: string | null
+          sport: string | null
+          team: string | null
+        }
+        Relationships: []
+      }
       leaderboard_stats: {
         Row: {
           avatar_url: string | null
@@ -977,6 +996,10 @@ export type Database = {
         Returns: boolean
       }
       refresh_best_odds: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      refresh_best_prop_odds: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
