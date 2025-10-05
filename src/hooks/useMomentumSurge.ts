@@ -9,11 +9,17 @@ export interface MomentumSurgePick {
   line: number;
   bookmaker: string;
   odds_now: number;
-  odds_change_15m: number;
-  odds_change_60m: number;
+  consensus_prob_now: number;
+  consensus_prob_15m: number;
+  consensus_prob_60m: number;
   consensus_change_15m: number;
   consensus_change_60m: number;
+  book_prob_now: number;
+  book_prob_15m: number;
+  book_change_15m: number;
+  lag_prob: number;
   momentum_score: number;
+  book_count: number;
   rationale?: string;
 }
 
@@ -34,7 +40,12 @@ export const useMomentumSurge = (autoLoad = true) => {
       setError(undefined);
 
       const { data, error: fetchError } = await supabase
-        .rpc('fn_momentum_surge', { result_limit: limit });
+        .rpc('fn_momentum_surge', { 
+          as_of: new Date().toISOString(),
+          lookback_mins_1: 15,
+          lookback_mins_2: 60,
+          top_n: limit 
+        });
 
       if (fetchError) {
         console.error('Error fetching momentum surge picks:', fetchError);
@@ -65,7 +76,7 @@ export const useMomentumSurge = (autoLoad = true) => {
             segment: 'momentum_surge',
             picks: targetPicks.slice(0, 20),
             context: {
-              change_windows: ['15m', '60m']
+              windows: ['15m', '60m']
             }
           }
         }

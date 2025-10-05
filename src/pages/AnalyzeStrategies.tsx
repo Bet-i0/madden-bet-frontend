@@ -397,7 +397,7 @@ const AnalyzeStrategies = () => {
                     MOMENTUM SURGE
                   </h3>
                   <p className="text-gray-400 text-sm">
-                    Rapid line movement detection: Capture steam before books adjust
+                    Rapid line movement: Books lagging consensus shifts (5%+ change, 3%+ lag required)
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -432,7 +432,7 @@ const AnalyzeStrategies = () => {
               ) : momentumPicks.length === 0 ? (
                 <Card className="gaming-card p-6 text-center">
                   <TrendingUp className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No momentum detected (5%+ consensus change required)</p>
+                  <p className="text-gray-400 text-sm">No momentum detected (requires 5%+ consensus change & 3%+ book lag)</p>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -447,8 +447,13 @@ const AnalyzeStrategies = () => {
                             {pick.market} {pick.line} @ {pick.bookmaker}
                           </div>
                         </div>
-                        <div className="px-2 py-0.5 bg-neon-green/20 text-neon-green text-xs rounded-full border border-neon-green/30 font-bold">
-                          {pick.momentum_score.toFixed(2)}
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="px-2 py-0.5 bg-neon-green/20 text-neon-green text-xs rounded-full border border-neon-green/30 font-bold">
+                            {pick.momentum_score.toFixed(1)}
+                          </div>
+                          <div className="px-2 py-0.5 bg-purple-500/20 text-purple-300 text-[10px] rounded-full border border-purple-500/30">
+                            Lag: {(pick.lag_prob * 100).toFixed(1)}%
+                          </div>
                         </div>
                       </div>
 
@@ -458,15 +463,15 @@ const AnalyzeStrategies = () => {
                           <span className="text-white font-bold">{pick.odds_now.toFixed(2)}</span>
                         </div>
                         <div className="bg-gray-800/50 p-1.5 rounded">
-                          <span className="text-gray-400 block text-[10px]">15m</span>
+                          <span className="text-gray-400 block text-[10px]">Δ15m</span>
                           <span className={`font-bold ${pick.consensus_change_15m > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {pick.consensus_change_15m > 0 ? '+' : ''}{pick.consensus_change_15m.toFixed(2)}
+                            {pick.consensus_change_15m > 0 ? '+' : ''}{(pick.consensus_change_15m * 100).toFixed(1)}%
                           </span>
                         </div>
                         <div className="bg-gray-800/50 p-1.5 rounded">
-                          <span className="text-gray-400 block text-[10px]">60m</span>
+                          <span className="text-gray-400 block text-[10px]">Δ60m</span>
                           <span className={`font-bold ${pick.consensus_change_60m > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            {pick.consensus_change_60m > 0 ? '+' : ''}{pick.consensus_change_60m.toFixed(2)}
+                            {pick.consensus_change_60m > 0 ? '+' : ''}{(pick.consensus_change_60m * 100).toFixed(1)}%
                           </span>
                         </div>
                       </div>

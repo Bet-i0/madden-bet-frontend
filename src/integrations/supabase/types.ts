@@ -1048,6 +1048,33 @@ export type Database = {
           consensus_prob: number
         }[]
       }
+      fn_momentum_surge: {
+        Args: {
+          as_of?: string
+          lookback_mins_1?: number
+          lookback_mins_2?: number
+          top_n?: number
+        }
+        Returns: {
+          book_change_15m: number
+          book_count: number
+          book_prob_15m: number
+          book_prob_now: number
+          bookmaker: string
+          consensus_change_15m: number
+          consensus_change_60m: number
+          consensus_prob_15m: number
+          consensus_prob_60m: number
+          consensus_prob_now: number
+          game_date: string
+          lag_prob: number
+          line: number
+          market: string
+          momentum_score: number
+          odds_now: number
+          player: string
+        }[]
+      }
       fn_value_hunter: {
         Args: { as_of?: string; top_n?: number }
         Returns: {
