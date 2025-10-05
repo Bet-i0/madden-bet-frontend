@@ -997,23 +997,14 @@ export type Database = {
         }
         Relationships: []
       }
-      prop_momentum_15m: {
+      prop_latest_minute_v: {
         Row: {
           bookmaker: string | null
-          consensus_15m_ago: number | null
-          consensus_60m_ago: number | null
-          consensus_change_15m: number | null
-          consensus_change_60m: number | null
-          consensus_now: number | null
-          game_date: string | null
-          last_seen: string | null
+          event_key: string | null
           line: number | null
           market: string | null
-          odds_15m_ago: number | null
-          odds_60m_ago: number | null
-          odds_change_15m: number | null
-          odds_change_60m: number | null
-          odds_now: number | null
+          minute_bucket: string | null
+          odds: number | null
           player: string | null
         }
         Relationships: []
@@ -1044,20 +1035,17 @@ export type Database = {
           team2: string
         }[]
       }
-      fn_momentum_surge: {
-        Args: { result_limit?: number }
+      fn_consensus_prob_at: {
+        Args: {
+          anchor: string
+          p_event_key: string
+          p_line: number
+          p_market: string
+          p_player: string
+        }
         Returns: {
-          bookmaker: string
-          consensus_change_15m: number
-          consensus_change_60m: number
-          game_date: string
-          line: number
-          market: string
-          momentum_score: number
-          odds_change_15m: number
-          odds_change_60m: number
-          odds_now: number
-          player: string
+          book_count: number
+          consensus_prob: number
         }[]
       }
       fn_value_hunter: {
