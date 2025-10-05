@@ -15,6 +15,7 @@ import stadiumBg from '@/assets/stadium-bg-optimized.jpg';
 import TopBar from '@/components/TopBar';
 import MatchSpotlight from '@/components/MatchSpotlight';
 import AIInsightsPreview from '@/components/AIInsightsPreview';
+import { AIEdgeRecommendations } from '@/components/AIEdgeRecommendations';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -95,6 +96,11 @@ const Index = () => {
       {/* Main Content Section */}
       <div className="px-6 md:px-8 lg:px-12 py-6 pb-24">
         <div className="max-w-7xl mx-auto">
+          {/* AI Edge Recommendations */}
+          <div className="mb-8">
+            <AIEdgeRecommendations />
+          </div>
+
           {/* AI Insights Preview */}
           <AIInsightsPreview />
 

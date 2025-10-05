@@ -167,3 +167,6 @@ verify_jwt = true
 
 [functions.trending-data]
 verify_jwt = true
+
+[functions.ai-edge-ranking]
+verify_jwt = false
