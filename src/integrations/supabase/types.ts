@@ -988,6 +988,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      compute_prop_edges: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          best_book: string
+          best_odds: number
+          book_count: number
+          consensus_odds: number
+          edge_percent: number
+          event_id: string
+          game_date: string
+          league: string
+          line: number
+          market: string
+          player: string
+          side: string
+          sport: string
+          team1: string
+          team2: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

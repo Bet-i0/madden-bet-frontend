@@ -56,6 +56,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  let propsInserted = 0;
+  const booksSeen = new Set<string>();
+  let requestsRemaining: number | null = null;
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -86,7 +91,6 @@ serve(async (req) => {
     // Player prop markets to fetch
     const playerMarkets = Object.keys(MARKET_MAP).join(',');
 
-    let totalPropsInserted = 0;
     const errors: string[] = [];
 
     for (const sport of sports) {
@@ -142,8 +146,9 @@ serve(async (req) => {
             });
 
             // Log quota usage
-            const requestsRemaining = oddsResponse.headers.get('x-requests-remaining');
-            if (requestsRemaining) {
+            const quotaHeader = oddsResponse.headers.get('x-requests-remaining');
+            if (quotaHeader) {
+              requestsRemaining = parseInt(quotaHeader);
               console.log(`Quota remaining: ${requestsRemaining}`);
             }
 
@@ -180,6 +185,8 @@ serve(async (req) => {
               if (!targetBookmakers.includes(bookmaker.key)) {
                 continue;
               }
+              
+              booksSeen.add(bookmaker.key);
               
               for (const market of (bookmaker.markets ?? [])) {
                 // Skip _alternate markets (ladders)
@@ -262,6 +269,7 @@ serve(async (req) => {
                       odds: Number(decimalOdds.toFixed(3)),
                       bookmaker: bookmaker.key,
                       side: side,
+                      event_id: eventId, // Store event_id for easier joins
                     };
 
                     // UPSERT with conflict key
@@ -275,7 +283,7 @@ serve(async (req) => {
                       console.error('Error inserting prop:', insertError);
                       errors.push(`Insert error: ${insertError.message}`);
                     } else {
-                      totalPropsInserted++;
+                      propsInserted++;
                     }
                   } catch (parseError: any) {
                     console.error('Error parsing outcome:', parseError);
@@ -295,25 +303,65 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Player prop fetch complete. Inserted/updated ${totalPropsInserted} props`);
+    console.log(`Player prop fetch complete. Inserted/updated ${propsInserted} props`);
     if (errors.length > 0) {
       console.warn(`Encountered ${errors.length} errors:`, errors.slice(0, 5));
     }
 
+    // Log run to ingest_runs table
+    const duration = Date.now() - startTime;
+    await supabase.from('ingest_runs').insert({
+      function: 'fetch-prop-odds',
+      sport: 'americanfootball_nfl',
+      duration_ms: duration,
+      rows_inserted: propsInserted,
+      books_seen: Array.from(booksSeen),
+      success: errors.length === 0,
+      error_text: errors.length > 0 ? `${errors.length} errors occurred` : null,
+      requests_remaining: requestsRemaining,
+    });
+
+    // Refresh best_prop_odds materialized view
+    await supabase.rpc('refresh_best_prop_odds');
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        propsInserted: totalPropsInserted,
+        propsInserted,
         errorsCount: errors.length,
+        duration_ms: duration,
+        books_seen: Array.from(booksSeen),
+        requests_remaining: requestsRemaining,
         message: 'Player props fetched and stored successfully'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
+    // Log failed run
+    const duration = Date.now() - startTime;
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      await supabase.from('ingest_runs').insert({
+        function: 'fetch-prop-odds',
+        sport: 'americanfootball_nfl',
+        duration_ms: duration,
+        rows_inserted: propsInserted,
+        books_seen: Array.from(booksSeen),
+        success: false,
+        error_text: error instanceof Error ? error.message : 'Unknown error',
+        requests_remaining: requestsRemaining,
+      });
+    } catch (logError) {
+      console.error('Failed to log error to ingest_runs:', logError);
+    }
+
     console.error('Error in fetch-prop-odds function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }), 
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), 
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
