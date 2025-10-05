@@ -431,6 +431,7 @@ export type Database = {
           error: string | null
           function: string
           id: number
+          requests_remaining: number | null
           rows_inserted: number
           sport: string | null
           success: boolean
@@ -442,6 +443,7 @@ export type Database = {
           error?: string | null
           function: string
           id?: number
+          requests_remaining?: number | null
           rows_inserted: number
           sport?: string | null
           success: boolean
@@ -453,6 +455,7 @@ export type Database = {
           error?: string | null
           function?: string
           id?: number
+          requests_remaining?: number | null
           rows_inserted?: number
           sport?: string | null
           success?: boolean

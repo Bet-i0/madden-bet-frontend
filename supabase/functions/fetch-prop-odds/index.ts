@@ -203,7 +203,6 @@ serve(async (req) => {
                 
                 for (const outcome of (market.outcomes ?? [])) {
                   try {
-                    // Robustly parse player name and side across bookmakers
                     const rawName = (outcome.name || '').trim();
                     const rawDesc = (outcome.description || '').trim();
                     console.log(`Outcome data: name="${rawName}", description="${rawDesc}", point=${outcome.point}`);
@@ -211,31 +210,32 @@ serve(async (req) => {
                     let playerName = '';
                     let side: string | null = null;
 
-                    // Pattern 1: "Josh Allen Over 231.5"
-                    const nameMatch = rawName.match(/^(.+?)\s+(Over|Under|Yes|No)\b/i);
-                    if (nameMatch) {
-                      playerName = nameMatch[1].trim();
-                      side = nameMatch[2];
-                    } else {
-                      // Pattern 2: name is "Over/Under/Yes/No" and description is the player name
-                      if (/^(Over|Under|Yes|No)$/i.test(rawName) && rawDesc) {
-                        playerName = rawDesc;
-                        side = rawName;
-                      } else if (rawDesc) {
-                        // Pattern 3: player in description, side embedded in name somewhere
-                        playerName = rawDesc;
-                        const sideMatch = rawName.match(/\b(Over|Under|Yes|No)\b/i);
-                        if (sideMatch) side = sideMatch[1];
-                      } else {
-                        // Pattern 4: fallback - try to treat the whole name as a player
-                        const onlyName = rawName.match(/^([A-Za-z'. -]{2,})$/);
-                        if (onlyName) playerName = onlyName[1].trim();
-                      }
+                    // CRITICAL: Always prefer description for player name if available
+                    // Pattern 1: description contains player name, name contains side
+                    // Example: name="Over", description="Josh Allen"
+                    if (rawDesc && /^(Over|Under|Yes|No)$/i.test(rawName)) {
+                      playerName = rawDesc;
+                      side = rawName;
+                    }
+                    // Pattern 2: name contains "Player Over/Under Line"
+                    // Example: name="Josh Allen Over 231.5"
+                    else if (rawName.match(/^(.+?)\s+(Over|Under|Yes|No)\b/i)) {
+                      const nameMatch = rawName.match(/^(.+?)\s+(Over|Under|Yes|No)\b/i);
+                      playerName = nameMatch![1].trim();
+                      side = nameMatch![2];
+                    }
+                    // Pattern 3: description has player, extract side from name if possible
+                    else if (rawDesc) {
+                      playerName = rawDesc;
+                      const sideMatch = rawName.match(/\b(Over|Under|Yes|No)\b/i);
+                      if (sideMatch) side = sideMatch[1];
                     }
 
                     console.log(`Parsed: playerName="${playerName}", side="${side}"`);
-                    if (!playerName) {
-                      console.log('Skipping outcome - no player name parsed');
+                    
+                    // Validation: Never allow Over/Under/Yes/No as player name
+                    if (!playerName || /^(Over|Under|Yes|No)$/i.test(playerName)) {
+                      console.log(`Skipping outcome - invalid player name: "${playerName}"`);
                       continue;
                     }
 
