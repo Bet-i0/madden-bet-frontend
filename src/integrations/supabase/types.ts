@@ -528,6 +528,63 @@ export type Database = {
         }
         Relationships: []
       }
+      player_props_history: {
+        Row: {
+          bookmaker: string
+          event_id: string | null
+          event_key: string
+          game_date: string
+          id: number
+          league: string
+          line: number | null
+          market: string
+          odds: number
+          player: string
+          seen_at: string
+          seen_minute: string
+          sport: string
+          team: string
+          team1: string
+          team2: string
+        }
+        Insert: {
+          bookmaker: string
+          event_id?: string | null
+          event_key: string
+          game_date: string
+          id?: number
+          league: string
+          line?: number | null
+          market: string
+          odds: number
+          player: string
+          seen_at?: string
+          seen_minute: string
+          sport: string
+          team: string
+          team1: string
+          team2: string
+        }
+        Update: {
+          bookmaker?: string
+          event_id?: string | null
+          event_key?: string
+          game_date?: string
+          id?: number
+          league?: string
+          line?: number | null
+          market?: string
+          odds?: number
+          player?: string
+          seen_at?: string
+          seen_minute?: string
+          sport?: string
+          team?: string
+          team1?: string
+          team2?: string
+        }
+        Relationships: []
+      }
       player_props_snapshots: {
         Row: {
           bookmaker: string
