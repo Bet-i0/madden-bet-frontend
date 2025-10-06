@@ -462,6 +462,48 @@ export type Database = {
         }
         Relationships: []
       }
+      injury_news_cache: {
+        Row: {
+          confidence: number
+          created_at: string
+          expires_at: string
+          headline: string
+          id: number
+          player: string
+          published_at: string
+          source: string | null
+          status: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          expires_at: string
+          headline: string
+          id?: number
+          player: string
+          published_at: string
+          source?: string | null
+          status: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          expires_at?: string
+          headline?: string
+          id?: number
+          player?: string
+          published_at?: string
+          source?: string | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -968,6 +1010,18 @@ export type Database = {
         }
         Relationships: []
       }
+      latest_injury_status_v: {
+        Row: {
+          confidence: number | null
+          headline: string | null
+          player: string | null
+          published_at: string | null
+          source: string | null
+          status: string | null
+          url: string | null
+        }
+        Relationships: []
+      }
       leaderboard_stats: {
         Row: {
           avatar_url: string | null
@@ -1046,6 +1100,24 @@ export type Database = {
         Returns: {
           book_count: number
           consensus_prob: number
+        }[]
+      }
+      fn_injury_candidates: {
+        Args: { as_of?: string; top_n?: number }
+        Returns: {
+          bookmaker: string
+          consensus_change_60m: number
+          consensus_prob_60m: number
+          consensus_prob_now: number
+          game_date: string
+          lag_prob: number
+          line: number
+          market: string
+          odds: number
+          pick_score: number
+          player: string
+          published_at: string
+          status: string
         }[]
       }
       fn_momentum_surge: {
