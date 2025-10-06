@@ -28,6 +28,24 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if data fetching is enabled
+    const { data: featureFlag } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('key', 'data_fetching_enabled')
+      .single();
+
+    if (!featureFlag?.enabled) {
+      console.log('Data fetching is paused via feature flag');
+      return new Response(
+        JSON.stringify({ 
+          message: 'Data fetching is currently paused',
+          skipped: true 
+        }), 
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Starting odds fetch process...');
 
     // Sports to fetch odds for - focusing on football only

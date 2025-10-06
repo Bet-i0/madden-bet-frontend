@@ -16,6 +16,7 @@ import TopBar from '@/components/TopBar';
 import MatchSpotlight from '@/components/MatchSpotlight';
 import AIInsightsPreview from '@/components/AIInsightsPreview';
 import { AIEdgeRecommendations } from '@/components/AIEdgeRecommendations';
+import { DataFetchingControl } from '@/components/DataFetchingControl';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -103,6 +104,11 @@ const Index = () => {
 
           {/* AI Insights Preview */}
           <AIInsightsPreview />
+
+          {/* Data Fetching Control */}
+          <div className="mb-8">
+            <DataFetchingControl />
+          </div>
 
           {/* Widget Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
