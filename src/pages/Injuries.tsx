@@ -1,374 +1,323 @@
-import { useState, useEffect } from "react";
-import { 
-  AlertTriangle, 
-  Clock, 
-  User, 
-  Activity, 
-  TrendingDown, 
-  Shield, 
-  Target, 
-  MessageSquare, 
-  Users,
-  Flame,
-  ChevronRight,
-  Heart
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, TrendingUp, Clock, Radio, MessageSquare, RefreshCw, Scan } from "lucide-react";
 import BackToHome from "@/components/BackToHome";
+import { useNavigate } from "react-router-dom";
+import { useInjuryIntelligence } from "@/hooks/useInjuryIntelligence";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Injuries = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedInjury, setSelectedInjury] = useState<any>(null);
-  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
-  const [aiInsight, setAiInsight] = useState<string>("");
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { candidates, loading, scanning, error, refresh, scanInjuries } = useInjuryIntelligence();
+  const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const [rationale, setRationale] = useState<string>("");
+  const [loadingRationale, setLoadingRationale] = useState(false);
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleExplain = async (candidate: any) => {
+    setSelectedCandidate(candidate);
+    setLoadingRationale(true);
+    setRationale("");
 
-  const injuryReports = [
-    {
-      id: 1,
-      player: "Patrick Mahomes",
-      team: "Kansas City Chiefs",
-      position: "QB",
-      injury: "Ankle Sprain",
-      status: "Questionable",
-      severity: "Minor",
-      lastUpdate: "2 hours ago",
-      projectedReturn: "This Week",
-      fantasyImpact: "Medium",
-      bettingImplications: "Chiefs spread may be affected (-1.5 pts)",
-      description: "Right ankle sprain sustained during practice. Expected to play with pain management.",
-      relatedPlayers: ["Travis Kelce", "Tyreek Hill"],
-      weeklyTrend: "Improving"
-    },
-    {
-      id: 2,
-      player: "Christian McCaffrey",
-      team: "San Francisco 49ers",
-      position: "RB",
-      injury: "Hamstring Strain",
-      status: "Doubtful",
-      severity: "Moderate",
-      lastUpdate: "4 hours ago",
-      projectedReturn: "Next Week",
-      fantasyImpact: "High",
-      bettingImplications: "49ers total may drop (-3.5 pts)",
-      description: "Grade 2 hamstring strain. Unlikely to suit up this week.",
-      relatedPlayers: ["Jordan Mason", "Kyle Juszczyk"],
-      weeklyTrend: "Declining"
-    },
-    {
-      id: 3,
-      player: "Cooper Kupp",
-      team: "Los Angeles Rams",
-      position: "WR",
-      injury: "Knee Contusion",
-      status: "Probable",
-      severity: "Minor",
-      lastUpdate: "1 hour ago",
-      projectedReturn: "This Week",
-      fantasyImpact: "Low",
-      bettingImplications: "Rams passing props stable",
-      description: "Minor knee bruising from contact in practice. Should be ready to go.",
-      relatedPlayers: ["Matthew Stafford", "Puka Nacua"],
-      weeklyTrend: "Stable"
-    }
-  ];
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-strategy-rationale', {
+        body: {
+          segment: 'injury_intelligence',
+          picks: [{
+            player: candidate.player,
+            market: candidate.market,
+            line: candidate.line,
+            best_book: candidate.bookmaker,
+            best_odds: candidate.odds,
+            consensus_odds: candidate.consensus_prob_now * candidate.odds,
+            book_count: 5,
+            edge_prob: candidate.lag_prob,
+            edge_bps: candidate.lag_prob * 10000,
+            game_date: candidate.game_date,
+          }],
+          context: {
+            status: candidate.status,
+            consensus_change_60m: candidate.consensus_change_60m,
+            lag_prob: candidate.lag_prob,
+          }
+        }
+      });
 
-  const generateGPTInsight = async (injury: any) => {
-    setIsLoadingInsight(true);
-    setAiInsight("");
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const insights = [
-      `Given ${injury.player}'s ${injury.injury}, I recommend AVOIDING his player props this week. The ${injury.severity.toLowerCase()} nature of this injury could limit his effectiveness. Consider fading ${injury.team} in your parlays.`,
-      `${injury.player}'s ${injury.injury} creates value in ${injury.relatedPlayers[0]} props. The backup options suggest a shift in game plan. This injury makes UNDER bets more attractive for team totals.`,
-      `Monitor ${injury.player} closely - his ${injury.status.toLowerCase()} status creates uncertainty. If he plays, expect limited snaps. This injury scenario favors defensive props and lower-scoring game outcomes.`,
-      `The ${injury.team} offense will adapt around ${injury.player}'s absence. Look for increased targets to ${injury.relatedPlayers.join(' and ')}. Team total UNDER becomes more valuable.`
-    ];
-    
-    setAiInsight(insights[Math.floor(Math.random() * insights.length)]);
-    setIsLoadingInsight(false);
-  };
+      if (error) throw error;
 
-  const handleInjuryClick = (injury: any) => {
-    setSelectedInjury(injury);
-    generateGPTInsight(injury);
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
-      case 'minor': return "text-neon-green";
-      case 'moderate': return "text-amber-400";
-      case 'severe': return "text-destructive";
-      default: return "text-muted-foreground";
+      if (data && data.picks && data.picks.length > 0 && data.picks[0].rationale) {
+        setRationale(data.picks[0].rationale);
+      }
+    } catch (err) {
+      console.error('Error fetching rationale:', err);
+      toast({
+        title: "Failed to generate rationale",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRationale(false);
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'probable': return "bg-neon-green/20 text-neon-green border-neon-green/30";
-      case 'questionable': return "bg-amber-400/20 text-amber-400 border-amber-400/30";
-      case 'doubtful': return "bg-destructive/20 text-destructive border-destructive/30";
-      case 'out': return "bg-muted/20 text-muted-foreground border-muted/30";
+    switch (status) {
+      case 'Out': return "bg-destructive/20 text-destructive border-destructive/30";
+      case 'Doubtful': return "bg-orange-500/20 text-orange-500 border-orange-500/30";
+      case 'Questionable': return "bg-amber-400/20 text-amber-400 border-amber-400/30";
       default: return "bg-muted/20 text-muted-foreground border-muted/30";
     }
   };
 
   return (
-    <div className="min-h-screen bg-background font-gaming overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-gradient-card backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-3">
+      <div className="border-b bg-card/50 backdrop-blur">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Left: Live Status */}
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-neon px-4 py-2 rounded-lg shadow-glow">
-                <div className="flex items-center space-x-2">
-                  <Activity className="w-5 h-5 text-accent-foreground animate-pulse" />
-                  <span className="font-bold text-accent-foreground font-sports">INJURY TRACKER</span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 text-neon-green">
-                <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-                <span className="font-sports text-sm">LIVE UPDATES</span>
+            <div className="flex items-center gap-3">
+              <BackToHome />
+              <div>
+                <h1 className="text-2xl font-bold">Injury Intelligence</h1>
+                <p className="text-sm text-muted-foreground">Real-time injury reports & AI-powered betting opportunities</p>
               </div>
             </div>
-
-            {/* Center: Time */}
-            <div className="flex items-center space-x-2 text-silver-metallic">
-              <Clock className="w-4 h-4" />
-              <span className="font-sports text-lg">
-                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-              <span className="hidden md:inline text-muted-foreground">
-                {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
-              </span>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => scanInjuries()}
+                disabled={scanning}
+                variant="outline"
+                size="sm"
+              >
+                {scanning ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Scanning...
+                  </>
+                ) : (
+                  <>
+                    <Scan className="h-4 w-4 mr-2" />
+                    Scan Injuries
+                  </>
+                )}
+              </Button>
+              <Button onClick={refresh} disabled={loading} variant="ghost" size="sm">
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Radio className="h-3 w-3 animate-pulse text-green-500" />
+                Live
+              </Badge>
             </div>
-
-            {/* Right: Back Button */}
-            <BackToHome 
-              variant="outline" 
-              className="font-sports"
-            />
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Hero Section */}
-      <section className="relative py-8 bg-gradient-subtle">
+      <section className="relative py-6 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="container mx-auto px-4">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-6xl font-bold font-sports tracking-wider">
-              INJURY <span className="text-gradient-primary">INTELLIGENCE</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Real-time injury reports with AI-powered betting impact analysis
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Find Props Where Injury News Hasn't Been Priced In
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Our AI scans injury reports and identifies opportunities where the market lags behind fresh news
             </p>
-            <div className="flex justify-center space-x-4">
-              <Badge variant="secondary" className="px-4 py-2 font-sports">
-                <Heart className="w-4 h-4 mr-2" />
-                REAL-TIME DATA
-              </Badge>
-              <Badge variant="secondary" className="px-4 py-2 font-sports">
-                <Target className="w-4 h-4 mr-2" />
-                AI ANALYSIS
-              </Badge>
-              <Badge variant="secondary" className="px-4 py-2 font-sports">
-                <TrendingDown className="w-4 h-4 mr-2" />
-                BETTING IMPACT
-              </Badge>
-            </div>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-8">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Injury Reports List */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold font-sports">ACTIVE REPORTS</h2>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Last updated: {currentTime.toLocaleTimeString()}</span>
-                </div>
-              </div>
+      <div className="container mx-auto px-4 py-6">
+        {error && (
+          <div className="mb-4 p-4 bg-destructive/10 border border-destructive rounded-lg text-destructive">
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
 
-              <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                {injuryReports.map((injury) => (
-                  <Card 
-                    key={injury.id}
-                    className={`gaming-card cursor-pointer transition-all duration-300 hover:shadow-neon hover:scale-[1.02] ${
-                      selectedInjury?.id === injury.id ? 'ring-2 ring-primary shadow-neon' : ''
-                    }`}
-                    onClick={() => handleInjuryClick(injury)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="text-xl font-bold font-sports">{injury.player}</h3>
-                            <Badge variant="outline" className="font-sports">
-                              {injury.position}
-                            </Badge>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Injury Candidates */}
+          <div className="lg:col-span-2 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Injury-Related Opportunities</CardTitle>
+                <CardDescription>
+                  Props where fresh injury news hasn't been fully priced in yet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-32 w-full" />
+                    ))}
+                  </div>
+                ) : candidates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No injury opportunities found.</p>
+                    <p className="text-sm mt-1">Click "Scan Injuries" to fetch latest injury news.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {candidates.map((candidate, idx) => {
+                      const minutesSince = Math.round(
+                        (Date.now() - new Date(candidate.published_at).getTime()) / 60000
+                      );
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-4 border rounded-lg transition-all ${
+                            selectedCandidate === candidate ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold">{candidate.player}</h3>
+                                <Badge className={getStatusColor(candidate.status)}>
+                                  {candidate.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm font-medium text-muted-foreground">
+                                {candidate.market} {candidate.line} @ {candidate.bookmaker}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Odds: {candidate.odds.toFixed(2)}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <Badge variant="secondary" className="text-xs">
+                                Score: {candidate.pick_score.toFixed(1)}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {minutesSince}m ago
+                              </span>
+                            </div>
                           </div>
-                          <p className="text-muted-foreground">{injury.team}</p>
+                          
+                          <div className="flex items-center gap-3 text-xs mb-3">
+                            <div className="flex items-center gap-1">
+                              <TrendingUp className={`h-3 w-3 ${
+                                candidate.consensus_change_60m > 0 ? 'text-green-500' : 'text-red-500'
+                              }`} />
+                              <span>Δ60m: {(candidate.consensus_change_60m * 100).toFixed(1)}%</span>
+                            </div>
+                            <div>
+                              Lag: {(candidate.lag_prob * 100).toFixed(1)}%
+                            </div>
+                          </div>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleExplain(candidate)}
+                            disabled={loadingRationale && selectedCandidate === candidate}
+                          >
+                            {loadingRationale && selectedCandidate === candidate ? (
+                              <>
+                                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                                Analyzing...
+                              </>
+                            ) : (
+                              <>
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                Explain
+                              </>
+                            )}
+                          </Button>
+
+                          {selectedCandidate === candidate && rationale && (
+                            <div className="mt-3 p-3 bg-muted rounded-lg text-sm">
+                              {rationale}
+                            </div>
+                          )}
                         </div>
-                        <Badge className={`${getStatusColor(injury.status)} font-sports`}>
-                          {injury.status.toUpperCase()}
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Quick Stats */}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Quick Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Opportunities</span>
+                  <span className="font-semibold">{candidates.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Out/Doubtful</span>
+                  <span className="font-semibold text-red-500">
+                    {candidates.filter(c => ['Out', 'Doubtful'].includes(c.status)).length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Avg Pick Score</span>
+                  <Badge variant="secondary">
+                    {candidates.length > 0
+                      ? (candidates.reduce((sum, c) => sum + c.pick_score, 0) / candidates.length).toFixed(1)
+                      : '0.0'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {selectedCandidate && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Selected Pick
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h3 className="font-semibold mb-2">{selectedCandidate.player}</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge className={getStatusColor(selectedCandidate.status)}>
+                          {selectedCandidate.status}
                         </Badge>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Injury</p>
-                          <p className="font-semibold">{injury.injury}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Severity</p>
-                          <p className={`font-semibold ${getSeverityColor(injury.severity)}`}>
-                            {injury.severity}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Return</p>
-                          <p className="font-semibold">{injury.projectedReturn}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Fantasy Impact</p>
-                          <p className="font-semibold">{injury.fantasyImpact}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Updated {injury.lastUpdate}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Market:</span>
+                        <span className="font-medium">
+                          {selectedCandidate.market} {selectedCandidate.line}
                         </span>
-                        <ChevronRight className="w-5 h-5 text-primary" />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Analysis Panel */}
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold font-sports">AI IMPACT ANALYSIS</h2>
-              
-              {selectedInjury ? (
-                <Card className="gaming-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-3">
-                      <User className="w-6 h-6 text-primary" />
-                      <span className="font-sports">{selectedInjury.player} ANALYSIS</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <h4 className="font-semibold mb-2">Injury Details</h4>
-                      <p className="text-muted-foreground">{selectedInjury.description}</p>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold mb-2">Betting Implications</h4>
-                      <p className="text-amber-400">{selectedInjury.bettingImplications}</p>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold mb-2">Related Players to Watch</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedInjury.relatedPlayers.map((player: string, index: number) => (
-                          <Badge key={index} variant="secondary" className="font-sports">
-                            {player}
-                          </Badge>
-                        ))}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pick Score:</span>
+                        <Badge variant="secondary">{selectedCandidate.pick_score.toFixed(1)}</Badge>
                       </div>
                     </div>
+                  </div>
 
-                    {isLoadingInsight ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <Flame className="w-5 h-5 text-primary animate-pulse" />
-                          <span className="font-sports">AI ANALYZING...</span>
-                        </div>
-                        <div className="bg-muted/20 rounded-lg p-4 animate-pulse">
-                          <div className="h-4 bg-muted rounded mb-2"></div>
-                          <div className="h-4 bg-muted rounded w-3/4"></div>
-                        </div>
-                      </div>
-                    ) : aiInsight ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                          <Flame className="w-5 h-5 text-primary" />
-                          <span className="font-sports text-primary">AI BETTING INSIGHT</span>
-                        </div>
-                        <div className="bg-gradient-card p-4 rounded-lg border border-primary/20">
-                          <p className="text-foreground">{aiInsight}</p>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <Button 
-                      className="w-full bg-gradient-neon hover:shadow-glow font-sports text-accent-foreground"
-                      onClick={() => navigate('/ai-coach')}
-                    >
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      DISCUSS WITH AI COACH
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="gaming-card">
-                  <CardContent className="p-8 text-center space-y-4">
-                    <Shield className="w-16 h-16 text-muted-foreground mx-auto" />
-                    <h3 className="text-xl font-sports">SELECT AN INJURY REPORT</h3>
-                    <p className="text-muted-foreground">
-                      Click on any injury report to get AI-powered betting insights and impact analysis
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => navigate("/ai-coach")}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Discuss with AI Coach
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
-      </section>
-
-      {/* Quick Stats */}
-      <footer className="bg-gradient-card border-t border-border py-6">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-primary font-sports">127</div>
-              <div className="text-sm text-muted-foreground">Active Reports</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-neon-green font-sports">89%</div>
-              <div className="text-sm text-muted-foreground">Accuracy Rate</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-amber-400 font-sports">34</div>
-              <div className="text-sm text-muted-foreground">Teams Affected</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-400 font-sports">Live</div>
-              <div className="text-sm text-muted-foreground">Updates</div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 };

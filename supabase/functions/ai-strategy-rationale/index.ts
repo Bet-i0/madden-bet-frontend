@@ -20,7 +20,7 @@ interface Pick {
 }
 
 interface RequestBody {
-  segment: 'value_hunter' | 'momentum_surge' | 'injury_intel' | 'weather_warrior';
+  segment: 'value_hunter' | 'momentum_surge' | 'injury_intelligence' | 'injury_intel' | 'weather_warrior';
   picks: Pick[];
   context?: Record<string, any>;
 }
@@ -118,8 +118,9 @@ serve(async (req) => {
       case 'momentum_surge':
         systemPrompt = `You are a sports betting analyst. For each pick, explain the recent line movement and momentum in 160 chars or less. Reference the change windows provided in context.`;
         break;
+      case 'injury_intelligence':
       case 'injury_intel':
-        systemPrompt = `You are a sports betting analyst. For each pick, connect the injury status to the pricing opportunity in 160 chars or less. Reference the injury status and headline.`;
+        systemPrompt = `You are a sports betting analyst. For each pick, connect the injury status to the pricing opportunity in 160 chars or less. Reference the injury status and how the market hasn't fully adjusted. Be specific about tactical implications.`;
         break;
       case 'weather_warrior':
         systemPrompt = `You are a sports betting analyst. For each pick, explain how weather conditions create an edge in 160 chars or less. Reference wind, precipitation, and stadium type.`;

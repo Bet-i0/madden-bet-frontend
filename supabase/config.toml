@@ -209,3 +209,6 @@ verify_jwt = false
 
 [functions.trending-data]
 verify_jwt = false
+
+[functions.injury-scan]
+verify_jwt = false
