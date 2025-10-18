@@ -1,0 +1,32 @@
+code,description
+MISSING_KEY,apiKey query parameter is required
+INVALID_KEY,API key invalid or not associated to a subscription
+DEACTIVATED_KEY,"API key deactivated (e.g., canceled subscription)"
+EXCEEDED_FREQ_LIMIT,Rate-limited (HTTP 429). Limit ≈ 30 calls/sec. Retry/backoff.
+OUT_OF_USAGE_CREDITS,Monthly usage credit limit reached; monitor via response headers
+MISSING_REGION,Missing regions param; or use bookmakers instead
+INVALID_REGION,One or more regions invalid
+INVALID_BOOKMAKERS,Bookmaker keys invalid
+MISSING_MARKET,Endpoint requires markets but not provided
+INVALID_MARKET,One or more market keys invalid for this endpoint
+INVALID_MARKET_COMBO,Sport key is an outrights event; valid market is 'outrights'
+INVALID_DATE_FORMAT,dateFormat invalid; valid: iso|unix
+INVALID_ODDS_FORMAT,oddsFormat invalid; valid: decimal|american
+INVALID_ALL_SPORTS_PARAM,all= must be true|false (sports endpoint context)
+INVALID_SPORT,Sport path parameter missing/invalid
+UNKNOWN_SPORT,Sport not found
+INVALID_SCORES_DAYS_FROM,daysFrom must be integer >=1 and <= endpoint max
+INVALID_EVENT_IDS,eventIds invalid; comma-separated 32-char ids
+INVALID_EVENT_ID,eventId path param invalid; must be 32 chars
+EVENT_NOT_FOUND,"eventId not found, likely concluded or wrong id"
+MISSING_HISTORICAL_TIMESTAMP,date param required on historical endpoints
+INVALID_HISTORICAL_TIMESTAMP,date must be ISO8601
+INVALID_COMMENCE_TIME_FROM,commenceTimeFrom must be ISO8601
+INVALID_COMMENCE_TIME_TO,commenceTimeTo must be ISO8601
+INVALID_COMMENCE_TIME_RANGE,commenceTimeTo must be later than commenceTimeFrom
+INVALID_INCLUDE_LINKS,includeLinks must be true|false; default false
+INVALID_INCLUDE_SIDS,includeSids must be true|false; default false
+INVALID_INCLUDE_BET_LIMITS,includeBetLimits must be true|false; default false
+INVALID_INCLUDE_MULTIPLIERS,includeMultipliers must be true|false (DFS only)
+HISTORICAL_UNAVAILABLE_ON_FREE_USAGE_PLAN,Historical endpoints require paid plans
+HISTORICAL_MARKETS_UNAVAILABLE_AT_DATE,Requested market keys unavailable at that timestamp

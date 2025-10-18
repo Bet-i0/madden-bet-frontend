@@ -18,6 +18,7 @@ import AIInsightsPreview from '@/components/AIInsightsPreview';
 import { AIEdgeRecommendations } from '@/components/AIEdgeRecommendations';
 import { DataFetchingControl } from '@/components/DataFetchingControl';
 import { TriggerOddsFetch } from '@/components/TriggerOddsFetch';
+import { OddsAPIDebugPanel } from '@/components/OddsAPIDebugPanel';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -110,6 +111,11 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-4 mb-8">
             <DataFetchingControl />
             <TriggerOddsFetch />
+          </div>
+          
+          {/* Odds API Debug Panel */}
+          <div className="mb-8">
+            <OddsAPIDebugPanel />
           </div>
 
           {/* Widget Grid */}

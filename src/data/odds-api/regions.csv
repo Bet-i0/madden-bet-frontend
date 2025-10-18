@@ -1,0 +1,8 @@
+key,description
+us,United States (primary set of US sportsbooks)
+us2,United States (additional US sportsbooks)
+uk,United Kingdom sportsbooks
+eu,Europe sportsbooks
+au,Australia sportsbooks
+us_dfs,US Daily Fantasy Sports (DFS) sites (player prop style lines; multipliers)
+us_ex,"US Betting Exchanges (peer-to-peer, lay/back)"

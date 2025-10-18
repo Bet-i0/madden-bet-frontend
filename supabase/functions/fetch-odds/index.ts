@@ -1,11 +1,17 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.0';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// The Odds API v4 - Canonical Configuration
+const ODDS_API_BASE = 'https://api.the-odds-api.com';
+const FEATURED_SPORTS = ['americanfootball_nfl', 'americanfootball_ncaaf'];
+const FEATURED_MARKETS = ['h2h', 'spreads', 'totals'];
+const TARGET_REGIONS = ['us'];
+const TARGET_BOOKMAKERS = ['draftkings', 'betmgm', 'fanduel', 'williamhill_us'];
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -29,59 +35,59 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check if data fetching is enabled
-    const { data: featureFlag } = await supabase
+    const { data: flagData, error: flagError } = await supabase
       .from('feature_flags')
       .select('enabled')
       .eq('key', 'data_fetching_enabled')
-      .single();
+      .maybeSingle();
 
-    if (!featureFlag?.enabled) {
-      console.log('Data fetching is paused via feature flag');
+    if (flagError) {
+      console.error('Error checking feature flag:', flagError);
+    }
+
+    if (flagData && !flagData.enabled) {
       return new Response(
         JSON.stringify({ 
-          message: 'Data fetching is currently paused',
-          skipped: true 
-        }), 
+          success: false, 
+          message: 'Data fetching is currently disabled' 
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Starting odds fetch process...');
+    console.log('Starting odds fetch - The Odds API v4...');
+    const startTime = Date.now();
+    let totalInserted = 0;
+    let quotaUsed = 0;
+    let quotaRemaining = 0;
 
-    // Sports to fetch odds for - focusing on football only
-    const sports = [
-      'americanfootball_nfl', 
-      'americanfootball_ncaaf'
-    ];
-    const regions = 'us';
-    const markets = 'h2h,spreads,totals';
-    
-    // Target bookmakers to reduce data load
-    const targetBookmakers = ['draftkings', 'betmgm', 'fanduel', 'caesars', 'williamhill_us'];
-
-    let totalOddsInserted = 0;
-
-    for (const sport of sports) {
+    for (const sport of FEATURED_SPORTS) {
       try {
-        console.log(`Fetching odds for ${sport}...`);
+        const params = new URLSearchParams({
+          apiKey: oddsApiKey,
+          regions: TARGET_REGIONS.join(','),
+          markets: FEATURED_MARKETS.join(','),
+          oddsFormat: 'decimal',
+          dateFormat: 'iso',
+          bookmakers: TARGET_BOOKMAKERS.join(',')
+        });
+
+        const apiUrl = `${ODDS_API_BASE}/v4/sports/${sport}/odds?${params}`;
+        console.log(`Fetching ${sport}...`);
+
+        const oddsResponse = await fetch(apiUrl);
         
-        const oddsResponse = await fetch(
-          `https://api.the-odds-api.com/v4/sports/${sport}/odds/?apiKey=${oddsApiKey}&regions=${regions}&markets=${markets}`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        quotaUsed = parseInt(oddsResponse.headers.get('x-requests-used') || '0');
+        quotaRemaining = parseInt(oddsResponse.headers.get('x-requests-remaining') || '0');
+        console.log(`Quota: Used=${quotaUsed}, Remaining=${quotaRemaining}`);
 
         if (!oddsResponse.ok) {
-          console.error(`Failed to fetch odds for ${sport}: ${oddsResponse.status}`);
+          console.error(`API error for ${sport}: ${oddsResponse.status}`);
           continue;
         }
 
         const oddsData = await oddsResponse.json();
-        console.log(`Retrieved ${oddsData.length} games for ${sport}`);
+        console.log(`Received ${oddsData.length} events`);
 
         // Filter for live and upcoming games within 1 day
         const now = new Date();
@@ -100,37 +106,27 @@ serve(async (req) => {
           // Normalize league for consistent filtering
           const league = sport === 'americanfootball_nfl' ? 'NFL' : 'NCAAF';
           
-          for (const bookmaker of game.bookmakers) {
-            // Filter to only target bookmakers
-            if (!targetBookmakers.includes(bookmaker.key)) {
-              continue;
-            }
+            for (const bookmaker of game.bookmakers) {
+            if (!TARGET_BOOKMAKERS.includes(bookmaker.key)) continue;
             
             for (const market of bookmaker.markets) {
               for (const outcome of market.outcomes) {
-                const oddsSnapshot = {
-                  sport: sport,
-                  league: league,
+                const oddsToInsert = {
+                  sport,
+                  league,
                   team1: game.home_team,
                   team2: game.away_team,
                   market: `${market.key}_${outcome.name}`,
-                  odds: parseFloat(outcome.price),
+                  odds: outcome.price,
                   bookmaker: bookmaker.key,
                   game_date: gameDate.toISOString(),
                 };
 
-                // Insert odds snapshot
-                const { error: insertError } = await supabase
+                const { error } = await supabase
                   .from('odds_snapshots')
-                  .upsert(oddsSnapshot, { 
-                    onConflict: 'sport,league,team1,team2,market,bookmaker' 
-                  });
+                  .upsert(oddsToInsert, { onConflict: 'sport,league,team1,team2,market,bookmaker' });
 
-                if (insertError) {
-                  console.error('Error inserting odds:', insertError);
-                } else {
-                  totalOddsInserted++;
-                }
+                if (!error) totalInserted++;
               }
             }
           }
@@ -150,13 +146,16 @@ serve(async (req) => {
       console.error('Error cleaning up old odds:', cleanupError);
     }
 
-    console.log(`Odds fetch complete. Inserted ${totalOddsInserted} odds snapshots`);
-
+    const duration = Date.now() - startTime;
+    
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        oddsInserted: totalOddsInserted,
-        message: 'Odds fetched and stored successfully'
+        success: true,
+        odds_inserted: totalInserted,
+        duration_ms: duration,
+        quota_used: quotaUsed,
+        quota_remaining: quotaRemaining,
+        timestamp: new Date().toISOString()
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
