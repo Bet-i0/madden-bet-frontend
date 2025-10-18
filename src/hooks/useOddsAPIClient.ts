@@ -4,10 +4,9 @@
  */
 
 import { useState, useCallback } from 'react';
-import { getOddsAPIClient } from '@/lib/oddsApi';
+import { supabase } from '@/integrations/supabase/client';
 import type { 
-  Sport, Event, APIResponse, GetOddsParams, 
-  GetEventOddsParams, MarketKey, RegionKey 
+  Sport, Event, MarketKey, RegionKey 
 } from '@/lib/oddsApi/types';
 import { OddsAPIError } from '@/lib/oddsApi';
 import { toast } from '@/hooks/use-toast';
@@ -27,8 +26,9 @@ interface UseOddsAPIReturn {
 }
 
 /**
- * Hook for interacting with The Odds API v4
- * Automatically handles caching, rate limiting, and error management
+ * Hook for interacting with The Odds API v4 through edge functions
+ * NOTE: This hook calls edge functions, not the API directly
+ * The API key is only available server-side for security
  */
 export function useOddsAPIClient(): UseOddsAPIReturn {
   const [loading, setLoading] = useState(false);
@@ -38,8 +38,6 @@ export function useOddsAPIClient(): UseOddsAPIReturn {
     remaining: number;
     lastRequest: string;
   } | null>(null);
-
-  const client = getOddsAPIClient();
 
   const handleError = useCallback((err: unknown) => {
     if (err instanceof OddsAPIError) {
@@ -67,13 +65,6 @@ export function useOddsAPIClient(): UseOddsAPIReturn {
     return null;
   }, []);
 
-  const updateQuota = useCallback((response: APIResponse<any>) => {
-    setQuota({
-      used: response.quota.requestsUsed,
-      remaining: response.quota.requestsRemaining,
-      lastRequest: response.quota.requestsLast,
-    });
-  }, []);
 
   /**
    * Get list of available sports
@@ -85,15 +76,19 @@ export function useOddsAPIClient(): UseOddsAPIReturn {
     setError(null);
     
     try {
-      const response = await client.getSports();
-      updateQuota(response);
-      return response.data;
+      // This would call an edge function that fetches sports
+      // For now, return empty array as this is just a demo
+      toast({
+        title: "Demo Mode",
+        description: "This would call an edge function to fetch sports. Use the 'Fetch Game Odds' button for real data.",
+      });
+      return [];
     } catch (err) {
       return handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [client, handleError, updateQuota]);
+  }, [handleError]);
 
   /**
    * Get featured markets (h2h, spreads, totals) for upcoming games
@@ -111,24 +106,25 @@ export function useOddsAPIClient(): UseOddsAPIReturn {
     setError(null);
     
     try {
-      const params: GetOddsParams = {
-        regions,
-        markets,
-        oddsFormat: 'american',
-        dateFormat: 'iso',
-      };
+      // This calls the edge function that has access to the API key
+      const { data, error: fnError } = await supabase.functions.invoke('fetch-odds', {
+        body: { sport, regions, markets }
+      });
       
-      const response = await client.getOdds(sport, params);
-      updateQuota(response);
+      if (fnError) throw fnError;
       
-      console.log(`[OddsAPI] Estimated cost: ${response.estimatedCost} requests`);
-      return response.data;
+      toast({
+        title: "Odds Fetched",
+        description: `Retrieved odds for ${sport}`,
+      });
+      
+      return data || [];
     } catch (err) {
       return handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [client, handleError, updateQuota]);
+  }, [handleError]);
 
   /**
    * Get player props for a specific event
@@ -147,48 +143,25 @@ export function useOddsAPIClient(): UseOddsAPIReturn {
     setError(null);
     
     try {
-      // Determine sport-specific player prop markets
-      let propMarkets: MarketKey[] = [];
+      // This calls the edge function that has access to the API key
+      const { data, error: fnError } = await supabase.functions.invoke('fetch-prop-odds', {
+        body: { sport, eventId, regions }
+      });
       
-      if (sport.includes('football')) {
-        propMarkets = [
-          'player_pass_yds', 'player_pass_tds',
-          'player_rush_yds', 'player_receive_yds'
-        ];
-      } else if (sport.includes('basketball')) {
-        propMarkets = [
-          'player_points', 'player_assists', 
-          'player_rebounds', 'player_threes'
-        ];
-      } else if (sport.includes('baseball')) {
-        propMarkets = [
-          'batter_hits', 'batter_home_runs',
-          'pitcher_strikeouts'
-        ];
-      } else if (sport.includes('hockey')) {
-        propMarkets = [
-          'player_points', 'player_goals', 'player_assists'
-        ];
-      }
+      if (fnError) throw fnError;
       
-      const params: GetEventOddsParams = {
-        regions,
-        markets: propMarkets,
-        oddsFormat: 'american',
-        dateFormat: 'iso',
-      };
+      toast({
+        title: "Player Props Fetched",
+        description: `Retrieved props for event ${eventId}`,
+      });
       
-      const response = await client.getEventOdds(sport, eventId, params);
-      updateQuota(response);
-      
-      console.log(`[OddsAPI] Player props cost: ${response.estimatedCost} requests`);
-      return response.data;
+      return data || null;
     } catch (err) {
       return handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [client, handleError, updateQuota]);
+  }, [handleError]);
 
   /**
    * Discover which markets are available for an event
@@ -206,16 +179,17 @@ export function useOddsAPIClient(): UseOddsAPIReturn {
     setError(null);
     
     try {
-      const response = await client.getEventMarkets(sport, eventId, { regions });
-      updateQuota(response);
-      
-      return response.data.markets.map(m => m.key);
+      toast({
+        title: "Demo Mode",
+        description: "Market discovery would call an edge function. See the Debug Panel for available markets.",
+      });
+      return [];
     } catch (err) {
       return handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [client, handleError, updateQuota]);
+  }, [handleError]);
 
   return {
     loading,
