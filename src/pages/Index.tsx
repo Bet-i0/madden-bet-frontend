@@ -17,6 +17,7 @@ import MatchSpotlight from '@/components/MatchSpotlight';
 import AIInsightsPreview from '@/components/AIInsightsPreview';
 import { AIEdgeRecommendations } from '@/components/AIEdgeRecommendations';
 import { DataFetchingControl } from '@/components/DataFetchingControl';
+import { TriggerOddsFetch } from '@/components/TriggerOddsFetch';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -106,8 +107,9 @@ const Index = () => {
           <AIInsightsPreview />
 
           {/* Data Fetching Control */}
-          <div className="mb-8">
+          <div className="grid md:grid-cols-2 gap-4 mb-8">
             <DataFetchingControl />
+            <TriggerOddsFetch />
           </div>
 
           {/* Widget Grid */}

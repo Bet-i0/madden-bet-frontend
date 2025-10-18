@@ -18,7 +18,7 @@ export const DataFetchingControl = () => {
         .from('feature_flags')
         .select('enabled')
         .eq('key', 'data_fetching_enabled')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setEnabled(data?.enabled ?? true);
