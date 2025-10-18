@@ -45,15 +45,18 @@ export const useOddsForStrategies = () => {
         const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
         const oneDayFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
         
+        // Using canonical bookmaker keys from The Odds API v4 spec
+        const canonicalBookmakers = ['draftkings', 'betmgm', 'fanduel', 'williamhill_us'];
+        
         const { data: allOdds, error: fetchError } = await supabase
           .from('odds_snapshots')
           .select('*')
-          .in('sport', ['americanfootball_nfl', 'americanfootball_ncaaf']) // Focus strictly on football
-          .in('bookmaker', ['draftkings', 'betmgm', 'fanduel', 'caesars', 'williamhill_us']) // Target bookmakers only
+          .in('sport', ['americanfootball_nfl', 'americanfootball_ncaaf'])
+          .in('bookmaker', canonicalBookmakers)
           .gte('game_date', sixHoursAgo.toISOString())
           .lte('game_date', oneDayFromNow.toISOString())
           .order('last_updated', { ascending: false })
-          .limit(100); // Reduced limit for better performance
+          .limit(100);
 
         if (fetchError) {
           throw fetchError;
