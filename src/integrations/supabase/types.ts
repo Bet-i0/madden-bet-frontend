@@ -398,6 +398,60 @@ export type Database = {
         }
         Relationships: []
       }
+      depth_chart_events: {
+        Row: {
+          captured_at: string
+          id: number
+          player_id: string | null
+          position: string
+          provider: string
+          provider_player_id: string
+          provider_team_id: string
+          rank: number
+          source: Json
+          team_id: string | null
+        }
+        Insert: {
+          captured_at: string
+          id?: number
+          player_id?: string | null
+          position: string
+          provider: string
+          provider_player_id: string
+          provider_team_id: string
+          rank: number
+          source?: Json
+          team_id?: string | null
+        }
+        Update: {
+          captured_at?: string
+          id?: number
+          player_id?: string | null
+          position?: string
+          provider?: string
+          provider_player_id?: string
+          provider_team_id?: string
+          rank?: number
+          source?: Json
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depth_chart_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "depth_chart_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id_new"]
+          },
+        ]
+      }
       edge_function_metrics: {
         Row: {
           created_at: string
@@ -500,8 +554,10 @@ export type Database = {
       games: {
         Row: {
           away_team: string
+          away_team_id: string | null
           created_at: string
           home_team: string
+          home_team_id: string | null
           id: string
           league: string
           provider: string
@@ -514,8 +570,10 @@ export type Database = {
         }
         Insert: {
           away_team: string
+          away_team_id?: string | null
           created_at?: string
           home_team: string
+          home_team_id?: string | null
           id?: string
           league: string
           provider?: string
@@ -528,8 +586,10 @@ export type Database = {
         }
         Update: {
           away_team?: string
+          away_team_id?: string | null
           created_at?: string
           home_team?: string
+          home_team_id?: string | null
           id?: string
           league?: string
           provider?: string
@@ -580,6 +640,67 @@ export type Database = {
           success?: boolean
         }
         Relationships: []
+      }
+      injury_events: {
+        Row: {
+          body_part: string | null
+          game_id: string | null
+          id: number
+          player_id: string | null
+          provider: string
+          provider_player_id: string
+          report_time: string
+          severity: string | null
+          source: Json
+          status: string
+        }
+        Insert: {
+          body_part?: string | null
+          game_id?: string | null
+          id?: number
+          player_id?: string | null
+          provider: string
+          provider_player_id: string
+          report_time: string
+          severity?: string | null
+          source?: Json
+          status: string
+        }
+        Update: {
+          body_part?: string | null
+          game_id?: string | null
+          id?: number
+          player_id?: string | null
+          provider?: string
+          provider_player_id?: string
+          report_time?: string
+          severity?: string | null
+          source?: Json
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "injury_events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "injury_events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "injury_impacted_markets"
+            referencedColumns: ["game_id"]
+          },
+          {
+            foreignKeyName: "injury_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       injury_news_cache: {
         Row: {
@@ -733,6 +854,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "odds_closing_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "injury_impacted_markets"
+            referencedColumns: ["game_id"]
           },
         ]
       }
@@ -904,6 +1032,48 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "player_props_snapshots_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "injury_impacted_markets"
+            referencedColumns: ["game_id"]
+          },
+        ]
+      }
+      player_status: {
+        Row: {
+          body_part: string | null
+          expected_impact: Json
+          last_updated: string
+          player_id: string
+          severity: string | null
+          status: string
+        }
+        Insert: {
+          body_part?: string | null
+          expected_impact?: Json
+          last_updated?: string
+          player_id: string
+          severity?: string | null
+          status: string
+        }
+        Update: {
+          body_part?: string | null
+          expected_impact?: Json
+          last_updated?: string
+          player_id?: string
+          severity?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_status_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: true
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
         ]
       }
       players: {
@@ -916,6 +1086,7 @@ export type Database = {
           provider: string
           provider_player_id: string
           team: string | null
+          team_id: string | null
         }
         Insert: {
           created_at?: string
@@ -926,6 +1097,7 @@ export type Database = {
           provider?: string
           provider_player_id: string
           team?: string | null
+          team_id?: string | null
         }
         Update: {
           created_at?: string
@@ -936,6 +1108,7 @@ export type Database = {
           provider?: string
           provider_player_id?: string
           team?: string | null
+          team_id?: string | null
         }
         Relationships: []
       }
@@ -1001,6 +1174,91 @@ export type Database = {
           zapier_webhook_url?: string | null
         }
         Relationships: []
+      }
+      provider_game_map: {
+        Row: {
+          game_id: string | null
+          provider: string
+          provider_game_id: string
+        }
+        Insert: {
+          game_id?: string | null
+          provider: string
+          provider_game_id: string
+        }
+        Update: {
+          game_id?: string | null
+          provider?: string
+          provider_game_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_game_map_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_game_map_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "injury_impacted_markets"
+            referencedColumns: ["game_id"]
+          },
+        ]
+      }
+      provider_player_map: {
+        Row: {
+          player_id: string
+          provider: string
+          provider_player_id: string
+        }
+        Insert: {
+          player_id: string
+          provider: string
+          provider_player_id: string
+        }
+        Update: {
+          player_id?: string
+          provider?: string
+          provider_player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_player_map_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_team_map: {
+        Row: {
+          provider: string
+          provider_team_id: string
+          team_id: string
+        }
+        Insert: {
+          provider: string
+          provider_team_id: string
+          team_id: string
+        }
+        Update: {
+          provider?: string
+          provider_team_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_team_map_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id_new"]
+          },
+        ]
       }
       selections: {
         Row: {
@@ -1192,6 +1450,7 @@ export type Database = {
           created_at: string
           external_id: string | null
           id: number
+          id_new: string
           league: string
           name: string
           short_name: string
@@ -1200,6 +1459,7 @@ export type Database = {
           created_at?: string
           external_id?: string | null
           id?: number
+          id_new?: string
           league: string
           name: string
           short_name: string
@@ -1208,6 +1468,7 @@ export type Database = {
           created_at?: string
           external_id?: string | null
           id?: number
+          id_new?: string
           league?: string
           name?: string
           short_name?: string
@@ -1323,6 +1584,32 @@ export type Database = {
         }
         Relationships: []
       }
+      current_depth_chart: {
+        Row: {
+          captured_at: string | null
+          player_id: string | null
+          position: string | null
+          provider_player_id: string | null
+          rank: number | null
+          team_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depth_chart_events_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "depth_chart_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id_new"]
+          },
+        ]
+      }
       edge_function_p95_latency: {
         Row: {
           avg_latency_ms: number | null
@@ -1330,6 +1617,26 @@ export type Database = {
           function_name: string | null
           p95_latency_ms: number | null
           request_count: number | null
+        }
+        Relationships: []
+      }
+      injury_impacted_markets: {
+        Row: {
+          affected_side: string | null
+          game_id: string | null
+          injury_status: string | null
+          market_hint: string | null
+        }
+        Relationships: []
+      }
+      injury_impacted_player_props: {
+        Row: {
+          market_hint: string | null
+          next_up_player_id: string | null
+          position: string | null
+          starter_player_id: string | null
+          starter_status: string | null
+          team_id: string | null
         }
         Relationships: []
       }
@@ -1428,6 +1735,39 @@ export type Database = {
           player: string | null
         }
         Relationships: []
+      }
+      replacement_candidates: {
+        Row: {
+          asof: string | null
+          next_up_player_id: string | null
+          position: string | null
+          starter_player_id: string | null
+          starter_status: string | null
+          team_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "depth_chart_events_player_id_fkey"
+            columns: ["starter_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "depth_chart_events_player_id_fkey"
+            columns: ["next_up_player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "depth_chart_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id_new"]
+          },
+        ]
       }
       social_engagement_metrics: {
         Row: {
