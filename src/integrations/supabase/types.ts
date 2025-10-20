@@ -114,6 +114,13 @@ export type Database = {
             referencedRelation: "bets"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bankroll_transactions_reference_bet_id_fkey"
+            columns: ["reference_bet_id"]
+            isOneToOne: false
+            referencedRelation: "user_clv"
+            referencedColumns: ["bet_id"]
+          },
         ]
       }
       bankrolls: {
@@ -238,6 +245,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "bets"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bet_legs_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "user_clv"
+            referencedColumns: ["bet_id"]
           },
         ]
       }
@@ -531,6 +545,54 @@ export type Database = {
         }
         Relationships: []
       }
+      odds_closing: {
+        Row: {
+          bookmaker: string
+          captured_at: string
+          created_at: string
+          decimal_odds: number
+          game_date: string
+          id: string
+          league: string
+          line: number | null
+          market: string
+          selection: string
+          sport: string
+          team1: string
+          team2: string
+        }
+        Insert: {
+          bookmaker: string
+          captured_at?: string
+          created_at?: string
+          decimal_odds: number
+          game_date: string
+          id?: string
+          league: string
+          line?: number | null
+          market: string
+          selection: string
+          sport: string
+          team1: string
+          team2: string
+        }
+        Update: {
+          bookmaker?: string
+          captured_at?: string
+          created_at?: string
+          decimal_odds?: number
+          game_date?: string
+          id?: string
+          league?: string
+          line?: number | null
+          market?: string
+          selection?: string
+          sport?: string
+          team1?: string
+          team2?: string
+        }
+        Relationships: []
+      }
       odds_snapshots: {
         Row: {
           bookmaker: string
@@ -692,6 +754,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accessibility_preferences: Json | null
           auto_save_bets: boolean | null
           avatar_url: string | null
           banner_url: string | null
@@ -704,12 +767,14 @@ export type Database = {
           notification_preferences: Json
           odds_format: string | null
           public_profile: boolean
+          unit_size: number | null
           updated_at: string
           user_id: string
           website_url: string | null
           zapier_webhook_url: string | null
         }
         Insert: {
+          accessibility_preferences?: Json | null
           auto_save_bets?: boolean | null
           avatar_url?: string | null
           banner_url?: string | null
@@ -722,12 +787,14 @@ export type Database = {
           notification_preferences?: Json
           odds_format?: string | null
           public_profile?: boolean
+          unit_size?: number | null
           updated_at?: string
           user_id: string
           website_url?: string | null
           zapier_webhook_url?: string | null
         }
         Update: {
+          accessibility_preferences?: Json | null
           auto_save_bets?: boolean | null
           avatar_url?: string | null
           banner_url?: string | null
@@ -740,6 +807,7 @@ export type Database = {
           notification_preferences?: Json
           odds_format?: string | null
           public_profile?: boolean
+          unit_size?: number | null
           updated_at?: string
           user_id?: string
           website_url?: string | null
@@ -1039,6 +1107,40 @@ export type Database = {
         }
         Relationships: []
       }
+      line_moves: {
+        Row: {
+          avg_odds: number | null
+          book_count: number | null
+          game_date: string | null
+          league: string | null
+          line: number | null
+          market: string | null
+          minute_bucket: string | null
+          player: string | null
+          sport: string | null
+          team1: string | null
+          team2: string | null
+        }
+        Relationships: []
+      }
+      next_best_odds: {
+        Row: {
+          best_bookmaker: string | null
+          best_odds: number | null
+          edge_bps: number | null
+          game_date: string | null
+          league: string | null
+          line: number | null
+          market: string | null
+          next_best_bookmaker: string | null
+          next_best_odds: number | null
+          player: string | null
+          sport: string | null
+          team1: string | null
+          team2: string | null
+        }
+        Relationships: []
+      }
       prop_consensus_odds_v: {
         Row: {
           book_count: number | null
@@ -1060,6 +1162,28 @@ export type Database = {
           minute_bucket: string | null
           odds: number | null
           player: string | null
+        }
+        Relationships: []
+      }
+      user_clv: {
+        Row: {
+          bet_id: string | null
+          bet_leg_id: string | null
+          bet_status: Database["public"]["Enums"]["bet_status"] | null
+          closing_bookmaker: string | null
+          closing_decimal_odds: number | null
+          clv_bps: number | null
+          clv_tier: string | null
+          game_date: string | null
+          league: string | null
+          market: string | null
+          placed_decimal_odds: number | null
+          selection: string | null
+          settled_at: string | null
+          sport: string | null
+          team1: string | null
+          team2: string | null
+          user_id: string | null
         }
         Relationships: []
       }
@@ -1160,6 +1284,23 @@ export type Database = {
           line: number
           market: string
           player: string
+        }[]
+      }
+      get_closing_prices: {
+        Args: {
+          p_game_date: string
+          p_league: string
+          p_sport: string
+          p_team1: string
+          p_team2: string
+        }
+        Returns: {
+          bookmaker: string
+          captured_at: string
+          decimal_odds: number
+          line: number
+          market: string
+          selection: string
         }[]
       }
       has_role: {

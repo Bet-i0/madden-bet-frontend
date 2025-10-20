@@ -11,7 +11,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useBets, type Bet, type BetLeg } from '@/hooks/useBets';
 import { useProfile } from '@/hooks/useProfile';
 import { Separator } from '@/components/ui/separator';
-import { PlusCircle, X, Tag } from 'lucide-react';
+import { PlusCircle, X, Tag, TrendingUp } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { decimalToImpliedProbability, formatProbability, calculateParlayTrueOdds, formatOdds } from '@/lib/oddsCalculations';
+import { OddsChangeBanner } from '@/components/OddsChangeBanner';
+import { LineMovementSparkline } from '@/components/LineMovementSparkline';
+import { useNextBestOdds } from '@/hooks/useLineMovement';
 
 interface SaveBetDialogProps {
   open: boolean;
@@ -32,12 +37,14 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
   });
   const [loading, setLoading] = useState(false);
   const [newTag, setNewTag] = useState('');
+  const [checkingPrices, setCheckingPrices] = useState(false);
+  const [oddsChanges, setOddsChanges] = useState<any[]>([]);
   
   const { saveBet } = useBets();
   const { profile } = useProfile();
   const { toast } = useToast();
 
-  const handleSave = async () => {
+  const checkPricesBeforeSave = async () => {
     if (!bet.legs || bet.legs.length === 0) {
       toast({
         title: "Error",
@@ -56,6 +63,54 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
       return;
     }
 
+    setCheckingPrices(true);
+    try {
+      // Call price-check edge function
+      const { data, error } = await supabase.functions.invoke('price-check', {
+        body: {
+          legs: bet.legs.map(leg => ({
+            sport: leg.sport,
+            league: leg.league,
+            team1: leg.team1,
+            team2: leg.team2,
+            market: leg.bet_market,
+            selection: leg.bet_selection,
+            lastSeenOdds: leg.odds
+          })),
+          thresholdBps: 50
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.status === 'changed') {
+        // Show odds change banner
+        const changes = data.legs
+          .filter((leg: any) => leg.changed)
+          .map((leg: any, idx: number) => ({
+            legIndex: idx,
+            market: leg.market,
+            selection: leg.selection,
+            oldOdds: leg.lastSeenOdds,
+            newOdds: leg.latestOdds,
+            bpsDiff: leg.bpsDiff
+          }));
+        
+        setOddsChanges(changes);
+      } else {
+        // Prices OK, proceed with save
+        await handleSave();
+      }
+    } catch (error) {
+      console.error('Price check error:', error);
+      // Proceed anyway if price check fails
+      await handleSave();
+    } finally {
+      setCheckingPrices(false);
+    }
+  };
+
+  const handleSave = async () => {
     setLoading(true);
     try {
       await saveBet(bet as Omit<Bet, 'id'>);
@@ -63,6 +118,7 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
         title: "Bet saved!",
         description: "Your bet has been added to your tracker."
       });
+      setOddsChanges([]);
       onOpenChange(false);
     } catch (error) {
       toast({
@@ -73,6 +129,18 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAcceptNewOdds = () => {
+    // Update bet legs with new odds
+    oddsChanges.forEach(change => {
+      updateLeg(change.legIndex, { odds: change.newOdds });
+    });
+    setOddsChanges([]);
+    toast({
+      title: "Odds Updated",
+      description: "Bet legs have been updated with latest odds."
+    });
   };
 
   const addLeg = () => {
@@ -136,6 +204,15 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
         </DialogHeader>
         
         <div className="space-y-6">
+          {/* Odds Change Warning */}
+          {oddsChanges.length > 0 && (
+            <OddsChangeBanner
+              changes={oddsChanges}
+              onAccept={handleAcceptNewOdds}
+              onCancel={() => setOddsChanges([])}
+            />
+          )}
+
           {/* Bet Details */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -337,6 +414,12 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
                       onChange={(e) => updateLeg(index, { odds: parseFloat(e.target.value) || 0 })}
                       placeholder="-110"
                     />
+                    {leg.odds > 0 && (
+                      <div className="text-xs text-muted-foreground flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        Implied: {formatProbability(decimalToImpliedProbability(leg.odds))}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Open Odds</Label>
@@ -376,8 +459,12 @@ const SaveBetDialog = ({ open, onOpenChange, initialBet, autoSave = false }: Sav
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={loading} className="bg-gradient-primary">
-              {loading ? 'Saving...' : autoSave ? 'Quick Save' : 'Save Bet'}
+            <Button 
+              onClick={checkPricesBeforeSave} 
+              disabled={loading || checkingPrices} 
+              className="bg-gradient-primary"
+            >
+              {checkingPrices ? 'Checking Prices...' : loading ? 'Saving...' : autoSave ? 'Quick Save' : 'Save Bet'}
             </Button>
           </div>
         </div>

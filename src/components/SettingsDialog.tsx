@@ -35,11 +35,17 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
     auto_save_bets: true,
     default_sportsbook: 'draftkings',
     odds_format: 'american',
+    unit_size: null as number | null,
     zapier_webhook_url: '',
     notification_preferences: {
       settlement_reminders: true,
       ai_picks_ready: true,
       bankroll_alerts: true,
+    },
+    accessibility_preferences: {
+      reduceMotion: false,
+      highContrast: false,
+      screenReaderOptimized: false,
     }
   });
 
@@ -56,8 +62,14 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
         auto_save_bets: profile.auto_save_bets,
         default_sportsbook: profile.default_sportsbook,
         odds_format: profile.odds_format,
+        unit_size: (profile as any).unit_size || null,
         zapier_webhook_url: profile.zapier_webhook_url || '',
-        notification_preferences: profile.notification_preferences
+        notification_preferences: profile.notification_preferences,
+        accessibility_preferences: (profile as any).accessibility_preferences || {
+          reduceMotion: false,
+          highContrast: false,
+          screenReaderOptimized: false,
+        }
       });
     }
   }, [profile]);
@@ -235,6 +247,21 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <Label htmlFor="unit_size">Unit Size ($)</Label>
+                <Input
+                  id="unit_size"
+                  type="number"
+                  step="0.01"
+                  value={formData.unit_size || ''}
+                  onChange={(e) => handleInputChange('unit_size', parseFloat(e.target.value) || null)}
+                  placeholder="e.g., 10.00"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your standard bet size for tracking and Kelly calculations
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -269,6 +296,56 @@ const SettingsDialog = ({ isOpen, onClose }: SettingsDialogProps) => {
                   onCheckedChange={(checked) => handleNotificationChange('bankroll_alerts', checked)}
                 />
                 <Label htmlFor="bankroll_alerts">Bankroll alerts</Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Accessibility */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Accessibility</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="reduce_motion"
+                  checked={formData.accessibility_preferences.reduceMotion}
+                  onCheckedChange={(checked) => 
+                    handleInputChange('accessibility_preferences', {
+                      ...formData.accessibility_preferences,
+                      reduceMotion: checked
+                    })
+                  }
+                />
+                <Label htmlFor="reduce_motion">Reduce motion & animations</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="high_contrast"
+                  checked={formData.accessibility_preferences.highContrast}
+                  onCheckedChange={(checked) => 
+                    handleInputChange('accessibility_preferences', {
+                      ...formData.accessibility_preferences,
+                      highContrast: checked
+                    })
+                  }
+                />
+                <Label htmlFor="high_contrast">High contrast mode</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="screen_reader"
+                  checked={formData.accessibility_preferences.screenReaderOptimized}
+                  onCheckedChange={(checked) => 
+                    handleInputChange('accessibility_preferences', {
+                      ...formData.accessibility_preferences,
+                      screenReaderOptimized: checked
+                    })
+                  }
+                />
+                <Label htmlFor="screen_reader">Optimize for screen readers</Label>
               </div>
             </CardContent>
           </Card>

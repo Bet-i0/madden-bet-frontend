@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useBets, type Bet } from '@/hooks/useBets';
+import { useCLV } from '@/hooks/useCLV';
 import { exportBetsToCSV } from '@/utils/csvUtils';
-import { CheckCircle, XCircle, MinusCircle, Download, Search, Filter, Archive } from 'lucide-react';
+import { CheckCircle, XCircle, MinusCircle, Download, Search, Filter, Archive, TrendingUp, TrendingDown } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BetHistoryTabProps {
   bets?: Bet[] | any[];
@@ -18,6 +20,8 @@ interface BetHistoryTabProps {
 
 const BetHistoryTab = ({ bets: propBets }: BetHistoryTabProps) => {
   const { bets: hookBets, updateBetStatus, loading } = useBets();
+  const { user } = useAuth();
+  const { data: clvData } = useCLV(user?.id);
   const bets = propBets || hookBets;
   const { toast } = useToast();
   const [selectedBets, setSelectedBets] = useState<Set<string>>(new Set());
@@ -25,6 +29,27 @@ const BetHistoryTab = ({ bets: propBets }: BetHistoryTabProps) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [bookFilter, setBookFilter] = useState<string>('all');
+
+  // Create CLV lookup by bet_id
+  const clvByBet = useMemo(() => {
+    const map = new Map<string, { avgCLV: number; tier: string }>();
+    if (clvData) {
+      clvData.forEach(clv => {
+        if (!map.has(clv.bet_id)) {
+          map.set(clv.bet_id, { avgCLV: 0, tier: 'unknown' });
+        }
+        const current = map.get(clv.bet_id)!;
+        current.avgCLV += (clv.clv_bps || 0);
+      });
+      // Average the CLV for bets with multiple legs
+      map.forEach((value, key) => {
+        const legCount = clvData.filter(c => c.bet_id === key).length;
+        value.avgCLV = value.avgCLV / legCount;
+        value.tier = value.avgCLV > 50 ? 'positive' : value.avgCLV < -50 ? 'negative' : 'neutral';
+      });
+    }
+    return map;
+  }, [clvData]);
 
   const filteredBets = useMemo(() => {
     return bets.filter(bet => {
@@ -252,6 +277,7 @@ const BetHistoryTab = ({ bets: propBets }: BetHistoryTabProps) => {
                 <TableHead>Type</TableHead>
                 <TableHead>Stake</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>CLV</TableHead>
                 <TableHead>Book</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -304,6 +330,30 @@ const BetHistoryTab = ({ bets: propBets }: BetHistoryTabProps) => {
                         {bet.status.toUpperCase()}
                       </Badge>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {clvByBet.has(bet.id!) ? (
+                      <div className="flex items-center gap-1">
+                        {clvByBet.get(bet.id!)!.tier === 'positive' ? (
+                          <TrendingUp className="w-3 h-3 text-success" />
+                        ) : clvByBet.get(bet.id!)!.tier === 'negative' ? (
+                          <TrendingDown className="w-3 w-3 text-destructive" />
+                        ) : null}
+                        <Badge 
+                          variant={
+                            clvByBet.get(bet.id!)!.tier === 'positive' ? 'default' : 
+                            clvByBet.get(bet.id!)!.tier === 'negative' ? 'destructive' : 
+                            'secondary'
+                          }
+                          className="font-mono text-xs"
+                        >
+                          {clvByBet.get(bet.id!)!.avgCLV > 0 ? '+' : ''}
+                          {Math.round(clvByBet.get(bet.id!)!.avgCLV)} bps
+                        </Badge>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-sm">
                     {bet.sportsbook || '-'}
