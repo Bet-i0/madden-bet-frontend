@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
             if (playerMap?.player_id) {
               player_id = playerMap.player_id;
             } else {
-              const name = (e.player.Name ?? `${e.player.FirstName ?? ''} ${e.player.LastName ?? ''}`).trim() || 'Unknown';
+              const name = ((e.player.Name ?? `${e.player.FirstName ?? ''} ${e.player.LastName ?? ''}`) || 'Unknown').trim();
               const { data: p } = await supabase
                 .from('players')
                 .insert({
@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
           const status: Status = STATUS_MAP[rawStatus] || 'active';
           const first = ev.FirstName ?? '';
           const last = ev.LastName ?? '';
-          const name = (ev.Name ?? `${first} ${last}` || 'Unknown').trim();
+          const name = ((ev.Name ?? `${first} ${last}`) || 'Unknown').trim();
           const position = String(ev.Position ?? '');
 
           // Get or create player
