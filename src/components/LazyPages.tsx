@@ -8,3 +8,5 @@ export const LazyAnalyzeStrategies = lazy(() => import('@/pages/AnalyzeStrategie
 export const LazyTrendingNow = lazy(() => import('@/pages/TrendingNow'));
 export const LazyInjuries = lazy(() => import('@/pages/Injuries'));
 export const LazyProfile = lazy(() => import('@/pages/Profile'));
+export const LazySchedule = lazy(() => import('@/pages/Schedule'));
+export const LazySuccessMetrics = lazy(() => import('@/pages/SuccessMetrics'));
