@@ -8,6 +8,14 @@ schedule = "*/10 * * * *"
 [functions.refresh-best-prop-odds.cron]
 schedule = "*/10 * * * *"
 
+# SportsDataIO ingestion (manual in staging, cron in prod)
+[functions.sportsdataio-ingest]
+verify_jwt = false
+
+# Uncomment to enable automatic ingestion (after staging validation)
+# [functions.sportsdataio-ingest.cron]
+# schedule = "*/5 * * * *"  # Every 5 minutes for injuries
+
 [functions.ai-edge-detection]
 verify_jwt = false
 
