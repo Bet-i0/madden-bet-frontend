@@ -49,7 +49,7 @@ const SharedBetCard = ({ sharedBet, onTail, onProfileClick }: SharedBetCardProps
   const handleTail = async () => {
     try {
       await onTail(sharedBet.id, tailStake);
-      await addReaction(sharedBet.id, 'tail');
+      await addReaction(sharedBet.id, '💯');
       setShowTailDialog(false);
       toast({
         title: "Bet Tailed!",
@@ -64,7 +64,7 @@ const SharedBetCard = ({ sharedBet, onTail, onProfileClick }: SharedBetCardProps
     }
   };
 
-  const handleReaction = async (type: 'like' | 'fire') => {
+  const handleReaction = async (type: '👍' | '🔥') => {
     try {
       await addReaction(sharedBet.id, type);
     } catch (error) {
@@ -178,10 +178,10 @@ const SharedBetCard = ({ sharedBet, onTail, onProfileClick }: SharedBetCardProps
           <div className="flex space-x-4">
             <button 
               className="flex items-center space-x-1 text-muted-foreground hover:text-red-500 transition-colors"
-              onClick={() => handleReaction('like')}
+              onClick={() => handleReaction('👍')}
             >
-              <Heart className={`w-5 h-5 ${getUserReaction(sharedBet.id, 'like') ? 'fill-current text-red-500' : ''}`} />
-              <span>{getReactionCount(sharedBet.id, 'like')}</span>
+              <Heart className={`w-5 h-5 ${getUserReaction(sharedBet.id, '👍') ? 'fill-current text-red-500' : ''}`} />
+              <span>{getReactionCount(sharedBet.id, '👍')}</span>
             </button>
             <button 
               className="flex items-center space-x-1 text-muted-foreground hover:text-primary transition-colors"
@@ -192,10 +192,10 @@ const SharedBetCard = ({ sharedBet, onTail, onProfileClick }: SharedBetCardProps
             </button>
             <button 
               className="flex items-center space-x-1 text-muted-foreground hover:text-orange-500 transition-colors"
-              onClick={() => handleReaction('fire')}
+              onClick={() => handleReaction('🔥')}
             >
-              <Flame className={`w-5 h-5 ${getUserReaction(sharedBet.id, 'fire') ? 'fill-current text-orange-500' : ''}`} />
-              <span>{getReactionCount(sharedBet.id, 'fire')}</span>
+              <Flame className={`w-5 h-5 ${getUserReaction(sharedBet.id, '🔥') ? 'fill-current text-orange-500' : ''}`} />
+              <span>{getReactionCount(sharedBet.id, '🔥')}</span>
             </button>
           </div>
           
@@ -206,7 +206,7 @@ const SharedBetCard = ({ sharedBet, onTail, onProfileClick }: SharedBetCardProps
               onClick={() => setShowTailDialog(true)}
             >
               <Share2 className="w-4 h-4 mr-1" />
-              Tail ({getReactionCount(sharedBet.id, 'tail')})
+              Tail ({getReactionCount(sharedBet.id, '💯')})
             </Button>
           </div>
         </div>

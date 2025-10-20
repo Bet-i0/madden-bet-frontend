@@ -169,21 +169,27 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          edited_at: string | null
           id: string
+          reports_count: number | null
           shared_bet_id: string
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          edited_at?: string | null
           id?: string
+          reports_count?: number | null
           shared_bet_id: string
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
+          reports_count?: number | null
           shared_bet_id?: string
           user_id?: string
         }
@@ -437,6 +443,51 @@ export type Database = {
         }
         Relationships: []
       }
+      games: {
+        Row: {
+          away_team: string
+          created_at: string
+          home_team: string
+          id: string
+          league: string
+          provider: string
+          provider_game_id: string
+          season: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          away_team: string
+          created_at?: string
+          home_team: string
+          id?: string
+          league: string
+          provider?: string
+          provider_game_id: string
+          season?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          away_team?: string
+          created_at?: string
+          home_team?: string
+          id?: string
+          league?: string
+          provider?: string
+          provider_game_id?: string
+          season?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
       ingest_runs: {
         Row: {
           books_seen: Json | null
@@ -552,6 +603,7 @@ export type Database = {
           created_at: string
           decimal_odds: number
           game_date: string
+          game_id: string | null
           id: string
           league: string
           line: number | null
@@ -567,6 +619,7 @@ export type Database = {
           created_at?: string
           decimal_odds: number
           game_date: string
+          game_id?: string | null
           id?: string
           league: string
           line?: number | null
@@ -582,6 +635,7 @@ export type Database = {
           created_at?: string
           decimal_odds?: number
           game_date?: string
+          game_id?: string | null
           id?: string
           league?: string
           line?: number | null
@@ -591,7 +645,15 @@ export type Database = {
           team1?: string
           team2?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "odds_closing_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       odds_snapshots: {
         Row: {
@@ -701,6 +763,7 @@ export type Database = {
           created_at: string
           event_id: string | null
           game_date: string
+          game_id: string | null
           id: string
           last_updated: string
           league: string
@@ -719,6 +782,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           game_date: string
+          game_id?: string | null
           id?: string
           last_updated?: string
           league: string
@@ -737,6 +801,7 @@ export type Database = {
           created_at?: string
           event_id?: string | null
           game_date?: string
+          game_id?: string | null
           id?: string
           last_updated?: string
           league?: string
@@ -749,6 +814,47 @@ export type Database = {
           team?: string | null
           team1?: string
           team2?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_props_snapshots_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string
+          id: string
+          league: string
+          name: string
+          position: string | null
+          provider: string
+          provider_player_id: string
+          team: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league: string
+          name: string
+          position?: string | null
+          provider?: string
+          provider_player_id: string
+          team?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league?: string
+          name?: string
+          position?: string | null
+          provider?: string
+          provider_player_id?: string
+          team?: string | null
         }
         Relationships: []
       }
@@ -857,31 +963,37 @@ export type Database = {
       shared_bets: {
         Row: {
           comment: string | null
+          comments_count: number | null
           created_at: string
           id: string
           is_active: boolean
           original_bet_id: string
           owner_user_id: string
+          reactions_count: number | null
           title: string | null
           updated_at: string
         }
         Insert: {
           comment?: string | null
+          comments_count?: number | null
           created_at?: string
           id?: string
           is_active?: boolean
           original_bet_id: string
           owner_user_id: string
+          reactions_count?: number | null
           title?: string | null
           updated_at?: string
         }
         Update: {
           comment?: string | null
+          comments_count?: number | null
           created_at?: string
           id?: string
           is_active?: boolean
           original_bet_id?: string
           owner_user_id?: string
+          reactions_count?: number | null
           title?: string | null
           updated_at?: string
         }
@@ -932,6 +1044,7 @@ export type Database = {
       subscription_plans: {
         Row: {
           ai_calls_per_month: number
+          code: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -941,6 +1054,7 @@ export type Database = {
         }
         Insert: {
           ai_calls_per_month: number
+          code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -950,6 +1064,7 @@ export type Database = {
         }
         Update: {
           ai_calls_per_month?: number
+          code?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1047,6 +1162,15 @@ export type Database = {
       }
     }
     Views: {
+      ai_usage_by_user: {
+        Row: {
+          call_count: number | null
+          total_cost: number | null
+          total_tokens: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       best_odds: {
         Row: {
           bookmaker: string | null
@@ -1141,6 +1265,15 @@ export type Database = {
         }
         Relationships: []
       }
+      odds_ingestion_health: {
+        Row: {
+          active_books: number | null
+          last_snapshot: string | null
+          rows_last_hour: number | null
+          sport: string | null
+        }
+        Relationships: []
+      }
       prop_consensus_odds_v: {
         Row: {
           book_count: number | null
@@ -1183,6 +1316,13 @@ export type Database = {
           sport: string | null
           team1: string | null
           team2: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      user_tiers: {
+        Row: {
+          tier: string | null
           user_id: string | null
         }
         Relationships: []
