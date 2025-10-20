@@ -398,6 +398,60 @@ export type Database = {
         }
         Relationships: []
       }
+      edge_function_metrics: {
+        Row: {
+          created_at: string
+          duration_ms: number
+          error: string | null
+          function_name: string
+          id: number
+          status_code: number
+        }
+        Insert: {
+          created_at?: string
+          duration_ms: number
+          error?: string | null
+          function_name: string
+          id?: number
+          status_code: number
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number
+          error?: string | null
+          function_name?: string
+          id?: number
+          status_code?: number
+        }
+        Relationships: []
+      }
+      events_analytics: {
+        Row: {
+          created_at: string
+          event: string
+          id: number
+          props: Json
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: number
+          props?: Json
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: number
+          props?: Json
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           created_at: string
@@ -566,6 +620,33 @@ export type Database = {
           status?: string
           updated_at?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      markets: {
+        Row: {
+          code: string
+          created_at: string
+          display_name: string
+          id: string
+          settlement_rule: string | null
+          value_type: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          display_name: string
+          id?: string
+          settlement_rule?: string | null
+          value_type: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          settlement_rule?: string | null
+          value_type?: string
         }
         Relationships: []
       }
@@ -921,6 +1002,38 @@ export type Database = {
         }
         Relationships: []
       }
+      selections: {
+        Row: {
+          code: string
+          created_at: string
+          display_name: string
+          id: string
+          market_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          display_name: string
+          id?: string
+          market_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          market_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selections_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_bet_legs: {
         Row: {
           bet_market: string
@@ -1202,6 +1315,24 @@ export type Database = {
         }
         Relationships: []
       }
+      clv_capture_metrics: {
+        Row: {
+          clv_capture_rate_percent: number | null
+          legs_with_clv: number | null
+          total_bet_legs: number | null
+        }
+        Relationships: []
+      }
+      edge_function_p95_latency: {
+        Row: {
+          avg_latency_ms: number | null
+          error_count: number | null
+          function_name: string | null
+          p95_latency_ms: number | null
+          request_count: number | null
+        }
+        Relationships: []
+      }
       latest_injury_status_v: {
         Row: {
           confidence: number | null
@@ -1295,6 +1426,26 @@ export type Database = {
           minute_bucket: string | null
           odds: number | null
           player: string | null
+        }
+        Relationships: []
+      }
+      social_engagement_metrics: {
+        Row: {
+          avg_comments_per_bet: number | null
+          avg_reactions_per_bet: number | null
+          total_comments: number | null
+          total_reactions: number | null
+          total_shared_bets: number | null
+        }
+        Relationships: []
+      }
+      tier_conversion_metrics: {
+        Row: {
+          conversion_rate_percent: number | null
+          degenerate_users: number | null
+          pro_users: number | null
+          starter_users: number | null
+          upgraded_within_30_days: number | null
         }
         Relationships: []
       }
