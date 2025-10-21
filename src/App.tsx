@@ -20,7 +20,8 @@ import {
   LazyTrendingNow,
   LazyInjuries,
   LazyAnalyzeStrategies,
-  LazyAICoach
+  LazyAICoach,
+  LazyAdminDashboard
 } from "./components/LazyPages";
 import "./App.css";
 
@@ -104,6 +105,11 @@ function App() {
                 <Route path="/ai-coach" element={
                   <Suspense fallback={<LoadingFallback />}>
                     <LazyAICoach />
+                  </Suspense>
+                } />
+                <Route path="/admin" element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LazyAdminDashboard />
                   </Suspense>
                 } />
                 <Route path="*" element={<NotFound />} />

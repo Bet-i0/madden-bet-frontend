@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Database, DollarSign, Activity, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { TriggerSportsDataIOIngest } from '@/components/TriggerSportsDataIOIngest';
+import { useUserRole } from '@/hooks/useUserRole';
+import LoadingFallback from '@/components/LoadingFallback';
 
 export default function AdminDashboard() {
+  const { isAdmin, loading } = useUserRole();
+
   const { data: aiUsage } = useQuery({
     queryKey: ['admin-ai-usage'],
     queryFn: async () => {
@@ -41,6 +46,14 @@ export default function AdminDashboard() {
       return data;
     },
   });
+
+  if (loading) {
+    return <LoadingFallback />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="container mx-auto p-6 pb-24 max-w-7xl">
