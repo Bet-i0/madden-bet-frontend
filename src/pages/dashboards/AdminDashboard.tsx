@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Database, DollarSign, Activity, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { TriggerSportsDataIOIngest } from '@/components/TriggerSportsDataIOIngest';
 
 export default function AdminDashboard() {
   const { data: aiUsage } = useQuery({
@@ -108,6 +109,10 @@ export default function AdminDashboard() {
             <p className="text-xs text-muted-foreground mt-1">Last 10 runs</p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mb-8">
+        <TriggerSportsDataIOIngest />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 mb-8">
