@@ -1,5 +1,5 @@
 
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -24,6 +24,8 @@ import {
   LazyAdminDashboard
 } from "./components/LazyPages";
 import "./App.css";
+
+const LazyGameDetails = lazy(() => import("./pages/GameDetails"));
 
 // Optimized QueryClient for better caching and performance
 const queryClient = new QueryClient({
@@ -110,6 +112,11 @@ function App() {
                 <Route path="/admin" element={
                   <Suspense fallback={<LoadingFallback />}>
                     <LazyAdminDashboard />
+                  </Suspense>
+                } />
+                <Route path="/game-details" element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LazyGameDetails />
                   </Suspense>
                 } />
                 <Route path="*" element={<NotFound />} />
